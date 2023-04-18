@@ -14,5 +14,5 @@ FOUNDATION_EXPORT double DamusSDKVersionNumber;
 FOUNDATION_EXPORT const unsigned char DamusSDKVersionString[];
 
 // In this header, you should import all the public headers of your framework using statements like #import <DamusSDK/PublicHeader.h>
-#import <damus-Bridging-Header.h>
+#import "damus-Bridging-Header.h"
 
