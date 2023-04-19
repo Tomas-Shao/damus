@@ -6,7 +6,7 @@
 //
 
 import SwiftUI
-import DamusSDK
+@testable import DamusSDK
 
 @main
 struct DemoApp: App {
