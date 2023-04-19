@@ -8,19 +8,19 @@
 import SwiftUI
 import Starscream
 
-struct TimestampedProfile {
-    let profile: Profile
-    let timestamp: Int64
-    let event: NostrEvent
+public struct TimestampedProfile {
+    public let profile: Profile
+    public let timestamp: Int64
+    public let event: NostrEvent
 }
 
-enum Sheets: Identifiable {
+public enum Sheets: Identifiable {
     case post(PostAction)
     case report(ReportTarget)
     case event(NostrEvent)
     case filter
 
-    var id: String {
+    public var id: String {
         switch self {
         case .report: return "report"
         case .post(let action): return "post-" + (action.ev?.id ?? "")
@@ -30,12 +30,12 @@ enum Sheets: Identifiable {
     }
 }
 
-enum ThreadState {
+public enum ThreadState {
     case event_details
     case chatroom
 }
 
-enum FilterState : Int {
+public enum FilterState : Int {
     case posts_and_replies = 1
     case posts = 0
     
@@ -49,8 +49,8 @@ enum FilterState : Int {
     }
 }
 
-struct ContentView: View {
-    let keypair: Keypair
+public struct ContentView: View {
+    public let keypair: Keypair
     
     var pubkey: String {
         return keypair.pubkey
@@ -59,36 +59,41 @@ struct ContentView: View {
     var privkey: String? {
         return keypair.privkey
     }
-    
-    @State var status: String = "Not connected"
-    @State var active_sheet: Sheets? = nil
-    @State var damus_state: DamusState? = nil
-    @State var selected_timeline: Timeline? = .home
-    @State var is_deleted_account: Bool = false
-    @State var is_profile_open: Bool = false
-    @State var event: NostrEvent? = nil
-    @State var active_profile: String? = nil
-    @State var active_search: NostrFilter? = nil
-    @State var active_event: NostrEvent? = nil
-    @State var profile_open: Bool = false
-    @State var thread_open: Bool = false
-    @State var search_open: Bool = false
-    @State var muting: String? = nil
-    @State var confirm_mute: Bool = false
-    @State var user_muted_confirm: Bool = false
-    @State var confirm_overwrite_mutelist: Bool = false
-    @State var current_boost: NostrEvent? = nil
-    @State var filter_state : FilterState = .posts_and_replies
+
+    public init(keypair: Keypair) {
+        self.keypair = keypair
+    }
+
+
+    @State public var status: String = "Not connected"
+    @State public var active_sheet: Sheets? = nil
+    @State public var damus_state: DamusState? = nil
+    @State public var selected_timeline: Timeline? = .home
+    @State public var is_deleted_account: Bool = false
+    @State public var is_profile_open: Bool = false
+    @State public var event: NostrEvent? = nil
+    @State public var active_profile: String? = nil
+    @State public var active_search: NostrFilter? = nil
+    @State public var active_event: NostrEvent? = nil
+    @State public var profile_open: Bool = false
+    @State public var thread_open: Bool = false
+    @State public var search_open: Bool = false
+    @State public var muting: String? = nil
+    @State public var confirm_mute: Bool = false
+    @State public var user_muted_confirm: Bool = false
+    @State public var confirm_overwrite_mutelist: Bool = false
+    @State public var current_boost: NostrEvent? = nil
+    @State public var filter_state : FilterState = .posts_and_replies
     @State private var isSideBarOpened = false
-    @StateObject var home: HomeModel = HomeModel()
-    @State var shouldShowBoostAlert = false
+    @StateObject public var home: HomeModel = HomeModel()
+    @State public var shouldShowBoostAlert = false
     
     // connect retry timer
     let timer = Timer.publish(every: 4, on: .main, in: .common).autoconnect()
 
     let sub_id = UUID().description
     
-    @Environment(\.colorScheme) var colorScheme
+    @Environment(\.colorScheme) public var colorScheme
     
     var mystery: some View {
         Text("Are you lost?", comment: "Text asking the user if they are lost in the app.")
@@ -250,7 +255,7 @@ struct ContentView: View {
         self.thread_open = true
     }
     
-    var body: some View {
+    public var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             if let damus = self.damus_state {
                 NavigationView {

@@ -17,7 +17,7 @@ struct RelayFilter: Hashable {
     }
 }
 
-class RelayFilters {
+public class RelayFilters {
     private let our_pubkey: String
     private var disabled: Set<RelayFilter>
     
@@ -47,7 +47,7 @@ class RelayFilters {
         save_relay_filters(our_pubkey, filters: disabled)
     }
     
-    init(our_pubkey: String) {
+    public init(our_pubkey: String) {
         self.our_pubkey = our_pubkey
         disabled = load_relay_filters(our_pubkey) ?? Set()
     }

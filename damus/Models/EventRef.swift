@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum EventRef {
+public enum EventRef {
     case mention(Mention)
     case thread_id(ReferencedId)
     case reply(ReferencedId)

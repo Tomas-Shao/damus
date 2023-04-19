@@ -22,7 +22,7 @@ class DraftArtifacts {
     }
 }
 
-class Drafts: ObservableObject {
+public class Drafts: ObservableObject {
     @Published var post: DraftArtifacts? = nil
     @Published var replies: [NostrEvent: DraftArtifacts] = [:]
     @Published var quotes: [NostrEvent: DraftArtifacts] = [:]

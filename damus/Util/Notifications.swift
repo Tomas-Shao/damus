@@ -7,7 +7,7 @@
 
 import Foundation
 
-extension Notification.Name {
+public extension Notification.Name {
     static var thread_focus: Notification.Name {
         return Notification.Name("thread focus")
     }
@@ -115,10 +115,10 @@ extension Notification.Name {
     }
 }
 
-func handle_notify(_ name: Notification.Name) -> NotificationCenter.Publisher {
+public func handle_notify(_ name: Notification.Name) -> NotificationCenter.Publisher {
     return NotificationCenter.default.publisher(for: name)
 }
 
-func notify(_ name: NSNotification.Name, _ object: Any?) {
+public func notify(_ name: NSNotification.Name, _ object: Any?) {
     NotificationCenter.default.post(name: name, object: object)
 }

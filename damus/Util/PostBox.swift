@@ -8,13 +8,13 @@
 import Foundation
 
 
-class Relayer {
-    let relay: String
-    var attempts: Int
-    var retry_after: Double
-    var last_attempt: Int64?
+public class Relayer {
+    public let relay: String
+    public var attempts: Int
+    public var retry_after: Double
+    public var last_attempt: Int64?
     
-    init(relay: String, attempts: Int, retry_after: Double) {
+    public init(relay: String, attempts: Int, retry_after: Double) {
         self.relay = relay
         self.attempts = attempts
         self.retry_after = retry_after
@@ -22,11 +22,11 @@ class Relayer {
     }
 }
 
-class PostedEvent {
-    let event: NostrEvent
-    var remaining: [Relayer]
+public class PostedEvent {
+    public let event: NostrEvent
+    public var remaining: [Relayer]
     
-    init(event: NostrEvent, remaining: [String]) {
+    public init(event: NostrEvent, remaining: [String]) {
         self.event = event
         self.remaining = remaining.map {
             Relayer(relay: $0, attempts: 0, retry_after: 2.0)
@@ -34,11 +34,11 @@ class PostedEvent {
     }
 }
 
-class PostBox {
-    let pool: RelayPool
-    var events: [String: PostedEvent]
+public class PostBox {
+    public let pool: RelayPool
+    public var events: [String: PostedEvent]
     
-    init(pool: RelayPool) {
+    public init(pool: RelayPool) {
         self.pool = pool
         self.events = [:]
         pool.register_handler(sub_id: "postbox", handler: handle_event)

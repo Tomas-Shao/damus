@@ -7,13 +7,13 @@
 
 import SwiftUI
 
-enum Timeline: String, CustomStringConvertible, Hashable {
+public enum Timeline: String, CustomStringConvertible, Hashable {
     case home
     case notifications
     case search
     case dms
     
-    var description: String {
+    public var description: String {
         return self.rawValue
     }
 }

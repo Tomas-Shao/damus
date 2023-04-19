@@ -23,7 +23,7 @@ struct NewEventsBits: OptionSet {
     static let notifications: NewEventsBits = [.zaps, .likes, .reposts, .mentions]
 }
 
-class HomeModel: ObservableObject {
+public class HomeModel: ObservableObject {
     var damus_state: DamusState
 
     var has_event: [String: Set<String>] = [:]
@@ -50,7 +50,7 @@ class HomeModel: ObservableObject {
     @Published var notifications = NotificationsModel()
     @Published var events = EventHolder()
 
-    init() {
+    public init() {
         self.damus_state = DamusState.empty
         filter_muted()
         self.setup_debouncer()

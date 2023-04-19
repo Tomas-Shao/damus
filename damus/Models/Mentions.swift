@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum MentionType {
+public enum MentionType {
     case pubkey
     case event
     
@@ -21,7 +21,7 @@ enum MentionType {
     }
 }
 
-struct Mention: Equatable {
+public struct Mention: Equatable {
     let index: Int?
     let type: MentionType
     let ref: ReferencedId

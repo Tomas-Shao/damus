@@ -7,7 +7,7 @@
 
 import Foundation
 
-class RelayMetadatas {
+public class RelayMetadatas {
     private var metadata: [String: RelayMetadata] = [:]
     
     func lookup(relay_id: String) -> RelayMetadata? {

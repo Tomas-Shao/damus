@@ -427,7 +427,7 @@
 		80736EFD29EEE23E00901A2F /* UserSearch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CF0ABF52985CD5500D66079 /* UserSearch.swift */; };
 		80736EFE29EEE24100901A2F /* MutelistView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CF0ABE02981A83900D66079 /* MutelistView.swift */; };
 		80736EFF29EEE24600901A2F /* EventBody.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CC7AAF5297F1A6A00430951 /* EventBody.swift */; };
-		80736F0029EEE24600901A2F /* EmbeddedEventView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CC7AAF1297F129C00430951 /* EmbeddedEventView.swift */; };
+		80736F0029EEE24600901A2F /* (null) in Sources */ = {isa = PBXBuildFile; };
 		80736F0129EEE24600901A2F /* BuilderEventView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CC7AAEA297F0AEC00430951 /* BuilderEventView.swift */; };
 		80736F0229EEE24600901A2F /* WideEventView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CFF8F6C29CD022E008DB934 /* WideEventView.swift */; };
 		80736F0329EEE24600901A2F /* ZapEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C3D52B5298DB4E6001C5831 /* ZapEvent.swift */; };
@@ -988,7 +988,6 @@
 		80736E4229EEE0D500901A2F /* DamusSDK.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DamusSDK.h; sourceTree = "<group>"; };
 		80736FA629EEF42700901A2F /* Demo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Demo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		80736FA829EEF42700901A2F /* DemoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoApp.swift; sourceTree = "<group>"; };
-		80736FAA29EEF42800901A2F /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		80736FAC29EEF42900901A2F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		80736FAF29EEF42900901A2F /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		9609F057296E220800069BF3 /* BannerImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BannerImageView.swift; sourceTree = "<group>"; };
@@ -1655,7 +1654,6 @@
 			isa = PBXGroup;
 			children = (
 				80736FA829EEF42700901A2F /* DemoApp.swift */,
-				80736FAA29EEF42800901A2F /* ContentView.swift */,
 				80736FAC29EEF42900901A2F /* Assets.xcassets */,
 				80736FAE29EEF42900901A2F /* Preview Content */,
 			);
@@ -2322,7 +2320,7 @@
 				80736EDD29EEE21A00901A2F /* ImageContainerView.swift in Sources */,
 				80736EFD29EEE23E00901A2F /* UserSearch.swift in Sources */,
 				80736F2729EEE26000901A2F /* AttachMediaUtility.swift in Sources */,
-				80736F0029EEE24600901A2F /* EmbeddedEventView.swift in Sources */,
+				80736F0029EEE24600901A2F /* (null) in Sources */,
 				80736F3529EEE26000901A2F /* PowView.swift in Sources */,
 				80736EEB29EEE23200901A2F /* ProfileName.swift in Sources */,
 				80736EC929EEE20400901A2F /* RelayConnection.swift in Sources */,

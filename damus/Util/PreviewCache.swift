@@ -23,7 +23,7 @@ enum Preview {
     case failed
 }
 
-class PreviewCache {
+public class PreviewCache {
     private var previews: [String: Preview]
     private var image_meta: [String: ImageFill]
     
@@ -48,7 +48,7 @@ class PreviewCache {
         }
     }
     
-    init() {
+    public init() {
         self.previews = [:]
         self.image_meta = [:]
     }

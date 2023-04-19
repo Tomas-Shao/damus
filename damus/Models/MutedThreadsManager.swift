@@ -27,7 +27,7 @@ func saveMutedThreads(pubkey: String, currentValue: [String], value: [String]) -
     return false
 }
 
-class MutedThreadsManager: ObservableObject {
+public class MutedThreadsManager: ObservableObject {
 
     private let userDefaults = UserDefaults.standard
     private let keypair: Keypair
@@ -46,7 +46,7 @@ class MutedThreadsManager: ObservableObject {
         }
     }
 
-    init(keypair: Keypair) {
+    public init(keypair: Keypair) {
         self._mutedThreads = loadMutedThreads(pubkey: keypair.pubkey)
         self._mutedThreadsSet = Set(_mutedThreads)
         self.keypair = keypair

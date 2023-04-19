@@ -30,7 +30,7 @@ func save_bookmarks(pubkey: String, current_value: [NostrEvent], value: [NostrEv
     return false
 }
 
-class BookmarksManager: ObservableObject {
+public class BookmarksManager: ObservableObject {
     
     private let userDefaults = UserDefaults.standard
     private let pubkey: String

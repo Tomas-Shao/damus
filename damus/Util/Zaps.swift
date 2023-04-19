@@ -7,7 +7,7 @@
 
 import Foundation
 
-class Zaps {
+public class Zaps {
     var zaps: [String: Zap]
     let our_pubkey: String
     var our_zaps: [String: [Zap]]
@@ -15,7 +15,7 @@ class Zaps {
     var event_counts: [String: Int]
     var event_totals: [String: Int64]
     
-    init(our_pubkey: String) {
+    public init(our_pubkey: String) {
         self.zaps = [:]
         self.our_pubkey = our_pubkey
         self.our_zaps = [:]

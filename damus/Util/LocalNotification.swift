@@ -7,18 +7,18 @@
 
 import Foundation
 
-struct LossyLocalNotification {
-    let type: LocalNotificationType
-    let event_id: String
+public struct LossyLocalNotification {
+    public let type: LocalNotificationType
+    public let event_id: String
     
-    func to_user_info() -> [AnyHashable: Any] {
+    public func to_user_info() -> [AnyHashable: Any] {
         return [
             "type": self.type.rawValue,
             "evid": self.event_id
         ]
     }
     
-    static func from_user_info(user_info: [AnyHashable: Any]) -> LossyLocalNotification {
+    public static func from_user_info(user_info: [AnyHashable: Any]) -> LossyLocalNotification {
         let target_id = user_info["evid"] as! String
         let typestr = user_info["type"] as! String
         let type = LocalNotificationType(rawValue: typestr)!
@@ -27,18 +27,18 @@ struct LossyLocalNotification {
     }
 }
 
-struct LocalNotification {
-    let type: LocalNotificationType
-    let event: NostrEvent
-    let target: NostrEvent
-    let content: String
+public struct LocalNotification {
+    public let type: LocalNotificationType
+    public let event: NostrEvent
+    public let target: NostrEvent
+    public let content: String
     
-    func to_lossy() -> LossyLocalNotification {
+    public func to_lossy() -> LossyLocalNotification {
         return LossyLocalNotification(type: self.type, event_id: self.target.id)
     }
 }
 
-enum LocalNotificationType: String {
+public enum LocalNotificationType: String {
     case dm
     case like
     case mention

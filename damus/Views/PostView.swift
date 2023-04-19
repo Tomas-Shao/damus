@@ -8,14 +8,14 @@
 import SwiftUI
 import AVFoundation
 
-enum NostrPostResult {
+public enum NostrPostResult {
     case post(NostrPost)
     case cancel
 }
 
 let POST_PLACEHOLDER = NSLocalizedString("Type your post here...", comment: "Text box prompt to ask user to type their post.")
 
-enum PostAction {
+public enum PostAction {
     case replying_to(NostrEvent)
     case quoting(NostrEvent)
     case posting

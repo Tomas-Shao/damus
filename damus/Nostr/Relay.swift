@@ -48,14 +48,14 @@ struct RelayMetadata: Codable {
     }
 }
 
-class Relay: Identifiable {
-    let descriptor: RelayDescriptor
-    let connection: RelayConnection
+public class Relay: Identifiable {
+    public let descriptor: RelayDescriptor
+    public let connection: RelayConnection
+
+    public var last_pong: UInt32
+    public var flags: Int
     
-    var last_pong: UInt32
-    var flags: Int
-    
-    init(descriptor: RelayDescriptor, connection: RelayConnection) {
+    public init(descriptor: RelayDescriptor, connection: RelayConnection) {
         self.flags = 0
         self.descriptor = descriptor
         self.connection = connection
@@ -70,7 +70,7 @@ class Relay: Identifiable {
         return (flags & RelayFlags.broken.rawValue) == RelayFlags.broken.rawValue
     }
     
-    var id: String {
+    public var id: String {
         return get_relay_id(descriptor.url)
     }
 

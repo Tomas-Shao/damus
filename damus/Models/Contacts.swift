@@ -8,16 +8,16 @@
 import Foundation
 
 
-class Contacts {
+public class Contacts {
     private var friends: Set<String> = Set()
     private var friend_of_friends: Set<String> = Set()
     private var muted: Set<String> = Set()
     
-    let our_pubkey: String
-    var event: NostrEvent?
-    var mutelist: NostrEvent?
+    public let our_pubkey: String
+    public var event: NostrEvent?
+    public var mutelist: NostrEvent?
     
-    init(our_pubkey: String) {
+    public init(our_pubkey: String) {
         self.our_pubkey = our_pubkey
     }
     

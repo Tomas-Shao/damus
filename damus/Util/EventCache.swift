@@ -9,7 +9,7 @@ import Combine
 import Foundation
 import UIKit
 
-class EventCache {
+public class EventCache {
     private var events: [String: NostrEvent] = [:]
     private var replies = ReplyMap()
     private var cancellable: AnyCancellable?
@@ -19,7 +19,7 @@ class EventCache {
     
     //private var thread_latest: [String: Int64]
     
-    init() {
+    public init() {
         cancellable = NotificationCenter.default.publisher(
             for: UIApplication.didReceiveMemoryWarningNotification
         ).sink { [weak self] _ in

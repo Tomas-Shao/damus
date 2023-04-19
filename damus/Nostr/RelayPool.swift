@@ -7,43 +7,43 @@
 
 import Foundation
 
-struct SubscriptionId: Identifiable, CustomStringConvertible {
-    let id: String
+public struct SubscriptionId: Identifiable, CustomStringConvertible {
+    public let id: String
 
-    var description: String {
+    public var description: String {
         id
     }
 }
 
-struct RelayId: Identifiable, CustomStringConvertible {
-    let id: String
+public struct RelayId: Identifiable, CustomStringConvertible {
+    public let id: String
 
-    var description: String {
+    public var description: String {
         id
     }
 }
 
-struct RelayHandler {
-    let sub_id: String
-    let callback: (String, NostrConnectionEvent) -> ()
+public struct RelayHandler {
+    public let sub_id: String
+    public let callback: (String, NostrConnectionEvent) -> ()
 }
 
-struct QueuedRequest {
-    let req: NostrRequest
-    let relay: String
+public struct QueuedRequest {
+    public let req: NostrRequest
+    public let relay: String
 }
 
-struct NostrRequestId: Equatable, Hashable {
-    let relay: String?
-    let sub_id: String
+public struct NostrRequestId: Equatable, Hashable {
+    public let relay: String?
+    public let sub_id: String
 }
 
-class RelayPool {
-    var relays: [Relay] = []
-    var handlers: [RelayHandler] = []
-    var request_queue: [QueuedRequest] = []
-    var seen: Set<String> = Set()
-    var counts: [String: UInt64] = [:]
+public class RelayPool {
+    public var relays: [Relay] = []
+    public var handlers: [RelayHandler] = []
+    public var request_queue: [QueuedRequest] = []
+    public var seen: Set<String> = Set()
+    public var counts: [String: UInt64] = [:]
 
     var descriptors: [RelayDescriptor] {
         relays.map { $0.descriptor }

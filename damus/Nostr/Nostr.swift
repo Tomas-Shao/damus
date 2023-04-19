@@ -7,10 +7,10 @@
 
 import Foundation
 
-class Profile: Codable {
+public class Profile: Codable {
     var value: [String: AnyCodable]
     
-    init (name: String?, display_name: String?, about: String?, picture: String?, banner: String?, website: String?, lud06: String?, lud16: String?, nip05: String?) {
+    public init (name: String?, display_name: String?, about: String?, picture: String?, banner: String?, website: String?, lud06: String?, lud16: String?, nip05: String?) {
         self.value = [:]
         self.name = name
         self.display_name = display_name
@@ -147,12 +147,12 @@ class Profile: Codable {
         self.value = [:]
     }
     
-    required init(from decoder: Decoder) throws {
+    public required init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         self.value = try container.decode([String: AnyCodable].self)
     }
     
-    func encode(to encoder: Encoder) throws {
+    public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
         try container.encode(value)
     }

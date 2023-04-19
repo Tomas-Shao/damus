@@ -7,13 +7,13 @@
 
 import Foundation
 
-struct CommandResult {
+public struct CommandResult {
     let event_id: String
     let ok: Bool
     let msg: String
 }
 
-enum NostrResponse: Decodable {
+public enum NostrResponse: Decodable {
     case event(String, NostrEvent)
     case notice(String)
     case eose(String)
@@ -32,7 +32,7 @@ enum NostrResponse: Decodable {
         }
     }
 
-    init(from decoder: Decoder) throws {
+    public init(from decoder: Decoder) throws {
         var container = try decoder.unkeyedContainer()
 
         // Only use first item

@@ -7,17 +7,17 @@
 
 import Foundation
 
-struct NostrFilter: Codable, Equatable {
-    var ids: [String]?
-    var kinds: [Int]?
-    var referenced_ids: [String]?
-    var pubkeys: [String]?
-    var since: Int64?
-    var until: Int64?
-    var limit: UInt32?
-    var authors: [String]?
-    var hashtag: [String]? = nil
-    var parameter: [String]? = nil
+public struct NostrFilter: Codable, Equatable {
+    public var ids: [String]?
+    public var kinds: [Int]?
+    public var referenced_ids: [String]?
+    public var pubkeys: [String]?
+    public var since: Int64?
+    public var until: Int64?
+    public var limit: UInt32?
+    public var authors: [String]?
+    public var hashtag: [String]? = nil
+    public var parameter: [String]? = nil
 
     private enum CodingKeys : String, CodingKey {
         case ids

@@ -7,27 +7,27 @@
 
 import Foundation
 
-enum ReportType: String {
+public enum ReportType: String {
     case explicit
     case illegal
     case spam
     case impersonation
 }
 
-struct ReportNoteTarget {
-    let pubkey: String
-    let note_id: String
+public struct ReportNoteTarget {
+    public let pubkey: String
+    public let note_id: String
 }
 
-enum ReportTarget {
+public enum ReportTarget {
     case user(String)
     case note(ReportNoteTarget)
 }
 
-struct Report {
-    let type: ReportType
-    let target: ReportTarget
-    let message: String
+public struct Report {
+    public let type: ReportType
+    public let target: ReportTarget
+    public let message: String
 }
 
 func create_report_tags(target: ReportTarget, type: ReportType) -> [[String]] {

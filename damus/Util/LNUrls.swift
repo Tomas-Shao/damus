@@ -7,10 +7,10 @@
 
 import Foundation
 
-class LNUrls {
+public class LNUrls {
     var endpoints: [String: LNUrlPayRequest]
     
-    init() {
+    public init() {
         self.endpoints = [:]
     }
     

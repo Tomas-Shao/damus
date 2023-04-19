@@ -7,9 +7,9 @@
 
 import Foundation
 
-struct NIP05 {
-    let username: String
-    let host: String
+public struct NIP05 {
+    public let username: String
+    public let host: String
     
     var url: URL? {
         URL(string: "https://\(host)/.well-known/nostr.json?name=\(username)")
@@ -19,7 +19,7 @@ struct NIP05 {
         URL(string: "https://\(host)")
     }
     
-    static func parse(_ nip05: String) -> NIP05? {
+    public static func parse(_ nip05: String) -> NIP05? {
         let parts = nip05.split(separator: "@")
         guard parts.count == 2 else {
             return nil

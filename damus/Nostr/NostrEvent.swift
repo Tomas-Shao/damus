@@ -13,7 +13,7 @@ import CryptoKit
 import NaturalLanguage
 
 
-enum ValidationResult: Decodable {
+public enum ValidationResult: Decodable {
     case unknown
     case ok
     case bad_id
@@ -24,76 +24,76 @@ enum ValidationResult: Decodable {
     }
 }
 
-struct OtherEvent {
+public struct OtherEvent {
     let event_id: String
     let relay_url: String
 }
 
-struct KeyEvent {
+public struct KeyEvent {
     let key: String
     let relay_url: String
 }
 
-struct ReferencedId: Identifiable, Hashable, Equatable {
-    let ref_id: String
-    let relay_id: String?
-    let key: String
+public struct ReferencedId: Identifiable, Hashable, Equatable {
+    public let ref_id: String
+    public let relay_id: String?
+    public let key: String
 
-    var id: String {
+    public var id: String {
         return ref_id
     }
 }
 
-struct EventId: Identifiable, CustomStringConvertible {
-    let id: String
+public struct EventId: Identifiable, CustomStringConvertible {
+    public let id: String
 
-    var description: String {
+    public var description: String {
         id
     }
 }
 
-class NostrEvent: Codable, Identifiable, CustomStringConvertible, Equatable, Hashable, Comparable {
-    static func == (lhs: NostrEvent, rhs: NostrEvent) -> Bool {
+public class NostrEvent: Codable, Identifiable, CustomStringConvertible, Equatable, Hashable, Comparable {
+    public static func == (lhs: NostrEvent, rhs: NostrEvent) -> Bool {
         return lhs.id == rhs.id
     }
     
-    static func < (lhs: NostrEvent, rhs: NostrEvent) -> Bool {
+    public static func < (lhs: NostrEvent, rhs: NostrEvent) -> Bool {
         return lhs.created_at < rhs.created_at
     }
     
-    func hash(into hasher: inout Hasher) {
+    public func hash(into hasher: inout Hasher) {
         hasher.combine(id)
     }
     
-    var id: String
-    var sig: String
-    var tags: [[String]]
-    var boosted_by: String?
+    public var id: String
+    public var sig: String
+    public var tags: [[String]]
+    public var boosted_by: String?
 
     // cached field for pow calc
     //var pow: Int?
 
     // custom flags for internal use
-    var flags: Int = 0
+    public var flags: Int = 0
 
-    let pubkey: String
-    let created_at: Int64
-    let kind: Int
-    let content: String
+    public let pubkey: String
+    public let created_at: Int64
+    public let kind: Int
+    public let content: String
     
-    var is_textlike: Bool {
+    public var is_textlike: Bool {
         return kind == 1 || kind == 42
     }
     
-    var too_big: Bool {
+    public var too_big: Bool {
         return self.content.utf8.count > 16000
     }
-    
-    var should_show_event: Bool {
+
+    public var should_show_event: Bool {
         return !too_big
     }
     
-    var is_valid_id: Bool {
+    public var is_valid_id: Bool {
         return calculate_event_id(ev: self) == self.id
     }
     
@@ -111,7 +111,7 @@ class NostrEvent: Codable, Identifiable, CustomStringConvertible, Equatable, Has
         return parse_mentions(content: content, tags: self.tags)
     }
 
-    lazy var inner_event: NostrEvent? = {
+    public lazy var inner_event: NostrEvent? = {
         // don't try to deserialize an inner event if we know there won't be one
         if self.known_kind == .boost {
             return event_from_json(dat: self.content)
@@ -120,7 +120,7 @@ class NostrEvent: Codable, Identifiable, CustomStringConvertible, Equatable, Has
     }()
     
     private var _event_refs: [EventRef]? = nil
-    func event_refs(_ privkey: String?) -> [EventRef] {
+    public func event_refs(_ privkey: String?) -> [EventRef] {
         if let rs = _event_refs {
             return rs
         }
@@ -129,9 +129,9 @@ class NostrEvent: Codable, Identifiable, CustomStringConvertible, Equatable, Has
         return refs
     }
 
-    var decrypted_content: String? = nil
+    public var decrypted_content: String? = nil
 
-    func decrypted(privkey: String?) -> String? {
+    public func decrypted(privkey: String?) -> String? {
         if let decrypted_content = decrypted_content {
             return decrypted_content
         }
@@ -160,7 +160,7 @@ class NostrEvent: Codable, Identifiable, CustomStringConvertible, Equatable, Has
         return dec
     }
 
-    func get_content(_ privkey: String?) -> String {
+    public func get_content(_ privkey: String?) -> String {
         if known_kind == .dm {
             return decrypted(privkey: privkey) ?? "*failed to decrypt content*"
         }
@@ -179,12 +179,12 @@ class NostrEvent: Codable, Identifiable, CustomStringConvertible, Equatable, Has
          */
     }
 
-    var description: String {
+    public var description: String {
         //let p = pow.map { String($0) } ?? "?"
         return "NostrEvent { id: \(id) pubkey \(pubkey) kind \(kind) tags \(tags) content '\(content)' }"
     }
 
-    var known_kind: NostrKind? {
+    public var known_kind: NostrKind? {
         return NostrKind.init(rawValue: kind)
     }
 
@@ -252,11 +252,11 @@ class NostrEvent: Codable, Identifiable, CustomStringConvertible, Equatable, Has
         return false
     }
 
-    func is_reply(_ privkey: String?) -> Bool {
+    public func is_reply(_ privkey: String?) -> Bool {
         return event_is_reply(self, privkey: privkey)
     }
 
-    func note_language(_ privkey: String?) -> String? {
+    public func note_language(_ privkey: String?) -> String? {
         // Rely on Apple's NLLanguageRecognizer to tell us which language it thinks the note is in
         // and filter on only the text portions of the content as URLs and hashtags confuse the language recognizer.
         let originalBlocks = blocks(privkey)
@@ -308,7 +308,7 @@ class NostrEvent: Codable, Identifiable, CustomStringConvertible, Equatable, Has
         return (self.flags & 1) != 0
     }
 
-    init(id: String = "", content: String, pubkey: String, kind: Int = 1, tags: [[String]] = [], createdAt: Int64 = Int64(Date().timeIntervalSince1970)) {
+    public init(id: String = "", content: String, pubkey: String, kind: Int = 1, tags: [[String]] = [], createdAt: Int64 = Int64(Date().timeIntervalSince1970)) {
         self.id = id
         self.sig = ""
 
@@ -319,7 +319,7 @@ class NostrEvent: Codable, Identifiable, CustomStringConvertible, Equatable, Has
         self.created_at = createdAt
     }
 
-    init(from: NostrEvent, content: String? = nil) {
+    public init(from: NostrEvent, content: String? = nil) {
         self.id = from.id
         self.sig = from.sig
 
@@ -330,7 +330,7 @@ class NostrEvent: Codable, Identifiable, CustomStringConvertible, Equatable, Has
         self.created_at = from.created_at
     }
 
-    func calculate_id() {
+    public func calculate_id() {
         self.id = calculate_event_id(ev: self)
         //self.pow = count_hash_leading_zero_bits(self.id)
     }

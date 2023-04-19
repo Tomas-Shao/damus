@@ -7,13 +7,13 @@
 
 import Foundation
 
-class ReplyCounter {
+public class ReplyCounter {
     private var replies: [String: Int]
     private var counted: Set<String>
     private var our_replies: [String: NostrEvent]
     private let our_pubkey: String
     
-    init(our_pubkey: String) {
+    public init(our_pubkey: String) {
         self.our_pubkey = our_pubkey
         replies = [:]
         counted = Set()

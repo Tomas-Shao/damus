@@ -7,14 +7,14 @@
 
 import Foundation
 
-class DirectMessagesModel: ObservableObject {
+public class DirectMessagesModel: ObservableObject {
     @Published var dms: [DirectMessageModel] = []
     @Published var loading: Bool = false
     @Published var open_dm: Bool = false
     @Published private(set) var active_model: DirectMessageModel = DirectMessageModel(our_pubkey: "", pubkey: "")
     let our_pubkey: String
     
-    init(our_pubkey: String) {
+    public init(our_pubkey: String) {
         self.our_pubkey = our_pubkey
     }
     

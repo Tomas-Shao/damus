@@ -9,11 +9,11 @@ import Foundation
 import UIKit
 
 
-class Profiles {
-    var profiles: [String: TimestampedProfile] = [:]
-    var validated: [String: NIP05] = [:]
-    var nip05_pubkey: [String: String] = [:]
-    var zappers: [String: String] = [:]
+public class Profiles {
+    public var profiles: [String: TimestampedProfile] = [:]
+    public var validated: [String: NIP05] = [:]
+    public var nip05_pubkey: [String: String] = [:]
+    public var zappers: [String: String] = [:]
     
     func is_validated(_ pk: String) -> NIP05? {
         return validated[pk]

@@ -93,7 +93,7 @@ private func get_libretranslate_url(_ pubkey: String, server: LibreTranslateServ
     return UserDefaults.standard.object(forKey: "libretranslate_url") as? String
 }
 
-class UserSettingsStore: ObservableObject {
+public class UserSettingsStore: ObservableObject {
     @Published var default_wallet: Wallet {
         didSet {
             UserDefaults.standard.set(default_wallet.rawValue, forKey: "default_wallet")

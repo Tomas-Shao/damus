@@ -12,18 +12,18 @@ import Vault
 let PUBKEY_HRP = "npub"
 let PRIVKEY_HRP = "nsec"
 
-struct FullKeypair {
+public struct FullKeypair {
     let pubkey: String
     let privkey: String
 }
 
-struct Keypair {
-    let pubkey: String
-    let privkey: String?
-    let pubkey_bech32: String
-    let privkey_bech32: String?
+public struct Keypair {
+    public let pubkey: String
+    public let privkey: String?
+    public let pubkey_bech32: String
+    public let privkey_bech32: String?
     
-    func to_full() -> FullKeypair? {
+    public func to_full() -> FullKeypair? {
         guard let privkey = self.privkey else {
             return nil
         }
@@ -31,7 +31,7 @@ struct Keypair {
         return FullKeypair(pubkey: pubkey, privkey: privkey)
     }
     
-    init(pubkey: String, privkey: String?) {
+    public init(pubkey: String, privkey: String?) {
         self.pubkey = pubkey
         self.privkey = privkey
         self.pubkey_bech32 = bech32_pubkey(pubkey) ?? pubkey
@@ -86,21 +86,21 @@ func bech32_nopre_pubkey(_ pubkey: String) -> String? {
     return bech32_encode(hrp: "", bytes)
 }
 
-func bech32_note_id(_ evid: String) -> String? {
+public func bech32_note_id(_ evid: String) -> String? {
     guard let bytes = hex_decode(evid) else {
         return nil
     }
     return bech32_encode(hrp: "note", bytes)
 }
 
-func generate_new_keypair() -> Keypair {
+public func generate_new_keypair() -> Keypair {
     let key = try! secp256k1.Signing.PrivateKey()
     let privkey = hex_encode(key.rawRepresentation)
     let pubkey = hex_encode(Data(key.publicKey.xonly.bytes))
     return Keypair(pubkey: pubkey, privkey: privkey)
 }
 
-func privkey_to_pubkey(privkey: String) -> String? {
+public func privkey_to_pubkey(privkey: String) -> String? {
     guard let sec = hex_decode(privkey) else {
         return nil
     }
@@ -110,33 +110,33 @@ func privkey_to_pubkey(privkey: String) -> String? {
     return hex_encode(Data(key.publicKey.xonly.bytes))
 }
 
-func save_pubkey(pubkey: String) {
+public func save_pubkey(pubkey: String) {
     UserDefaults.standard.set(pubkey, forKey: "pubkey")
 }
 
-func save_privkey(privkey: String) throws {
+public func save_privkey(privkey: String) throws {
     try Vault.savePrivateKey(privkey, keychainConfiguration: DamusKeychainConfiguration())
 }
 
-func clear_saved_privkey() throws {
+public func clear_saved_privkey() throws {
     try Vault.deletePrivateKey(keychainConfiguration: DamusKeychainConfiguration())
 }
 
-func clear_saved_pubkey() {
+public func clear_saved_pubkey() {
     UserDefaults.standard.removeObject(forKey: "pubkey")
 }
 
-func save_keypair(pubkey: String, privkey: String) throws {
+public func save_keypair(pubkey: String, privkey: String) throws {
     save_pubkey(pubkey: pubkey)
     try save_privkey(privkey: privkey)
 }
 
-func clear_keypair() throws {
+public func clear_keypair() throws {
     try clear_saved_privkey()
     clear_saved_pubkey()
 }
 
-func get_saved_keypair() -> Keypair? {
+public func get_saved_keypair() -> Keypair? {
     do {
         try removePrivateKeyFromUserDefaults()
         
@@ -149,11 +149,11 @@ func get_saved_keypair() -> Keypair? {
     }
 }
 
-func get_saved_pubkey() -> String? {
+public func get_saved_pubkey() -> String? {
     return UserDefaults.standard.string(forKey: "pubkey")
 }
 
-func get_saved_privkey() -> String? {
+public func get_saved_privkey() -> String? {
     let mkey = try? Vault.getPrivateKey(keychainConfiguration: DamusKeychainConfiguration());
     return mkey.map { $0.trimmingCharacters(in: .whitespaces) }
 }
@@ -162,7 +162,7 @@ func get_saved_privkey() -> String? {
  Detects whether a string might contain an nsec1 prefixed private key.
  It does not determine if it's the current user's private key and does not verify if it is properly encoded or has the right length.
  */
-func contentContainsPrivateKey(_ content: String) -> Bool {
+public func contentContainsPrivateKey(_ content: String) -> Bool {
     if #available(iOS 16.0, *) {
         return content.contains(/nsec1[02-9ac-z]+/)
     } else {

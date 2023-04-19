@@ -8,28 +8,28 @@
 import Foundation
 import LinkPresentation
 
-struct DamusState {
-    let pool: RelayPool
-    let keypair: Keypair
-    let likes: EventCounter
-    let boosts: EventCounter
-    let contacts: Contacts
-    let tips: TipCounter
-    let profiles: Profiles
-    let dms: DirectMessagesModel
-    let previews: PreviewCache
-    let zaps: Zaps
-    let lnurls: LNUrls
-    let settings: UserSettingsStore
-    let relay_filters: RelayFilters
-    let relay_metadata: RelayMetadatas
-    let drafts: Drafts
-    let events: EventCache
-    let bookmarks: BookmarksManager
-    let postbox: PostBox
-    let bootstrap_relays: [String]
-    let replies: ReplyCounter
-    let muted_threads: MutedThreadsManager
+public struct DamusState {
+    public let pool: RelayPool
+    public let keypair: Keypair
+    public let likes: EventCounter
+    public let boosts: EventCounter
+    public let contacts: Contacts
+    public let tips: TipCounter
+    public let profiles: Profiles
+    public let dms: DirectMessagesModel
+    public let previews: PreviewCache
+    public let zaps: Zaps
+    public let lnurls: LNUrls
+    public let settings: UserSettingsStore
+    public let relay_filters: RelayFilters
+    public let relay_metadata: RelayMetadatas
+    public let drafts: Drafts
+    public let events: EventCache
+    public let bookmarks: BookmarksManager
+    public let postbox: PostBox
+    public let bootstrap_relays: [String]
+    public let replies: ReplyCounter
+    public let muted_threads: MutedThreadsManager
     
     var pubkey: String {
         return keypair.pubkey

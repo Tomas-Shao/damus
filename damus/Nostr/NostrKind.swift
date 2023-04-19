@@ -8,7 +8,7 @@
 import Foundation
 
 
-enum NostrKind: Int {
+public enum NostrKind: Int {
     case metadata = 0
     case text = 1
     case contacts = 3

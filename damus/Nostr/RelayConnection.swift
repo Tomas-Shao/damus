@@ -8,12 +8,12 @@
 import Foundation
 import Starscream
 
-enum NostrConnectionEvent {
+public enum NostrConnectionEvent {
     case ws_event(WebSocketEvent)
     case nostr_event(NostrResponse)
 }
 
-final class RelayConnection: WebSocketDelegate {
+final public class RelayConnection: WebSocketDelegate {
     private(set) var isConnected = false
     private(set) var isConnecting = false
     private(set) var isReconnecting = false
@@ -28,7 +28,7 @@ final class RelayConnection: WebSocketDelegate {
     private var handleEvent: (NostrConnectionEvent) -> ()
     private let url: URL
 
-    init(url: URL, handleEvent: @escaping (NostrConnectionEvent) -> ()) {
+    public init(url: URL, handleEvent: @escaping (NostrConnectionEvent) -> ()) {
         self.url = url
         self.handleEvent = handleEvent
     }
@@ -70,7 +70,7 @@ final class RelayConnection: WebSocketDelegate {
     
     // MARK: - WebSocketDelegate
     
-    func didReceive(event: WebSocketEvent, client: WebSocket) {
+    public func didReceive(event: WebSocketEvent, client: WebSocket) {
         switch event {
         case .connected:
             self.isConnected = true
