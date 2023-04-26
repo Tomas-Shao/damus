@@ -20,9 +20,6 @@ public extension Notification.Name {
     static var select_quote: Notification.Name {
         return Notification.Name("select quote")
     }
-    static var reply: Notification.Name {
-        return Notification.Name("reply")
-    }
     static var profile_updated: Notification.Name {
         return Notification.Name("profile_updated")
     }
@@ -55,6 +52,9 @@ public extension Notification.Name {
     }
     static var post: Notification.Name {
         return Notification.Name("send post")
+    }
+    static var compose: Notification.Name {
+        return Notification.Name("compose")
     }
     static var boost: Notification.Name {
         return Notification.Name("boost")
@@ -112,6 +112,9 @@ public extension Notification.Name {
     }
     static var local_notification: Notification.Name {
         return Notification.Name("local_notification")
+    }
+    static var onlyzaps_mode: Notification.Name {
+        return Notification.Name("hide_reactions")
     }
 }
 

@@ -13,7 +13,7 @@ import CryptoKit
 import NaturalLanguage
 
 
-public enum ValidationResult: Decodable {
+enum ValidationResult: Decodable {
     case unknown
     case ok
     case bad_id
@@ -24,14 +24,14 @@ public enum ValidationResult: Decodable {
     }
 }
 
-public struct OtherEvent {
+struct OtherEvent {
     let event_id: String
     let relay_url: String
 }
 
 public struct KeyEvent {
-    let key: String
-    let relay_url: String
+    public let key: String
+    public let relay_url: String
 }
 
 public struct ReferencedId: Identifiable, Hashable, Equatable {
@@ -44,10 +44,10 @@ public struct ReferencedId: Identifiable, Hashable, Equatable {
     }
 }
 
-public struct EventId: Identifiable, CustomStringConvertible {
-    public let id: String
+struct EventId: Identifiable, CustomStringConvertible {
+    let id: String
 
-    public var description: String {
+    var description: String {
         id
     }
 }
@@ -66,34 +66,34 @@ public class NostrEvent: Codable, Identifiable, CustomStringConvertible, Equatab
     }
     
     public var id: String
-    public var sig: String
-    public var tags: [[String]]
-    public var boosted_by: String?
+    var sig: String
+    var tags: [[String]]
+    var boosted_by: String?
 
     // cached field for pow calc
     //var pow: Int?
 
     // custom flags for internal use
-    public var flags: Int = 0
+    var flags: Int = 0
 
-    public let pubkey: String
-    public let created_at: Int64
-    public let kind: Int
-    public let content: String
+    let pubkey: String
+    let created_at: Int64
+    let kind: Int
+    let content: String
     
-    public var is_textlike: Bool {
+    var is_textlike: Bool {
         return kind == 1 || kind == 42
     }
     
-    public var too_big: Bool {
+    var too_big: Bool {
         return self.content.utf8.count > 16000
     }
-
-    public var should_show_event: Bool {
+    
+    var should_show_event: Bool {
         return !too_big
     }
     
-    public var is_valid_id: Bool {
+    var is_valid_id: Bool {
         return calculate_event_id(ev: self) == self.id
     }
     
@@ -111,16 +111,24 @@ public class NostrEvent: Codable, Identifiable, CustomStringConvertible, Equatab
         return parse_mentions(content: content, tags: self.tags)
     }
 
-    public lazy var inner_event: NostrEvent? = {
-        // don't try to deserialize an inner event if we know there won't be one
-        if self.known_kind == .boost {
-            return event_from_json(dat: self.content)
-        }
-        return nil
+    private lazy var inner_event: NostrEvent? = {
+        return event_from_json(dat: self.content)
     }()
     
+    func get_inner_event(cache: EventCache) -> NostrEvent? {
+        guard self.known_kind == .boost else {
+            return nil
+        }
+        
+        if self.content == "", let ref = self.referenced_ids.first {
+            return cache.lookup(ref.ref_id)
+        }
+        
+        return self.inner_event
+    }
+    
     private var _event_refs: [EventRef]? = nil
-    public func event_refs(_ privkey: String?) -> [EventRef] {
+    func event_refs(_ privkey: String?) -> [EventRef] {
         if let rs = _event_refs {
             return rs
         }
@@ -129,9 +137,9 @@ public class NostrEvent: Codable, Identifiable, CustomStringConvertible, Equatab
         return refs
     }
 
-    public var decrypted_content: String? = nil
+    var decrypted_content: String? = nil
 
-    public func decrypted(privkey: String?) -> String? {
+    func decrypted(privkey: String?) -> String? {
         if let decrypted_content = decrypted_content {
             return decrypted_content
         }
@@ -160,7 +168,7 @@ public class NostrEvent: Codable, Identifiable, CustomStringConvertible, Equatab
         return dec
     }
 
-    public func get_content(_ privkey: String?) -> String {
+    func get_content(_ privkey: String?) -> String {
         if known_kind == .dm {
             return decrypted(privkey: privkey) ?? "*failed to decrypt content*"
         }
@@ -184,7 +192,7 @@ public class NostrEvent: Codable, Identifiable, CustomStringConvertible, Equatab
         return "NostrEvent { id: \(id) pubkey \(pubkey) kind \(kind) tags \(tags) content '\(content)' }"
     }
 
-    public var known_kind: NostrKind? {
+    var known_kind: NostrKind? {
         return NostrKind.init(rawValue: kind)
     }
 
@@ -193,7 +201,12 @@ public class NostrEvent: Codable, Identifiable, CustomStringConvertible, Equatab
     }
 
     private func get_referenced_ids(key: String) -> [ReferencedId] {
+#if DamusSDK
         return DamusSDK.get_referenced_ids(tags: self.tags, key: key)
+#else
+        return damus.get_referenced_ids(tags: self.tags, key: key)
+        #endif
+
     }
 
     public func is_root_event() -> Bool {
@@ -252,11 +265,11 @@ public class NostrEvent: Codable, Identifiable, CustomStringConvertible, Equatab
         return false
     }
 
-    public func is_reply(_ privkey: String?) -> Bool {
+    func is_reply(_ privkey: String?) -> Bool {
         return event_is_reply(self, privkey: privkey)
     }
 
-    public func note_language(_ privkey: String?) -> String? {
+    func note_language(_ privkey: String?) -> String? {
         // Rely on Apple's NLLanguageRecognizer to tell us which language it thinks the note is in
         // and filter on only the text portions of the content as URLs and hashtags confuse the language recognizer.
         let originalBlocks = blocks(privkey)
@@ -308,7 +321,7 @@ public class NostrEvent: Codable, Identifiable, CustomStringConvertible, Equatab
         return (self.flags & 1) != 0
     }
 
-    public init(id: String = "", content: String, pubkey: String, kind: Int = 1, tags: [[String]] = [], createdAt: Int64 = Int64(Date().timeIntervalSince1970)) {
+    init(id: String = "", content: String, pubkey: String, kind: Int = 1, tags: [[String]] = [], createdAt: Int64 = Int64(Date().timeIntervalSince1970)) {
         self.id = id
         self.sig = ""
 
@@ -319,7 +332,7 @@ public class NostrEvent: Codable, Identifiable, CustomStringConvertible, Equatab
         self.created_at = createdAt
     }
 
-    public init(from: NostrEvent, content: String? = nil) {
+    init(from: NostrEvent, content: String? = nil) {
         self.id = from.id
         self.sig = from.sig
 
@@ -330,7 +343,7 @@ public class NostrEvent: Codable, Identifiable, CustomStringConvertible, Equatab
         self.created_at = from.created_at
     }
 
-    public func calculate_id() {
+    func calculate_id() {
         self.id = calculate_event_id(ev: self)
         //self.pow = count_hash_leading_zero_bits(self.id)
     }
@@ -560,7 +573,7 @@ func make_first_contact_event(keypair: Keypair) -> NostrEvent? {
     return ev
 }
 
-func make_metadata_event(keypair: Keypair, metadata: NostrMetadata) -> NostrEvent? {
+func make_metadata_event(keypair: Keypair, metadata: Profile) -> NostrEvent? {
     guard let privkey = keypair.privkey else {
         return nil
     }
@@ -686,7 +699,7 @@ func generate_private_keypair(our_privkey: String, id: String, created_at: Int64
 func make_zap_request_event(keypair: FullKeypair, content: String, relays: [RelayDescriptor], target: ZapTarget, zap_type: ZapType) -> NostrEvent? {
     var tags = zap_target_to_tags(target)
     var relay_tag = ["relays"]
-    relay_tag.append(contentsOf: relays.map { $0.url.absoluteString })
+    relay_tag.append(contentsOf: relays.map { $0.url.id })
     tags.append(relay_tag)
     
     var kp = keypair
@@ -998,8 +1011,8 @@ func last_etag(tags: [[String]]) -> String? {
     return e
 }
 
-func inner_event_or_self(ev: NostrEvent) -> NostrEvent {
-    guard let inner_ev = ev.inner_event else {
+func inner_event_or_self(ev: NostrEvent, cache: EventCache) -> NostrEvent {
+    guard let inner_ev = ev.get_inner_event(cache: cache) else {
         return ev
     }
     
