@@ -262,6 +262,8 @@
 		7C902AE32981D55B002AB16E /* ZoomableScrollView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C902AE22981D55B002AB16E /* ZoomableScrollView.swift */; };
 		7C95CAEE299DCEF1009DCB67 /* KFOptionSetter+.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C95CAED299DCEF1009DCB67 /* KFOptionSetter+.swift */; };
 		7CFF6317299FEFE5005D382A /* SelectableText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CFF6316299FEFE5005D382A /* SelectableText.swift */; };
+		8003225229F9477A00C969FB /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4CE6DEEA27F7A08200C66700 /* Assets.xcassets */; };
+		8003225329F947BE00C969FB /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4CE6DEEA27F7A08200C66700 /* Assets.xcassets */; };
 		80736E4329EEE0D500901A2F /* DamusSDK.h in Headers */ = {isa = PBXBuildFile; fileRef = 80736E4229EEE0D500901A2F /* DamusSDK.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		80736E5C29EEE1D000901A2F /* SwipeToDismiss.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7F0BA24297892BD009531F3 /* SwipeToDismiss.swift */; };
 		80736E5D29EEE1D600901A2F /* WebsiteLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CBCA92F297DB57F00EC6B2F /* WebsiteLink.swift */; };
@@ -1951,6 +1953,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				80736ED629EEE20B00901A2F /* Localizable.strings in Resources */,
+				8003225229F9477A00C969FB /* Assets.xcassets in Resources */,
 				80736ED729EEE21000901A2F /* InfoPlist.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1960,6 +1963,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				80736FB029EEF42900901A2F /* Preview Assets.xcassets in Resources */,
+				8003225329F947BE00C969FB /* Assets.xcassets in Resources */,
 				80736FAD29EEF42900901A2F /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

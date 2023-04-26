@@ -30,6 +30,8 @@ public enum Sheets: Identifiable {
     }
 }
 
+let IS_DAMUS_SDK = true
+
 public enum ThreadState {
     case event_details
     case chatroom
@@ -93,7 +95,7 @@ public struct ContentView: View {
 
     let sub_id = UUID().description
     
-    @Environment(\.colorScheme) public var colorScheme
+    @Environment(\.colorScheme) var colorScheme
     
     var mystery: some View {
         Text("Are you lost?", comment: "Text asking the user if they are lost in the app.")
@@ -197,7 +199,7 @@ public struct ContentView: View {
         .toolbar {
             ToolbarItem(placement: .principal) {
                 VStack {
-                    if selected_timeline == .home {
+                    if selected_timeline == .home, !IS_DAMUS_SDK {
                         Image("damus-home")
                             .resizable()
                             .frame(width:30,height:30)
@@ -262,16 +264,19 @@ public struct ContentView: View {
                     TabView { // Prevents navbar appearance change on scroll
                         MainContent(damus: damus)
                             .toolbar() {
-                                ToolbarItem(placement: .navigationBarLeading) {
-                                    Button {
-                                        isSideBarOpened.toggle()
-                                    } label: {
-                                        ProfilePicView(pubkey: damus_state!.pubkey, size: 32, highlight: .none, profiles: damus_state!.profiles)
-                                            .opacity(isSideBarOpened ? 0 : 1)
-                                            .animation(isSideBarOpened ? .none : .default, value: isSideBarOpened)
+                                if !IS_DAMUS_SDK {
+                                    ToolbarItem(placement: .navigationBarLeading) {
+                                        Button {
+                                            isSideBarOpened.toggle()
+                                        } label: {
+                                            ProfilePicView(pubkey: damus_state!.pubkey, size: 32, highlight: .none, profiles: damus_state!.profiles)
+                                                .opacity(isSideBarOpened ? 0 : 1)
+                                                .animation(isSideBarOpened ? .none : .default, value: isSideBarOpened)
+                                        }
+                                        .disabled(isSideBarOpened)
                                     }
-                                    .disabled(isSideBarOpened)
                                 }
+
                                 
                                 ToolbarItem(placement: .navigationBarTrailing) {
                                     HStack(alignment: .center) {
@@ -299,10 +304,11 @@ public struct ContentView: View {
                     )
                 }
                 .navigationViewStyle(.stack)
-            
-                TabBar(new_events: $home.new_events, selected: $selected_timeline, settings: damus.settings, action: switch_timeline)
-                    .padding([.bottom], 8)
-                    .background(Color(uiColor: .systemBackground).ignoresSafeArea())
+                if !IS_DAMUS_SDK {
+                    TabBar(new_events: $home.new_events, selected: $selected_timeline, settings: damus.settings, action: switch_timeline)
+                        .padding([.bottom], 8)
+                        .background(Color(uiColor: .systemBackground).ignoresSafeArea())
+                }
             }
         }
         .ignoresSafeArea(.keyboard)
