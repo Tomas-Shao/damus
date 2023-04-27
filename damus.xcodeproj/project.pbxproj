@@ -277,7 +277,6 @@
 		8003225929F94CF900C969FB /* ZapTypePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CA3FA0F29F593D000FDB3C3 /* ZapTypePicker.swift */; };
 		8003225A29F9502B00C969FB /* ShareActionButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CE1399129F0666100AC6A0B /* ShareActionButton.swift */; };
 		8003225B29F9504100C969FB /* RepostAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CE1398F29F0661A00AC6A0B /* RepostAction.swift */; };
-		80736E4329EEE0D500901A2F /* DamusSDK.h in Headers */ = {isa = PBXBuildFile; fileRef = 80736E4229EEE0D500901A2F /* DamusSDK.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		80736E5C29EEE1D000901A2F /* SwipeToDismiss.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7F0BA24297892BD009531F3 /* SwipeToDismiss.swift */; };
 		80736E5D29EEE1D600901A2F /* WebsiteLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CBCA92F297DB57F00EC6B2F /* WebsiteLink.swift */; };
 		80736E5E29EEE1D600901A2F /* TruncatedText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C8D00C929DF80350036AF10 /* TruncatedText.swift */; };
@@ -558,7 +557,6 @@
 		80736F9B29EEE4D300901A2F /* container_of.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C3EA65428FF5AAE00C48A62 /* container_of.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		80736F9C29EEE4D300901A2F /* utf8.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C06670C28FDEAA000038D2A /* utf8.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		80736F9D29EEE4D300901A2F /* typesafe_cb.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C3EA65828FF5B3700C48A62 /* typesafe_cb.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		80736F9E29EEE4D300901A2F /* damus-Bridging-Header.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C06670828FDE64700038D2A /* damus-Bridging-Header.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		80736F9F29EEE4D300901A2F /* nostr_bech32.c in Sources */ = {isa = PBXBuildFile; fileRef = 4C8D00CE29E38B950036AF10 /* nostr_bech32.c */; };
 		80736FA029EEE4D300901A2F /* list.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C3EA65028FF5A5500C48A62 /* list.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		80736FA129EEE4D300901A2F /* block.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C8D00D129E397AD0036AF10 /* block.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -568,6 +566,9 @@
 		80736FB929EEF74E00901A2F /* secp256k1 in Frameworks */ = {isa = PBXBuildFile; productRef = 80736FB829EEF74E00901A2F /* secp256k1 */; };
 		80736FBB29EEF74E00901A2F /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 80736FBA29EEF74E00901A2F /* Kingfisher */; };
 		80736FBD29EEF74E00901A2F /* Vault in Frameworks */ = {isa = PBXBuildFile; productRef = 80736FBC29EEF74E00901A2F /* Vault */; };
+		80DBC9B329F95B12001D03AF /* DamusSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 80736E4029EEE0D500901A2F /* DamusSDK.framework */; };
+		80DBC9B429F95B12001D03AF /* DamusSDK.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 80736E4029EEE0D500901A2F /* DamusSDK.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		80DBC9B829F95D94001D03AF /* DamusSDK.h in Headers */ = {isa = PBXBuildFile; fileRef = 80736E4229EEE0D500901A2F /* DamusSDK.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		9609F058296E220800069BF3 /* BannerImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9609F057296E220800069BF3 /* BannerImageView.swift */; };
 		9C83F89329A937B900136C08 /* TextViewWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C83F89229A937B900136C08 /* TextViewWrapper.swift */; };
 		9CA876E229A00CEA0003B9A3 /* AttachMediaUtility.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CA876E129A00CE90003B9A3 /* AttachMediaUtility.swift */; };
@@ -608,6 +609,13 @@
 			remoteGlobalIDString = 80736E3F29EEE0D500901A2F;
 			remoteInfo = DamusSDK;
 		};
+		80DBC9B529F95B12001D03AF /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4CE6DEDB27F7A08100C66700 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 80736E3F29EEE0D500901A2F;
+			remoteInfo = DamusSDK;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -617,6 +625,17 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		80DBC9B729F95B12001D03AF /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				80DBC9B429F95B12001D03AF /* DamusSDK.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1068,6 +1087,7 @@
 			files = (
 				80736FBB29EEF74E00901A2F /* Kingfisher in Frameworks */,
 				80736FBD29EEF74E00901A2F /* Vault in Frameworks */,
+				80DBC9B329F95B12001D03AF /* DamusSDK.framework in Frameworks */,
 				80736FB929EEF74E00901A2F /* secp256k1 in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1096,58 +1116,58 @@
 		4C06670728FDE62900038D2A /* damus-c */ = {
 			isa = PBXGroup;
 			children = (
-				4C06670928FDE64700038D2A /* damus.h */,
-				4C06670A28FDE64700038D2A /* damus.c */,
-				4C06670828FDE64700038D2A /* damus-Bridging-Header.h */,
-				4C06670C28FDEAA000038D2A /* utf8.h */,
-				4C06670D28FDEAA000038D2A /* utf8.c */,
-				4C3EA63B28FF52D600C48A62 /* bolt11.h */,
-				4C3EA63C28FF52D600C48A62 /* bolt11.c */,
-				4C3EA63E28FF54BD00C48A62 /* short_types.h */,
-				4C3EA63F28FF553900C48A62 /* hash_u5.h */,
-				4C3EA64028FF553900C48A62 /* hash_u5.c */,
-				4C3EA64228FF558100C48A62 /* sha256.h */,
-				4C3EA64328FF558100C48A62 /* sha256.c */,
-				4C3EA64528FF56D300C48A62 /* config.h */,
-				4C3EA64628FF570F00C48A62 /* node_id.h */,
-				4C3EA64728FF597700C48A62 /* bech32.h */,
-				4C3EA64828FF597700C48A62 /* bech32.c */,
-				4C3EA64A28FF59AC00C48A62 /* bech32_util.h */,
+				4C3EA65A28FF5BC900C48A62 /* alignof.h */,
+				4C3EA66C28FF782800C48A62 /* amount.c */,
+				4C3EA65E28FF5DA400C48A62 /* amount.h */,
+				4C3EA66128FF5EA800C48A62 /* array_size.h */,
 				4C3EA64B28FF59AC00C48A62 /* bech32_util.c */,
-				4C3EA64D28FF59F200C48A62 /* tal.h */,
-				4C3EA64E28FF59F200C48A62 /* tal.c */,
-				4C3EA65028FF5A5500C48A62 /* list.h */,
-				4C3EA65328FF5A8600C48A62 /* str.h */,
-				4C3EA65428FF5AAE00C48A62 /* container_of.h */,
+				4C3EA64A28FF59AC00C48A62 /* bech32_util.h */,
+				4C3EA64828FF597700C48A62 /* bech32.c */,
+				4C3EA64728FF597700C48A62 /* bech32.h */,
+				4C8D00D129E397AD0036AF10 /* block.h */,
+				4C3EA63C28FF52D600C48A62 /* bolt11.c */,
+				4C3EA63B28FF52D600C48A62 /* bolt11.h */,
+				4C3EA66228FF5EBC00C48A62 /* build_assert.h */,
 				4C3EA65528FF5AC300C48A62 /* check_type.h */,
 				4C3EA65628FF5B0200C48A62 /* compiler.h */,
-				4C3EA65728FF5B1E00C48A62 /* likely.h */,
-				4C3EA65828FF5B3700C48A62 /* typesafe_cb.h */,
-				4C3EA65928FF5B5100C48A62 /* take.h */,
-				4C3EA65A28FF5BC900C48A62 /* alignof.h */,
-				4C3EA65B28FF5C7E00C48A62 /* str_debug.h */,
-				4C3EA65C28FF5CAF00C48A62 /* endian.h */,
-				4C3EA65D28FF5CF300C48A62 /* talstr.h */,
-				4C3EA65E28FF5DA400C48A62 /* amount.h */,
-				4C3EA65F28FF5E7700C48A62 /* node_id.c */,
-				4C3EA66128FF5EA800C48A62 /* array_size.h */,
-				4C3EA66228FF5EBC00C48A62 /* build_assert.h */,
-				4C3EA66328FF5F6800C48A62 /* mem.h */,
-				4C3EA66428FF5F6800C48A62 /* mem.c */,
-				4C3EA66628FF5F9900C48A62 /* hex.h */,
-				4C3EA66728FF5F9900C48A62 /* hex.c */,
-				4C3EA66C28FF782800C48A62 /* amount.c */,
-				4C3EA66E28FF787100C48A62 /* overflows.h */,
-				4C3EA67228FF79F600C48A62 /* structeq.h */,
+				4C3EA64528FF56D300C48A62 /* config.h */,
+				4C3EA65428FF5AAE00C48A62 /* container_of.h */,
 				4C3EA67328FF7A2600C48A62 /* cppmagic.h */,
-				4C3EA67428FF7A5A00C48A62 /* take.c */,
-				4C3EA67628FF7A9800C48A62 /* talstr.c */,
-				4C3EA67828FF7ABF00C48A62 /* list.c */,
-				4C8D00CD29E38B950036AF10 /* nostr_bech32.h */,
-				4C8D00CE29E38B950036AF10 /* nostr_bech32.c */,
 				4C8D00D029E38E4C0036AF10 /* cursor.h */,
-				4C8D00D129E397AD0036AF10 /* block.h */,
+				4C06670828FDE64700038D2A /* damus-Bridging-Header.h */,
+				4C06670A28FDE64700038D2A /* damus.c */,
+				4C06670928FDE64700038D2A /* damus.h */,
+				4C3EA65C28FF5CAF00C48A62 /* endian.h */,
+				4C3EA64028FF553900C48A62 /* hash_u5.c */,
+				4C3EA63F28FF553900C48A62 /* hash_u5.h */,
+				4C3EA66728FF5F9900C48A62 /* hex.c */,
+				4C3EA66628FF5F9900C48A62 /* hex.h */,
+				4C3EA65728FF5B1E00C48A62 /* likely.h */,
+				4C3EA67828FF7ABF00C48A62 /* list.c */,
+				4C3EA65028FF5A5500C48A62 /* list.h */,
+				4C3EA66428FF5F6800C48A62 /* mem.c */,
+				4C3EA66328FF5F6800C48A62 /* mem.h */,
+				4C3EA65F28FF5E7700C48A62 /* node_id.c */,
+				4C3EA64628FF570F00C48A62 /* node_id.h */,
+				4C8D00CE29E38B950036AF10 /* nostr_bech32.c */,
+				4C8D00CD29E38B950036AF10 /* nostr_bech32.h */,
+				4C3EA66E28FF787100C48A62 /* overflows.h */,
+				4C3EA64328FF558100C48A62 /* sha256.c */,
+				4C3EA64228FF558100C48A62 /* sha256.h */,
+				4C3EA63E28FF54BD00C48A62 /* short_types.h */,
 				4C8D00D229E3C19F0036AF10 /* str_block.h */,
+				4C3EA65B28FF5C7E00C48A62 /* str_debug.h */,
+				4C3EA65328FF5A8600C48A62 /* str.h */,
+				4C3EA67228FF79F600C48A62 /* structeq.h */,
+				4C3EA67428FF7A5A00C48A62 /* take.c */,
+				4C3EA65928FF5B5100C48A62 /* take.h */,
+				4C3EA64E28FF59F200C48A62 /* tal.c */,
+				4C3EA64D28FF59F200C48A62 /* tal.h */,
+				4C3EA67628FF7A9800C48A62 /* talstr.c */,
+				4C3EA65D28FF5CF300C48A62 /* talstr.h */,
+				4C3EA65828FF5B3700C48A62 /* typesafe_cb.h */,
+				4C06670D28FDEAA000038D2A /* utf8.c */,
+				4C06670C28FDEAA000038D2A /* utf8.h */,
 			);
 			path = "damus-c";
 			sourceTree = "<group>";
@@ -1713,6 +1733,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				80736F7729EEE4D300901A2F /* bolt11.h in Headers */,
 				80736F9829EEE4D300901A2F /* tal.h in Headers */,
 				80736F8529EEE4D300901A2F /* hex.h in Headers */,
 				80736F9429EEE4D300901A2F /* bech32.h in Headers */,
@@ -1727,7 +1748,6 @@
 				80736F8629EEE4D300901A2F /* short_types.h in Headers */,
 				80736F7529EEE4D300901A2F /* str.h in Headers */,
 				80736F9D29EEE4D300901A2F /* typesafe_cb.h in Headers */,
-				80736F7729EEE4D300901A2F /* bolt11.h in Headers */,
 				80736F7D29EEE4D300901A2F /* compiler.h in Headers */,
 				80736F8C29EEE4D300901A2F /* talstr.h in Headers */,
 				80736F8B29EEE4D300901A2F /* hash_u5.h in Headers */,
@@ -1738,16 +1758,15 @@
 				80736F7429EEE4D300901A2F /* take.h in Headers */,
 				80736F8329EEE4D300901A2F /* bech32_util.h in Headers */,
 				80736F9929EEE4D300901A2F /* cursor.h in Headers */,
-				80736F7129EEE4D300901A2F /* cppmagic.h in Headers */,
 				80736F7629EEE4D300901A2F /* amount.h in Headers */,
-				80736E4329EEE0D500901A2F /* DamusSDK.h in Headers */,
+				80736F7129EEE4D300901A2F /* cppmagic.h in Headers */,
 				80736F6F29EEE4D300901A2F /* node_id.h in Headers */,
 				80736F7329EEE4D300901A2F /* structeq.h in Headers */,
 				80736F8A29EEE4D300901A2F /* likely.h in Headers */,
-				80736F9E29EEE4D300901A2F /* damus-Bridging-Header.h in Headers */,
 				80736F9B29EEE4D300901A2F /* container_of.h in Headers */,
 				80736F7929EEE4D300901A2F /* endian.h in Headers */,
 				80736F8E29EEE4D300901A2F /* build_assert.h in Headers */,
+				80DBC9B829F95D94001D03AF /* DamusSDK.h in Headers */,
 				80736F8129EEE4D300901A2F /* array_size.h in Headers */,
 				80736F8229EEE4D300901A2F /* config.h in Headers */,
 			);
@@ -1845,11 +1864,13 @@
 				80736FA229EEF42700901A2F /* Sources */,
 				80736FA329EEF42700901A2F /* Frameworks */,
 				80736FA429EEF42700901A2F /* Resources */,
+				80DBC9B729F95B12001D03AF /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				80736FB529EEF47B00901A2F /* PBXTargetDependency */,
+				80DBC9B629F95B12001D03AF /* PBXTargetDependency */,
 			);
 			name = Demo;
 			packageProductDependencies = (
@@ -2568,6 +2589,11 @@
 			target = 80736E3F29EEE0D500901A2F /* DamusSDK */;
 			targetProxy = 80736FB429EEF47B00901A2F /* PBXContainerItemProxy */;
 		};
+		80DBC9B629F95B12001D03AF /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 80736E3F29EEE0D500901A2F /* DamusSDK */;
+			targetProxy = 80DBC9B529F95B12001D03AF /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
@@ -2729,7 +2755,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				MACOSX_DEPLOYMENT_TARGET = 12.3;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -2786,7 +2812,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				MACOSX_DEPLOYMENT_TARGET = 12.3;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -2824,6 +2850,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -2872,6 +2899,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -2976,14 +3004,14 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEFINES_MODULE = YES;
-				DEVELOPMENT_TEAM = XK7H4JAB3D;
+				DEVELOPMENT_TEAM = 68SKULU766;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -3010,14 +3038,14 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEFINES_MODULE = YES;
-				DEVELOPMENT_TEAM = XK7H4JAB3D;
+				DEVELOPMENT_TEAM = 68SKULU766;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -3053,7 +3081,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -3083,7 +3111,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

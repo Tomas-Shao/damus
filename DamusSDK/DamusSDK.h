@@ -5,14 +5,18 @@
 //  Created by Tomas Shao on 2023/4/18.
 //
 
-#import <Foundation/Foundation.h>
+#include "damus.h"
+#include "bolt11.h"
+#include "amount.h"
 
 //! Project version number for DamusSDK.
-FOUNDATION_EXPORT double DamusSDKVersionNumber;
+//FOUNDATION_EXPORT double DamusSDKVersionNumber;
 
 //! Project version string for DamusSDK.
-FOUNDATION_EXPORT const unsigned char DamusSDKVersionString[];
+//FOUNDATION_EXPORT const unsigned char DamusSDKVersionString[];
 
 // In this header, you should import all the public headers of your framework using statements like #import <DamusSDK/PublicHeader.h>
-#import "damus-Bridging-Header.h"
+//#import "damus-Bridging-Header.h"
+
+
 
