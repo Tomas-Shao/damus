@@ -79,7 +79,7 @@ public struct SetupView: View {
     }
 }
 
-func DamusWhiteButton(_ title: String, action: @escaping () -> ()) -> some View {
+public func DamusWhiteButton(_ title: String, action: @escaping () -> ()) -> some View {
     return Button(action: action) {
         Text(title)
             .frame(width: 300, height: 50)

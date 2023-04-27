@@ -543,7 +543,7 @@ func get_referenced_id_set(tags: [[String]], key: String) -> Set<ReferencedId> {
     }
 }
 
-func make_first_contact_event(keypair: Keypair) -> NostrEvent? {
+public func make_first_contact_event(keypair: Keypair) -> NostrEvent? {
     guard let privkey = keypair.privkey else {
         return nil
     }
@@ -573,7 +573,7 @@ func make_first_contact_event(keypair: Keypair) -> NostrEvent? {
     return ev
 }
 
-func make_metadata_event(keypair: Keypair, metadata: Profile) -> NostrEvent? {
+public func make_metadata_event(keypair: Keypair, metadata: Profile) -> NostrEvent? {
     guard let privkey = keypair.privkey else {
         return nil
     }
