@@ -157,6 +157,7 @@ public struct ContentView: View {
     var timelineNavItem: Text {
         return Text(timeline_name(selected_timeline))
             .bold()
+            .foregroundColor(.white)
     }
     
     func MainContent(damus: DamusState) -> some View {
