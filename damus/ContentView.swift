@@ -858,7 +858,11 @@ func timeline_name(_ timeline: Timeline?) -> String {
     }
     switch timeline {
     case .home:
+        #if DamusSDK
+        return NSLocalizedString("tab_explore", comment: "Navigation bar title for Home view where posts and replies appear from those who the user is following.")
+        #else
         return NSLocalizedString("Home", comment: "Navigation bar title for Home view where posts and replies appear from those who the user is following.")
+        #endif
     case .notifications:
         return NSLocalizedString("Notifications", comment: "Toolbar label for Notifications view.")
     case .search:
