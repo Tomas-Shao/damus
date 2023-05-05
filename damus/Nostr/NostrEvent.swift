@@ -559,9 +559,11 @@ public func make_first_contact_event(keypair: Keypair) -> NostrEvent? {
     let relay_json = encode_json(relays)!
     let damus_pubkey = "3efdaebb1d8923ebd99c9e7ace3b4194ab45512e2be79c1b7d68d9243e0d2681"
     let jb55_pubkey = "32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245" // lol
+//    let test_pubkey = "npub1sp09gsfpkq3c3tqut442tsmsvz2y99v7ym9ftr58euy4ge29sems0jjnpw"
     let tags = [
         ["p", damus_pubkey],
         ["p", jb55_pubkey],
+//        ["p", test_pubkey],
         ["p", keypair.pubkey] // you're a friend of yourself!
     ]
     let ev = NostrEvent(content: relay_json,
