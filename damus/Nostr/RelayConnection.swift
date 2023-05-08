@@ -42,6 +42,8 @@ final public class RelayConnection {
     private(set) var isConnecting = false
     
     private(set) var last_connection_attempt: TimeInterval = 0
+    private(set) var last_pong: Date? = nil
+    private(set) var backoff: TimeInterval = 1.0
     private lazy var socket = WebSocket(url.url)
     private var subscriptionToken: AnyCancellable?
     
@@ -53,6 +55,19 @@ final public class RelayConnection {
         self.handleEvent = handleEvent
     }
     
+    func ping() {
+        socket.ping { err in
+            if err == nil {
+                self.last_pong = .now
+            } else {
+                print("pong failed, reconnecting \(self.url.id)")
+                self.isConnected = false
+                self.isConnecting = false
+                self.reconnect_with_backoff()
+            }
+        }
+    }
+    
     func connect(force: Bool = false) {
         if !force && (isConnected || isConnecting) {
             return
@@ -62,7 +77,7 @@ final public class RelayConnection {
         last_connection_attempt = Date().timeIntervalSince1970
         
         subscriptionToken = socket.subject
-            .receive(on: DispatchQueue.main)
+            .receive(on: DispatchQueue.global(qos: .default))
             .sink { [weak self] completion in
                 switch completion {
                 case .failure(let error):
@@ -96,24 +111,38 @@ final public class RelayConnection {
     private func receive(event: WebSocketEvent) {
         switch event {
         case .connected:
-            self.isConnected = true
-            self.isConnecting = false
+            DispatchQueue.main.async {
+                self.backoff = 1.0
+                self.isConnected = true
+                self.isConnecting = false
+            }
         case .message(let message):
             self.receive(message: message)
         case .disconnected(let closeCode, let reason):
             if closeCode != .normalClosure {
                 print("⚠️ Warning: RelayConnection (\(self.url)) closed with code \(closeCode), reason: \(String(describing: reason))")
             }
-            isConnected = false
-            isConnecting = false
-            reconnect()
+            DispatchQueue.main.async {
+                self.isConnected = false
+                self.isConnecting = false
+                self.reconnect()
+            }
         case .error(let error):
             print("⚠️ Warning: RelayConnection (\(self.url)) error: \(error)")
-            isConnected = false
-            isConnecting = false
-            reconnect()
+            DispatchQueue.main.async {
+                self.isConnected = false
+                self.isConnecting = false
+                self.reconnect_with_backoff()
+            }
         }
-        self.handleEvent(.ws_event(event))
+        DispatchQueue.main.async {
+            self.handleEvent(.ws_event(event))
+        }
+    }
+    
+    func reconnect_with_backoff() {
+        self.backoff *= 1.5
+        self.reconnect_in(after: self.backoff)
     }
     
     func reconnect() {
@@ -124,23 +153,20 @@ final public class RelayConnection {
         connect()
     }
     
+    func reconnect_in(after: TimeInterval) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + after) {
+            self.reconnect()
+        }
+    }
+    
     private func receive(message: URLSessionWebSocketTask.Message) {
         switch message {
         case .string(let messageString):
-            if messageString.utf8.count > 2000 {
-                DispatchQueue.global(qos: .default).async {
-                    if let ev = decode_nostr_event(txt: messageString) {
-                        DispatchQueue.main.async {
-                            self.handleEvent(.nostr_event(ev))
-                        }
-                        return
-                    }
+            if let ev = decode_nostr_event(txt: messageString) {
+                DispatchQueue.main.async {
+                    self.handleEvent(.nostr_event(ev))
                 }
-            } else {
-                if let ev = decode_nostr_event(txt: messageString) {
-                    handleEvent(.nostr_event(ev))
-                    return
-                }
+                return
             }
         case .data(let messageData):
             if let messageString = String(data: messageData, encoding: .utf8) {

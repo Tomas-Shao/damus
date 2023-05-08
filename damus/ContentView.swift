@@ -69,30 +69,29 @@ public struct ContentView: View {
         self.keypair = keypair
     }
 
+    @Environment(\.scenePhase) var scenePhase
     
-    @State public var status: String = "Not connected"
-    @State public var active_sheet: Sheets? = nil
-    @State public var damus_state: DamusState? = nil
-    @State public var selected_timeline: Timeline? = .home
-    @State public var is_deleted_account: Bool = false
-    @State public var is_profile_open: Bool = false
-    @State public var event: NostrEvent? = nil
-    @State public var active_profile: String? = nil
-    @State public var active_search: NostrFilter? = nil
-    @State public var active_event: NostrEvent? = nil
-    @State public var profile_open: Bool = false
-    @State public var thread_open: Bool = false
-    @State public var search_open: Bool = false
-    @State public var muting: String? = nil
-    @State public var confirm_mute: Bool = false
-    @State public var user_muted_confirm: Bool = false
-    @State public var confirm_overwrite_mutelist: Bool = false
-    @State public var filter_state : FilterState = .posts_and_replies
+    @State var status: String = "Not connected"
+    @State var active_sheet: Sheets? = nil
+    @State var damus_state: DamusState? = nil
+    @SceneStorage("ContentView.selected_timeline") var selected_timeline: Timeline = .home
+    @State var is_deleted_account: Bool = false
+    @State var is_profile_open: Bool = false
+    @State var event: NostrEvent? = nil
+    @State var active_profile: String? = nil
+    @State var active_search: NostrFilter? = nil
+    @State var active_event: NostrEvent? = nil
+    @State var profile_open: Bool = false
+    @State var thread_open: Bool = false
+    @State var search_open: Bool = false
+    @State var muting: String? = nil
+    @State var confirm_mute: Bool = false
+    @State var user_muted_confirm: Bool = false
+    @State var confirm_overwrite_mutelist: Bool = false
+    @SceneStorage("ContentView.filter_state") var filter_state : FilterState = .posts_and_replies
+
     @State private var isSideBarOpened = false
     @StateObject var home: HomeModel = HomeModel()
-    
-    // connect retry timer
-    let timer = Timer.publish(every: 4, on: .main, in: .common).autoconnect()
 
     let sub_id = UUID().description
     
@@ -192,9 +191,6 @@ public struct ContentView: View {
                 
             case .dms:
                 DirectMessagesView(damus_state: damus_state!, model: damus_state!.dms, settings: damus_state!.settings)
-            
-            case .none:
-                EmptyView()
             }
         }
         .navigationBarTitle(timeline_name(selected_timeline), displayMode: .inline)
@@ -221,7 +217,7 @@ public struct ContentView: View {
     var MaybeSearchView: some View {
         Group {
             if let search = self.active_search {
-                SearchView(appstate: damus_state!, search: SearchModel(contacts: damus_state!.contacts, pool: damus_state!.pool, search: search))
+                SearchView(appstate: damus_state!, search: SearchModel(state: damus_state!, search: search))
             } else {
                 EmptyView()
             }
@@ -327,7 +323,7 @@ public struct ContentView: View {
             case .event:
                 EventDetailView()
             case .filter:
-                let timeline = selected_timeline ?? .home
+                let timeline = selected_timeline
                 if #available(iOS 16.0, *) {
                     RelayFilterView(state: damus_state!, timeline: timeline)
                         .presentationDetents([.height(550)])
@@ -389,85 +385,26 @@ public struct ContentView: View {
             }
         }
         .onReceive(handle_notify(.unfollow)) { notif in
-            guard let privkey = self.privkey else {
+            guard let state = self.damus_state else {
                 return
             }
-            
-            guard let damus = self.damus_state else {
-                return
-            }
-            
-            let target = notif.object as! FollowTarget
-            let pk = target.pubkey
-            
-            if let ev = unfollow_user(postbox: damus.postbox,
-                                      our_contacts: damus.contacts.event,
-                                      pubkey: damus.pubkey,
-                                      privkey: privkey,
-                                      unfollow: pk) {
-                notify(.unfollowed, pk)
-                
-                damus.contacts.event = ev
-                damus.contacts.remove_friend(pk)
-                //friend_events = friend_events.filter { $0.pubkey != pk }
-            }
+            handle_unfollow(state: state, notif: notif)
         }
         .onReceive(handle_notify(.follow)) { notif in
-            guard let privkey = self.privkey else {
+            guard let state = self.damus_state else {
                 return
             }
-            
-            let fnotify = notif.object as! FollowTarget
-            guard let damus = self.damus_state else {
-                return
-            }
-            
-            if let ev = follow_user(pool: damus.pool,
-                                    our_contacts: damus.contacts.event,
-                                    pubkey: damus.pubkey,
-                                    privkey: privkey,
-                                    follow: ReferencedId(ref_id: fnotify.pubkey, relay_id: nil, key: "p")) {
-                notify(.followed, fnotify.pubkey)
-                
-                damus_state?.contacts.event = ev
-                
-                switch fnotify {
-                case .pubkey(let pk):
-                    damus.contacts.add_friend_pubkey(pk)
-                case .contact(let ev):
-                    damus.contacts.add_friend_contact(ev)
-                }
-            }
+            handle_follow(state: state, notif: notif)
         }
-        .onReceive(handle_notify(.post)) { obj in
-            guard let privkey = self.privkey else {
-                return
+        .onReceive(handle_notify(.post)) { notif in
+            guard let state = self.damus_state,
+                  let keypair = state.keypair.to_full() else {
+                      return
             }
-            
-            let post_res = obj.object as! NostrPostResult
-            switch post_res {
-            case .post(let post):
-                //let post = tup.0
-                //let to_relays = tup.1
-                print("post \(post.content)")
-                let new_ev = post_to_event(post: post, privkey: privkey, pubkey: pubkey)
-                guard let ds = self.damus_state else {
-                    return
-                }
-                ds.postbox.send(new_ev)
-                for eref in new_ev.referenced_ids.prefix(3) {
-                    // also broadcast at most 3 referenced events
-                    if let ev = ds.events.lookup(eref.ref_id) {
-                        ds.postbox.send(ev)
-                    }
-                }
-            case .cancel:
-                active_sheet = nil
-                print("post cancelled")
+
+            if !handle_post_notification(keypair: keypair, postbox: state.postbox, events: state.events, notif: notif) {
+                self.active_sheet = nil
             }
-        }
-        .onReceive(timer) { n in
-            self.damus_state?.pool.connect_to_disconnected()
         }
         .onReceive(handle_notify(.new_mutes)) { notif in
             home.filter_events()
@@ -477,6 +414,22 @@ public struct ContentView: View {
         }
         .onReceive(handle_notify(.unmute_thread)) { notif in
             home.filter_events()
+        }
+        .onChange(of: scenePhase) { (phase: ScenePhase) in
+            switch phase {
+            case .background:
+                print("📙 DAMUS BACKGROUNDED")
+                break
+            case .inactive:
+                print("📙 DAMUS INACTIVE")
+                break
+            case .active:
+                print("📙 DAMUS ACTIVE")
+                guard let ds = damus_state else { return }
+                ds.pool.ping()
+            @unknown default:
+                break
+            }
         }
         .onReceive(handle_notify(.local_notification)) { notif in
             
@@ -547,19 +500,11 @@ public struct ContentView: View {
             }
 
             Button(NSLocalizedString("Yes, Overwrite", comment: "Text of button that confirms to overwrite the existing mutelist.")) {
-                guard let ds = damus_state else {
-                    return
-                }
-                
-                guard let keypair = ds.keypair.to_full() else {
-                    return
-                }
-                
-                guard let pubkey = muting else {
-                    return
-                }
-                
-                guard let mutelist = create_or_update_mutelist(keypair: keypair, mprev: nil, to_add: pubkey) else {
+                guard let ds = damus_state,
+                      let keypair = ds.keypair.to_full(),
+                      let pubkey = muting,
+                      let mutelist = create_or_update_mutelist(keypair: keypair, mprev: nil, to_add: pubkey)
+                else {
                     return
                 }
                 
@@ -834,8 +779,16 @@ func find_event(state: DamusState, evid: String, search_type: SearchType, find_f
             break
         case .event(_, let ev):
             has_event = true
-            callback(ev)
+            
             state.pool.unsubscribe(sub_id: subid)
+            
+            if search_type == .profile && ev.known_kind == .metadata {
+                process_metadata_event(events: state.events, our_pubkey: state.pubkey, profiles: state.profiles, ev: ev) {
+                    callback(ev)
+                }
+            } else {
+                callback(ev)
+            }
         case .eose:
             if !has_event {
                 attempts += 1
@@ -871,3 +824,73 @@ func timeline_name(_ timeline: Timeline?) -> String {
         return NSLocalizedString("DMs", comment: "Toolbar label for DMs view, where DM is the English abbreviation for Direct Message.")
     }
 }
+
+func handle_unfollow(state: DamusState, notif: Notification) {
+    guard let privkey = state.keypair.privkey else {
+        return
+    }
+    
+    let target = notif.object as! FollowTarget
+    let pk = target.pubkey
+    
+    if let ev = unfollow_user(postbox: state.postbox,
+                              our_contacts: state.contacts.event,
+                              pubkey: state.pubkey,
+                              privkey: privkey,
+                              unfollow: pk) {
+        notify(.unfollowed, pk)
+        
+        state.contacts.event = ev
+        state.contacts.remove_friend(pk)
+        //friend_events = friend_events.filter { $0.pubkey != pk }
+    }
+}
+
+func handle_follow(state: DamusState, notif: Notification) {
+    guard let privkey = state.keypair.privkey else {
+        return
+    }
+
+    let fnotify = notif.object as! FollowTarget
+
+    if let ev = follow_user(pool: state.pool,
+                            our_contacts: state.contacts.event,
+                            pubkey: state.pubkey,
+                            privkey: privkey,
+                            follow: ReferencedId(ref_id: fnotify.pubkey, relay_id: nil, key: "p")) {
+        notify(.followed, fnotify.pubkey)
+        
+        state.contacts.event = ev
+        
+        switch fnotify {
+        case .pubkey(let pk):
+            state.contacts.add_friend_pubkey(pk)
+        case .contact(let ev):
+            state.contacts.add_friend_contact(ev)
+        }
+    }
+}
+
+func handle_post_notification(keypair: FullKeypair, postbox: PostBox, events: EventCache, notif: Notification) -> Bool {
+    let post_res = notif.object as! NostrPostResult
+    switch post_res {
+    case .post(let post):
+        //let post = tup.0
+        //let to_relays = tup.1
+        print("post \(post.content)")
+        let new_ev = post_to_event(post: post, privkey: keypair.privkey, pubkey: keypair.pubkey)
+        postbox.send(new_ev)
+        for eref in new_ev.referenced_ids.prefix(3) {
+            // also broadcast at most 3 referenced events
+            if let ev = events.lookup(eref.ref_id) {
+                postbox.send(ev)
+            }
+        }
+        return true
+    case .cancel:
+        print("post cancelled")
+        return false
+    }
+}
+    
+

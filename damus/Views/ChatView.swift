@@ -46,7 +46,11 @@ struct ChatView: View {
     }
     
     func prev_reply_is_same() -> String? {
+        #if DamusSDK
         return DamusSDK.prev_reply_is_same(event: event, prev_ev: prev_ev, replies: thread.replies)
+        #else
+        return damus.prev_reply_is_same(event: event, prev_ev: prev_ev, replies: thread.replies)
+        #endif
     }
     
     func reply_is_new() -> String? {

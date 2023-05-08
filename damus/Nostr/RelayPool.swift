@@ -82,6 +82,12 @@ public class RelayPool {
         print("removing \(sub_id) handler, current: \(handlers.count)")
     }
 
+    func ping() {
+        for relay in relays {
+            relay.connection.ping()
+        }
+    }
+    
     public func register_handler(sub_id: String, handler: @escaping (String, NostrConnectionEvent) -> ()) {
         for handler in handlers {
             // don't add duplicate handlers
