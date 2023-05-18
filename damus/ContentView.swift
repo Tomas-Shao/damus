@@ -131,6 +131,7 @@ public struct ContentView: View {
                 CustomPicker(selection: $filter_state, content: {
                     Text("Posts", comment: "Label for filter for seeing only posts (instead of posts and replies).").tag(FilterState.posts)
                     Text("Posts & Replies", comment: "Label for filter for seeing posts and replies (instead of only posts).").tag(FilterState.posts_and_replies)
+                    Text("Universal", comment: "Label for filter for seeing universal.").tag(3)
                 })
                 Divider()
                     .frame(height: 1)
