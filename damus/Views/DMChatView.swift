@@ -66,7 +66,7 @@ struct DMChatView: View, KeyboardReadable {
             HStack {
                 ProfilePicView(pubkey: pubkey, size: 24, highlight: .none, profiles: damus_state.profiles, disable_animation: damus_state.settings.disable_animation)
 
-                ProfileName(pubkey: pubkey, profile: profile, damus: damus_state, show_friend_confirmed: true)
+                ProfileName(pubkey: pubkey, profile: profile, damus: damus_state)
             }
         }
         .buttonStyle(PlainButtonStyle())
@@ -96,14 +96,6 @@ struct DMChatView: View, KeyboardReadable {
             return Color.init(.sRGB, red: 0.9, green: 0.9, blue: 0.9, opacity: 1.0)
         } else {
             return Color.init(.sRGB, red: 0.1, green: 0.1, blue: 0.1, opacity: 1.0)
-        }
-    }
-
-    func BackgroundColor() -> some View {
-        if colorScheme == .dark {
-            return Color.black.opacity(0.9)
-        } else {
-            return Color.white.opacity(0.9)
         }
     }
 
@@ -219,22 +211,30 @@ func encrypt_message(message: String, privkey: String, to_pk: String, encoding: 
     
 }
 
-func create_dm(_ message: String, to_pk: String, tags: [[String]], keypair: Keypair, created_at: Int64? = nil) -> NostrEvent?
-{
-    guard let privkey = keypair.privkey else {
-        return nil
-    }
-
+func create_encrypted_event(_ message: String, to_pk: String, tags: [[String]], keypair: FullKeypair, created_at: Int64, kind: Int) -> NostrEvent? {
+    
+    let privkey = keypair.privkey
+    
     guard let enc_content = encrypt_message(message: message, privkey: privkey, to_pk: to_pk) else {
         return nil
     }
     
-    let created = created_at ?? Int64(Date().timeIntervalSince1970)
-    let ev = NostrEvent(content: enc_content, pubkey: keypair.pubkey, kind: 4, tags: tags, createdAt: created)
+    let ev = NostrEvent(content: enc_content, pubkey: keypair.pubkey, kind: kind, tags: tags, createdAt: created_at)
     
     ev.calculate_id()
     ev.sign(privkey: privkey)
     return ev
+}
+
+func create_dm(_ message: String, to_pk: String, tags: [[String]], keypair: Keypair, created_at: Int64? = nil) -> NostrEvent?
+{
+    let created = created_at ?? Int64(Date().timeIntervalSince1970)
+    
+    guard let keypair = keypair.to_full() else {
+        return nil
+    }
+    
+    return create_encrypted_event(message, to_pk: to_pk, tags: tags, keypair: keypair, created_at: created, kind: 4)
 }
 
 extension View {

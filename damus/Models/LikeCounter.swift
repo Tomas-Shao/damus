@@ -12,13 +12,13 @@ enum CountResult {
     case success(Int)
 }
 
-public class EventCounter {
-    public var counts: [String: Int] = [:]
-    public var user_events: [String: Set<String>] = [:]
-    public var our_events: [String: NostrEvent] = [:]
-    public var our_pubkey: String
+class EventCounter {
+    var counts: [String: Int] = [:]
+    var user_events: [String: Set<String>] = [:]
+    var our_events: [String: NostrEvent] = [:]
+    var our_pubkey: String
     
-    public init (our_pubkey: String) {
+    init (our_pubkey: String) {
         self.our_pubkey = our_pubkey
     }
     

@@ -9,14 +9,27 @@ import Foundation
 import UIKit
 
 
-public class Profiles {
-    public var profiles: [String: TimestampedProfile] = [:]
-    public var validated: [String: NIP05] = [:]
-    public var nip05_pubkey: [String: String] = [:]
-    public var zappers: [String: String] = [:]
+class Profiles {
+    
+    /// This queue is used to synchronize access to the profiles dictionary, which
+    /// prevents data races from crashing the app.
+    private var queue = DispatchQueue(label: "io.damus.profiles",
+                                      qos: .userInteractive,
+                                      attributes: .concurrent)
+    
+    private var profiles: [String: TimestampedProfile] = [:]
+    var validated: [String: NIP05] = [:]
+    var nip05_pubkey: [String: String] = [:]
+    var zappers: [String: String] = [:]
     
     func is_validated(_ pk: String) -> NIP05? {
         return validated[pk]
+    }
+    
+    func enumerated() -> EnumeratedSequence<[String: TimestampedProfile]> {
+        return queue.sync {
+            return profiles.enumerated()
+        }
     }
     
     func lookup_zapper(pubkey: String) -> String? {
@@ -28,14 +41,26 @@ public class Profiles {
     }
     
     func add(id: String, profile: TimestampedProfile) {
-        profiles[id] = profile
+        queue.async(flags: .barrier) {
+            self.profiles[id] = profile
+        }
     }
     
     func lookup(id: String) -> Profile? {
-        return profiles[id]?.profile
+        queue.sync {
+            return profiles[id]?.profile
+        }
     }
     
     func lookup_with_timestamp(id: String) -> TimestampedProfile? {
-        return profiles[id]
+        queue.sync {
+            return profiles[id]
+        }
     }
+}
+
+
+func invalidate_zapper_cache(pubkey: String, profiles: Profiles, lnurl: LNUrls) {
+    profiles.zappers.removeValue(forKey: pubkey)
+    lnurl.endpoints.removeValue(forKey: pubkey)
 }

@@ -7,19 +7,19 @@
 
 import SwiftUI
 
-public struct TimestampedProfile {
-    public let profile: Profile
-    public let timestamp: Int64
-    public let event: NostrEvent
+struct TimestampedProfile {
+    let profile: Profile
+    let timestamp: Int64
+    let event: NostrEvent
 }
 
-public enum Sheets: Identifiable {
+enum Sheets: Identifiable {
     case post(PostAction)
     case report(ReportTarget)
     case event(NostrEvent)
     case filter
 
-    public var id: String {
+    var id: String {
         switch self {
         case .report: return "report"
         case .post(let action): return "post-" + (action.ev?.id ?? "")
@@ -40,7 +40,7 @@ public enum ThreadState {
     case chatroom
 }
 
-public enum FilterState : Int {
+enum FilterState : Int {
     case posts_and_replies = 1
     case posts = 0
     
@@ -71,20 +71,19 @@ public struct ContentView: View {
 
     @Environment(\.scenePhase) var scenePhase
     
-    @State var status: String = "Not connected"
     @State var active_sheet: Sheets? = nil
     @State var damus_state: DamusState? = nil
 //    @SceneStorage("ContentView.selected_timeline") var selected_timeline: Timeline = .home
     @State var selected_timeline: Timeline = .home
     @State var is_deleted_account: Bool = false
-    @State var is_profile_open: Bool = false
-    @State var event: NostrEvent? = nil
     @State var active_profile: String? = nil
     @State var active_search: NostrFilter? = nil
     @State var active_event: NostrEvent? = nil
     @State var profile_open: Bool = false
     @State var thread_open: Bool = false
     @State var search_open: Bool = false
+    @State var wallet_open: Bool = false
+    @State var active_nwc: WalletConnectURL? = nil
     @State var muting: String? = nil
     @State var confirm_mute: Bool = false
     @State var user_muted_confirm: Bool = false
@@ -97,6 +96,9 @@ public struct ContentView: View {
     let sub_id = UUID().description
     
     @Environment(\.colorScheme) var colorScheme
+    
+    // connect retry timer
+    let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     
     var mystery: some View {
         Text("Are you lost?", comment: "Text asking the user if they are lost in the app.")
@@ -151,6 +153,7 @@ public struct ContentView: View {
         profile_open = false
         thread_open = false
         search_open = false
+        wallet_open = false
         isSideBarOpened = false
     }
     
@@ -162,6 +165,9 @@ public struct ContentView: View {
     
     func MainContent(damus: DamusState) -> some View {
         VStack {
+            NavigationLink(destination: WalletView(damus_state: damus, model: damus_state!.wallet), isActive: $wallet_open) {
+                EmptyView()
+            }
             NavigationLink(destination: MaybeProfileView, isActive: $profile_open) {
                 EmptyView()
             }
@@ -252,8 +258,26 @@ public struct ContentView: View {
     }
     
     func open_event(ev: NostrEvent) {
+        popToRoot()
         self.active_event = ev
         self.thread_open = true
+    }
+
+    func open_wallet(nwc: WalletConnectURL) {
+        self.damus_state!.wallet.new(nwc)
+        self.wallet_open = true
+    }
+    
+    func open_profile(id: String) {
+        popToRoot()
+        self.active_profile = id
+        self.profile_open = true
+    }
+    
+    func open_search(filt: NostrFilter) {
+        popToRoot()
+        self.active_search = filt
+        self.search_open = true
     }
     
     public var body: some View {
@@ -335,33 +359,24 @@ public struct ContentView: View {
             }
         }
         .onOpenURL { url in
-            guard let link = decode_nostr_uri(url.absoluteString) else {
-                return
-            }
-            
-            switch link {
-            case .ref(let ref):
-                if ref.key == "p" {
-                    active_profile = ref.ref_id
-                    profile_open = true
-                } else if ref.key == "e" {
-                    find_event(state: damus_state!, evid: ref.ref_id, search_type: .event, find_from: nil) { ev in
-                        if let ev {
-                            open_event(ev: ev)
-                        }
-                    }
+            on_open_url(state: damus_state!, url: url) { res in
+                guard let res else {
+                    return
                 }
-            case .filter(let filt):
-                active_search = filt
-                search_open = true
-                break
-                // TODO: handle filter searches?
+                
+                switch res {
+                case .filter(let filt): self.open_search(filt: filt)
+                case .profile(let id):  self.open_profile(id: id)
+                case .event(let ev):    self.open_event(ev: ev)
+                case .wallet_connect(let nwc): self.open_wallet(nwc: nwc)}
             }
-            
         }
         .onReceive(handle_notify(.compose)) { notif in
             let action = notif.object as! PostAction
             self.active_sheet = .post(action)
+        }
+        .onReceive(timer) { n in
+            self.damus_state?.postbox.try_flushing_events()
         }
         .onReceive(handle_notify(.deleted_account)) { notif in
             self.is_deleted_account = true
@@ -375,13 +390,36 @@ public struct ContentView: View {
             self.muting = pubkey
             self.confirm_mute = true
         }
+        .onReceive(handle_notify(.attached_wallet)) { notif in
+            // update the lightning address on our profile when we attach a
+            // wallet with an associated
+            let nwc = notif.object as! WalletConnectURL
+            guard let ds = self.damus_state,
+                  let lud16 = nwc.lud16,
+                  let keypair = ds.keypair.to_full(),
+                  let profile = ds.profiles.lookup(id: ds.pubkey),
+                  lud16 != profile.lud16
+            else {
+                return
+            }
+            
+            // clear zapper cache for old lud16
+            if profile.lud16 != nil {
+                // TODO: should this be somewhere else, where we process profile events!?
+                invalidate_zapper_cache(pubkey: keypair.pubkey, profiles: ds.profiles, lnurl: ds.lnurls)
+            }
+            
+            profile.lud16 = lud16
+            let ev = make_metadata_event(keypair: keypair, metadata: profile)
+            ds.postbox.send(ev)
+        }
         .onReceive(handle_notify(.broadcast_event)) { obj in
             let ev = obj.object as! NostrEvent
             guard let ds = self.damus_state else {
                 return
             }
             ds.postbox.send(ev)
-            if let profile = ds.profiles.profiles[ev.pubkey] {
+            if let profile = ds.profiles.lookup_with_timestamp(id: ev.pubkey) {
                 ds.postbox.send(profile.event)
             }
         }
@@ -459,20 +497,15 @@ public struct ContentView: View {
             let hide = notif.object as! Bool
             home.filter_events()
             
-            guard let damus_state else {
-                return
-            }
-            
-            guard let profile = damus_state.profiles.lookup(id: damus_state.pubkey) else {
+            guard let damus_state,
+                  let profile = damus_state.profiles.lookup(id: damus_state.pubkey),
+                  let keypair = damus_state.keypair.to_full()
+            else {
                 return
             }
             
             profile.reactions = !hide
-            
-            guard let profile_ev = make_metadata_event(keypair: damus_state.keypair, metadata: profile) else {
-                return
-            }
-            
+            let profile_ev = make_metadata_event(keypair: keypair, metadata: profile)
             damus_state.postbox.send(profile_ev)
         }
         .alert(NSLocalizedString("Deleted Account", comment: "Alert message to indicate this is a deleted account"), isPresented: $is_deleted_account) {
@@ -568,19 +601,6 @@ public struct ContentView: View {
         }
         
         self.selected_timeline = timeline
-        //NotificationCenter.default.post(name: .switched_timeline, object: timeline)
-        //self.selected_timeline = timeline
-    }
-    
-    func add_relay(_ pool: RelayPool, _ relay: String) {
-        //add_rw_relay(pool, "wss://nostr-pub.wellorder.net")
-        add_rw_relay(pool, relay)
-        /*
-        let profile = Profile(name: relay, about: nil, picture: nil)
-        let ts = Int64(Date().timeIntervalSince1970)
-        let tsprofile = TimestampedProfile(profile: profile, timestamp: ts)
-        damus!.profiles.add(id: relay, profile: tsprofile)
-         */
     }
 
     func connect() {
@@ -592,7 +612,8 @@ public struct ContentView: View {
         let new_relay_filters = load_relay_filters(pubkey) == nil
         for relay in bootstrap_relays {
             if let url = RelayURL(relay) {
-                add_new_relay(relay_filters: relay_filters, metadatas: metadatas, pool: pool, url: url, info: .rw, new_relay_filters: new_relay_filters)
+                let descriptor = RelayDescriptor(url: url, info: .rw)
+                add_new_relay(relay_filters: relay_filters, metadatas: metadatas, pool: pool, descriptor: descriptor, new_relay_filters: new_relay_filters)
             }
         }
         
@@ -603,12 +624,16 @@ public struct ContentView: View {
         let settings = UserSettingsStore()
         UserSettingsStore.shared = settings
         
+        if let nwc_str = settings.nostr_wallet_connect,
+           let nwc = WalletConnectURL(str: nwc_str) {
+            try? pool.add_relay(.nwc(url: nwc.relay))
+        }
+        
         self.damus_state = DamusState(pool: pool,
                                       keypair: keypair,
                                       likes: EventCounter(our_pubkey: pubkey),
                                       boosts: EventCounter(our_pubkey: pubkey),
                                       contacts: Contacts(our_pubkey: pubkey),
-                                      tips: TipCounter(our_pubkey: pubkey),
                                       profiles: Profiles(),
                                       dms: home.dms,
                                       previews: PreviewCache(),
@@ -623,7 +648,8 @@ public struct ContentView: View {
                                       postbox: PostBox(pool: pool),
                                       bootstrap_relays: bootstrap_relays,
                                       replies: ReplyCounter(our_pubkey: pubkey),
-                                      muted_threads: MutedThreadsManager(keypair: keypair)
+                                      muted_threads: MutedThreadsManager(keypair: keypair),
+                                      wallet: WalletModel(settings: settings)
         )
         home.damus_state = self.damus_state!
         
@@ -646,14 +672,6 @@ func get_since_time(last_event: NostrEvent?) -> Int64? {
     
     return nil
 }
-
-func is_notification(ev: NostrEvent, pubkey: String) -> Bool {
-    if ev.pubkey == pubkey {
-        return false
-    }
-    return ev.references(id: pubkey, key: "p")
-}
-
 
 extension UINavigationController: UIGestureRecognizerDelegate {
     override open func viewDidLoad() {
@@ -690,12 +708,6 @@ func save_last_event(_ ev: NostrEvent, timeline: Timeline) {
     UserDefaults.standard.set(String(ev.created_at), forKey: "last_\(str)_time")
 }
 
-
-func get_like_pow() -> [String] {
-    return ["00000"] // 20 bits
-}
-
-
 func update_filters_with_since(last_of_kind: [Int: NostrEvent], filters: [NostrFilter]) -> [NostrFilter] {
     
     return filters.map { filter in
@@ -728,7 +740,6 @@ func update_filters_with_since(last_of_kind: [Int: NostrEvent], filters: [NostrF
         return filter
     }
 }
-
 
 
 func setup_notifications() {
@@ -793,7 +804,7 @@ func find_event(state: DamusState, evid: String, search_type: SearchType, find_f
         case .eose:
             if !has_event {
                 attempts += 1
-                if attempts == state.pool.descriptors.count / 2 {
+                if attempts == state.pool.our_descriptors.count / 2 {
                     callback(nil)
                 }
                 state.pool.unsubscribe(sub_id: subid, to: [relay_id])
@@ -804,7 +815,6 @@ func find_event(state: DamusState, evid: String, search_type: SearchType, find_f
 
     }
 }
-
 
 func timeline_name(_ timeline: Timeline?) -> String {
     guard let timeline else {
@@ -893,5 +903,40 @@ func handle_post_notification(keypair: FullKeypair, postbox: PostBox, events: Ev
         return false
     }
 }
-    
 
+
+enum OpenResult {
+    case profile(String)
+    case filter(NostrFilter)
+    case event(NostrEvent)
+    case wallet_connect(WalletConnectURL)
+}
+
+func on_open_url(state: DamusState, url: URL, result: @escaping (OpenResult?) -> Void) {
+    if let nwc = WalletConnectURL(str: url.absoluteString) {
+        result(.wallet_connect(nwc))
+        return
+    }
+    
+    guard let link = decode_nostr_uri(url.absoluteString) else {
+        result(nil)
+        return
+    }
+    
+    switch link {
+    case .ref(let ref):
+        if ref.key == "p" {
+            result(.profile(ref.ref_id))
+        } else if ref.key == "e" {
+            find_event(state: state, evid: ref.ref_id, search_type: .event, find_from: nil) { ev in
+                if let ev {
+                    result(.event(ev))
+                }
+            }
+        }
+    case .filter(let filt):
+        result(.filter(filt))
+        break
+        // TODO: handle filter searches?
+    }
+}

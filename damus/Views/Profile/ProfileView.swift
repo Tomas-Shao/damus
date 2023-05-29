@@ -7,11 +7,6 @@
 
 import SwiftUI
 
-enum ProfileTab: Hashable {
-    case posts
-    case following
-}
-
 enum FollowState {
     case follows
     case following
@@ -33,19 +28,6 @@ func follow_btn_txt(_ fs: FollowState, follows_you: Bool) -> String {
         } else {
             return NSLocalizedString("Follow", comment: "Button to follow a user.")
         }
-    }
-}
-
-func follow_btn_enabled_state(_ fs: FollowState) -> Bool {
-    switch fs {
-    case .follows:
-        return true
-    case .following:
-        return false
-    case .unfollowing:
-        return false
-    case .unfollows:
-       return true
     }
 }
 
@@ -114,8 +96,6 @@ struct ProfileView: View {
     
     static let markdown = Markdown()
     
-    @State private var selected_tab: ProfileTab = .posts
-    @State private var showingEditProfile = false
     @State var showing_select_wallet: Bool = false
     @State var is_zoomed: Bool = false
     @State var show_share_sheet: Bool = false
@@ -141,7 +121,6 @@ struct ProfileView: View {
     
     @Environment(\.dismiss) var dismiss
     @Environment(\.colorScheme) var colorScheme
-    @Environment(\.openURL) var openURL
     @Environment(\.presentationMode) var presentationMode
     
     func imageBorderColor() -> Color {
@@ -226,8 +205,26 @@ struct ProfileView: View {
                     notify(.report, target)
                 }
 
-                Button(NSLocalizedString("Mute", comment: "Button to mute a profile."), role: .destructive) {
-                    notify(.mute, profile.pubkey)
+                if damus_state.contacts.is_muted(profile.pubkey) {
+                    Button(NSLocalizedString("Unmute", comment: "Button to unmute a profile.")) {
+                        guard
+                            let keypair = damus_state.keypair.to_full(),
+                            let mutelist = damus_state.contacts.mutelist
+                        else {
+                            return
+                        }
+                        
+                        guard let new_ev = remove_from_mutelist(keypair: keypair, prev: mutelist, to_remove: profile.pubkey) else {
+                            return
+                        }
+
+                        damus_state.contacts.set_mutelist(new_ev)
+                        damus_state.postbox.send(new_ev)
+                    }
+                } else {
+                    Button(NSLocalizedString("Mute", comment: "Button to mute a profile."), role: .destructive) {
+                        notify(.mute, profile.pubkey)
+                    }
                 }
             }
         }
@@ -419,7 +416,7 @@ struct ProfileView: View {
                         }
                         .buttonStyle(PlainButtonStyle())
                     } else {
-                        NavigationLink(destination: UserRelaysView(state: damus_state, pubkey: profile.pubkey, relays: Array(relays.keys).sorted())) {
+                        NavigationLink(destination: UserRelaysView(state: damus_state, relays: Array(relays.keys).sorted())) {
                             relay_text
                         }
                         .buttonStyle(PlainButtonStyle())
@@ -450,10 +447,10 @@ struct ProfileView: View {
                     .background(colorScheme == .dark ? Color.black : Color.white)
                     
                     if filter_state == FilterState.posts {
-                        InnerTimelineView(events: profile.events, damus: damus_state, show_friend_icon: false, filter: FilterState.posts.filter)
+                        InnerTimelineView(events: profile.events, damus: damus_state, filter: FilterState.posts.filter)
                     }
                     if filter_state == FilterState.posts_and_replies {
-                        InnerTimelineView(events: profile.events, damus: damus_state, show_friend_icon: false, filter: FilterState.posts_and_replies.filter)
+                        InnerTimelineView(events: profile.events, damus: damus_state, filter: FilterState.posts_and_replies.filter)
                     }
                 }
                 .padding(.horizontal, Theme.safeAreaInsets?.left)
@@ -499,8 +496,11 @@ struct ProfileView_Previews: PreviewProvider {
 func test_damus_state() -> DamusState {
     let pubkey = "3efdaebb1d8923ebd99c9e7ace3b4194ab45512e2be79c1b7d68d9243e0d2681"
     let damus = DamusState.empty
+    let settings = UserSettingsStore()
+    settings.donation_percent = 100
+    settings.default_zap_amount = 1971
     
-    let prof = Profile(name: "damus", display_name: "damus", about: "iOS app!", picture: "https://damus.io/img/logo.png", banner: "", website: "https://damus.io", lud06: nil, lud16: "jb55@sendsats.lol", nip05: "damus.io")
+    let prof = Profile(name: "damus", display_name: "damus", about: "iOS app!", picture: "https://damus.io/img/logo.png", banner: "", website: "https://damus.io", lud06: nil, lud16: "jb55@sendsats.lol", nip05: "damus.io", damus_donation: nil)
     let tsprof = TimestampedProfile(profile: prof, timestamp: 0, event: test_event)
     damus.profiles.add(id: pubkey, profile: tsprof)
     return damus

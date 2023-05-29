@@ -26,15 +26,6 @@ enum ImageMetaProcessState {
     case failed
     case processed(UIImage)
     case not_needed
-    
-    var img: UIImage? {
-        switch self {
-        case .processed(let img):
-            return img
-        default:
-            return nil
-        }
-    }
 }
 
 class TranslationModel: ObservableObject {
@@ -58,35 +49,56 @@ class NoteArtifactsModel: ObservableObject {
 class PreviewModel: ObservableObject {
     @Published var state: PreviewState
     
-    func store(preview: LPLinkMetadata?)  {
-        state = .loaded(Preview(meta: preview))
-    }
-    
     init(state: PreviewState) {
         self.state = state
     }
 }
 
 class ZapsDataModel: ObservableObject {
-    @Published var zaps: [Zap]
+    @Published var zaps: [Zapping]
     
-    init(_ zaps: [Zap]) {
+    init(_ zaps: [Zapping]) {
         self.zaps = zaps
+    }
+    
+    func confirm_nwc(reqid: String) {
+        guard let zap = zaps.first(where: { z in z.request.id == reqid }),
+              case .pending(let pzap) = zap
+        else {
+            return
+        }
+        
+        switch pzap.state {
+        case .external:
+            break
+        case .nwc(let nwc_state):
+            if nwc_state.update_state(state: .confirmed) {
+                self.objectWillChange.send()
+            }
+        }
+    }
+    
+    var zap_total: Int64 {
+        zaps.reduce(0) { total, zap in total + zap.amount }
+    }
+   
+    func from(_ pubkey: String) -> [Zapping] {
+        return self.zaps.filter { z in z.request.pubkey == pubkey }
+    }
+    
+    @discardableResult
+    func remove(reqid: String) -> Bool {
+        guard zaps.first(where: { z in z.request.id == reqid }) != nil else {
+            return false
+        }
+        
+        self.zaps = zaps.filter { z in z.request.id != reqid }
+        return true
     }
 }
 
 class RelativeTimeModel: ObservableObject {
-    private(set) var last_update: Int64
-    @Published var value: String {
-        didSet {
-            self.last_update = Int64(Date().timeIntervalSince1970)
-        }
-    }
-    
-    init(value: String) {
-        self.last_update = 0
-        self.value = ""
-    }
+    @Published var value: String = ""
 }
 
 class EventData {
@@ -94,7 +106,7 @@ class EventData {
     var artifacts_model: NoteArtifactsModel
     var preview_model: PreviewModel
     var zaps_model : ZapsDataModel
-    var relative_time: RelativeTimeModel
+    var relative_time: RelativeTimeModel = RelativeTimeModel()
     var validated: ValidationResult
     
     var translations: TranslateStatus {
@@ -109,17 +121,12 @@ class EventData {
         return preview_model.state
     }
     
-    var zaps: [Zap] {
-        return zaps_model.zaps
-    }
-    
-    init(zaps: [Zap] = []) {
+    init(zaps: [Zapping] = []) {
         self.translations_model = .init(state: .havent_tried)
         self.artifacts_model = .init(state: .not_loaded)
         self.zaps_model = .init(zaps)
         self.validated = .unknown
         self.preview_model = .init(state: .not_loaded)
-        self.relative_time = .init(value: "")
     }
 }
 
@@ -158,21 +165,24 @@ public class EventCache {
         get_cache_data(evid).validated = validated
     }
     
-    func store_translation_artifacts(evid: String, translated: TranslateStatus) {
-        get_cache_data(evid).translations_model.state = translated
-    }
-    
-    func store_artifacts(evid: String, artifacts: NoteArtifacts) {
-        get_cache_data(evid).artifacts_model.state = .loaded(artifacts)
-    }
-    
     @discardableResult
-    func store_zap(zap: Zap) -> Bool {
+    func store_zap(zap: Zapping) -> Bool {
         let data = get_cache_data(zap.target.id).zaps_model
         return insert_uniq_sorted_zap_by_amount(zaps: &data.zaps, new_zap: zap)
     }
     
-    func lookup_zaps(target: ZapTarget) -> [Zap] {
+    func remove_zap(zap: Zapping) {
+        switch zap.target {
+        case .note(let note_target):
+            let zaps = get_cache_data(note_target.note_id).zaps_model
+            zaps.remove(reqid: zap.request.id)
+        case .profile:
+            // these aren't stored anywhere yet
+            break
+        }
+    }
+    
+    func lookup_zaps(target: ZapTarget) -> [Zapping] {
         return get_cache_data(target.id).zaps_model.zaps
     }
     
@@ -180,16 +190,8 @@ public class EventCache {
         self.image_metadata[url.absoluteString.lowercased()] = meta
     }
     
-    func lookup_artifacts(evid: String) -> NoteArtifactState {
-        return get_cache_data(evid).artifacts_model.state
-    }
-    
     func lookup_img_metadata(url: URL) -> ImageMetadataState? {
         return image_metadata[url.absoluteString.lowercased()]
-    }
-    
-    func lookup_translated_artifacts(evid: String) -> TranslateStatus? {
-        return get_cache_data(evid).translations_model.state
     }
     
     func parent_events(event: NostrEvent) -> [NostrEvent] {
@@ -368,15 +370,6 @@ func preload_image(url: URL) {
     }
 }
 
-func preload_pfp(profiles: Profiles, pubkey: String) {
-    // preload pfp
-    if let profile = profiles.lookup(id: pubkey),
-       let picture = profile.picture,
-       let url = URL(string: picture) {
-        preload_image(url: url)
-    }
-}
-
 func preload_event(plan: PreloadPlan, state: DamusState) async {
     var artifacts: NoteArtifacts? = plan.data.artifacts.artifacts
     let settings = state.settings
@@ -384,13 +377,6 @@ func preload_event(plan: PreloadPlan, state: DamusState) async {
     let our_keypair = state.keypair
     
     print("Preloading event \(plan.event.content)")
-    
-    /*
-    preload_pfp(profiles: profiles, pubkey: plan.event.pubkey)
-    if let inner_ev = plan.event.get_inner_event(cache: state.events), inner_ev.pubkey != plan.event.pubkey {
-        preload_pfp(profiles: profiles, pubkey: inner_ev.pubkey)
-    }
-     */
     
     if artifacts == nil && plan.load_artifacts {
         let arts = render_note_content(ev: plan.event, profiles: profiles, privkey: our_keypair.privkey)

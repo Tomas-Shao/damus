@@ -23,7 +23,10 @@ struct NewEventsBits: OptionSet {
     static let notifications: NewEventsBits = [.zaps, .likes, .reposts, .mentions]
 }
 
-public class HomeModel: ObservableObject {
+class HomeModel: ObservableObject {
+    // Don't trigger a user notification for events older than a certain age
+    static let event_max_age_for_notification: TimeInterval = 12 * 60 * 60
+    
     var damus_state: DamusState
 
     var has_event: [String: Set<String>] = [:]
@@ -50,7 +53,7 @@ public class HomeModel: ObservableObject {
     @Published var notifications = NotificationsModel()
     @Published var events: EventHolder = EventHolder()
     
-    public init() {
+    init() {
         self.damus_state = DamusState.empty
         self.setup_debouncer()
         filter_events()
@@ -121,11 +124,45 @@ public class HomeModel: ObservableObject {
         case .channel_create:
             handle_channel_create(ev)
         case .channel_meta:
-            handle_channel_meta(ev)
+            break
         case .zap:
             handle_zap_event(ev)
         case .zap_request:
             break
+        case .nwc_request:
+            break
+        case .nwc_response:
+            handle_nwc_response(ev)
+        }
+    }
+    
+    func handle_nwc_response(_ ev: NostrEvent) {
+        Task { @MainActor in
+            // TODO: Adapt KeychainStorage to StringCodable and instead of parsing to WalletConnectURL every time
+            guard let nwc_str = damus_state.settings.nostr_wallet_connect,
+                  let nwc = WalletConnectURL(str: nwc_str),
+                  let resp = await FullWalletResponse(from: ev, nwc: nwc) else {
+                return
+            }
+            
+            // since command results are not returned for ephemeral events,
+            // remove the request from the postbox which is likely failing over and over
+            if damus_state.postbox.remove_relayer(relay_id: nwc.relay.id, event_id: resp.req_id) {
+                print("nwc: got response, removed \(resp.req_id) from the postbox")
+            } else {
+                print("nwc: \(resp.req_id) not found in the postbox, nothing to remove")
+            }
+            
+            if resp.response.error == nil {
+            }
+            
+            guard let err = resp.response.error else {
+                nwc_success(state: self.damus_state, resp: resp)
+                return
+            }
+            
+            print("nwc error: \(err)")
+            nwc_error(zapcache: self.damus_state.zaps, evcache: self.damus_state.events, resp: resp)
         }
     }
     
@@ -134,13 +171,13 @@ public class HomeModel: ObservableObject {
             return
         }
         
-        damus_state.add_zap(zap: zap)
+        damus_state.add_zap(zap: .zap(zap))
         
         guard zap.target.pubkey == our_keypair.pubkey else {
             return
         }
         
-        if !notifications.insert_zap(zap, damus_state: damus_state) {
+        if !notifications.insert_zap(.zap(zap)) {
             return
         }
 
@@ -193,9 +230,6 @@ public class HomeModel: ObservableObject {
     
     func handle_channel_create(_ ev: NostrEvent) {
         self.channels[ev.id] = ev
-    }
-    
-    func handle_channel_meta(_ ev: NostrEvent) {
     }
     
     func filter_events() {
@@ -301,6 +335,16 @@ public class HomeModel: ObservableObject {
                     //remove_bootstrap_nodes(damus_state)
                     send_home_filters(relay_id: relay_id)
                 }
+                
+                // connect to nwc relays when connected
+                if let nwc_str = damus_state.settings.nostr_wallet_connect,
+                   let r = pool.get_relay(relay_id),
+                   r.descriptor.variant == .nwc,
+                   let nwc = WalletConnectURL(str: nwc_str),
+                   nwc.relay.id == relay_id
+                {
+                    subscribe_to_nwc(url: nwc, pool: pool)
+                }
             case .error(let merr):
                 let desc = String(describing: merr)
                 if desc.contains("Software caused connection abort") {
@@ -327,7 +371,6 @@ public class HomeModel: ObservableObject {
 
                 self.process_event(sub_id: sub_id, relay_id: relay_id, ev: ev)
             case .notice(let msg):
-                //self.events.insert(NostrEvent(content: "NOTICE from \(relay_id): \(msg)", pubkey: "system"), at: 0)
                 print(msg)
 
             case .eose(let sub_id):
@@ -432,7 +475,7 @@ public class HomeModel: ObservableObject {
 
         print_filters(relay_id: relay_id, filters: [home_filters, contacts_filters, notifications_filters, dms_filters])
 
-        if let relay_id = relay_id {
+        if let relay_id {
             pool.send(.subscribe(.init(filters: home_filters, sub_id: home_subid)), to: [relay_id])
             pool.send(.subscribe(.init(filters: contacts_filters, sub_id: contacts_subid)), to: [relay_id])
             pool.send(.subscribe(.init(filters: notifications_filters, sub_id: notifications_subid)), to: [relay_id])
@@ -547,7 +590,8 @@ public class HomeModel: ObservableObject {
     
     func got_new_dm(notifs: NewEventsBits, ev: NostrEvent) {
         self.new_events = notifs
-        if damus_state.settings.dm_notification {
+        
+        if damus_state.settings.dm_notification && ev.age < HomeModel.event_max_age_for_notification {
             let convo = ev.decrypted(privkey: self.damus_state.keypair.privkey) ?? NSLocalizedString("New encrypted direct message", comment: "Notification that the user has received a new direct message")
             let notify = LocalNotification(type: .dm, event: ev, target: ev, content: convo)
             create_local_notification(profiles: damus_state.profiles, notify: notify)
@@ -600,7 +644,7 @@ func add_contact_if_friend(contacts: Contacts, ev: NostrEvent) {
     contacts.add_friend_contact(ev)
 }
 
-func load_our_contacts(contacts: Contacts, our_pubkey: String, m_old_ev: NostrEvent?, ev: NostrEvent) {
+func load_our_contacts(contacts: Contacts, m_old_ev: NostrEvent?, ev: NostrEvent) {
     var new_pks = Set<String>()
     // our contacts
     for tag in ev.tags {
@@ -691,7 +735,7 @@ func process_metadata_profile(our_pubkey: String, profiles: Profiles, profile: P
     var old_nip05: String? = nil
     if let mprof = profiles.lookup_with_timestamp(id: ev.pubkey) {
         old_nip05 = mprof.profile.nip05
-        if mprof.timestamp > ev.created_at {
+        if mprof.event.created_at > ev.created_at {
             // skip if we already have an newer profile
             return
         }
@@ -708,7 +752,7 @@ func process_metadata_profile(our_pubkey: String, profiles: Profiles, profile: P
                 print("validated nip05 for '\(nip05)'")
             }
             
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 profiles.validated[ev.pubkey] = validated
                 profiles.nip05_pubkey[nip05] = ev.pubkey
                 notify(.profile_updated, ProfileUpdate(pubkey: ev.pubkey, profile: profile))
@@ -798,7 +842,7 @@ func load_our_stuff(state: DamusState, ev: NostrEvent) {
     let m_old_ev = state.contacts.event
     state.contacts.event = ev
 
-    load_our_contacts(contacts: state.contacts, our_pubkey: state.pubkey, m_old_ev: m_old_ev, ev: ev)
+    load_our_contacts(contacts: state.contacts, m_old_ev: m_old_ev, ev: ev)
     load_our_relays(state: state, m_old_ev: m_old_ev, ev: ev)
 }
 
@@ -836,7 +880,8 @@ func load_our_relays(state: DamusState, m_old_ev: NostrEvent?, ev: NostrEvent) {
         changed = true
         if new.contains(d) {
             if let url = RelayURL(d) {
-                add_new_relay(relay_filters: state.relay_filters, metadatas: state.relay_metadata, pool: state.pool, url: url, info: decoded[d] ?? .rw, new_relay_filters: new_relay_filters)
+                let descriptor = RelayDescriptor(url: url, info: decoded[d] ?? .rw)
+                add_new_relay(relay_filters: state.relay_filters, metadatas: state.relay_metadata, pool: state.pool, descriptor: descriptor, new_relay_filters: new_relay_filters)
             }
         } else {
             state.pool.remove_relay(d)
@@ -849,8 +894,9 @@ func load_our_relays(state: DamusState, m_old_ev: NostrEvent?, ev: NostrEvent) {
     }
 }
 
-func add_new_relay(relay_filters: RelayFilters, metadatas: RelayMetadatas, pool: RelayPool, url: RelayURL, info: RelayInfo, new_relay_filters: Bool) {
-    try? pool.add_relay(url, info: info)
+func add_new_relay(relay_filters: RelayFilters, metadatas: RelayMetadatas, pool: RelayPool, descriptor: RelayDescriptor, new_relay_filters: Bool) {
+    try? pool.add_relay(descriptor)
+    let url = descriptor.url
     
     let relay_id = url.id
     guard metadatas.lookup(relay_id: relay_id) == nil else {
@@ -894,9 +940,6 @@ func fetch_relay_metadata(relay_id: String) async throws -> RelayMetadata? {
     
     let nip11 = try JSONDecoder().decode(RelayMetadata.self, from: data)
     return nip11
-}
-
-func process_relay_metadata() {
 }
 
 @discardableResult
@@ -1116,6 +1159,11 @@ func process_local_notification(damus_state: DamusState, event ev: NostrEvent) {
 
     // Don't show notifications from muted threads.
     if damus_state.muted_threads.isMutedThread(ev, privkey: damus_state.keypair.privkey) {
+        return
+    }
+    
+    // Don't show notifications for old events
+    guard ev.age < HomeModel.event_max_age_for_notification else {
         return
     }
 

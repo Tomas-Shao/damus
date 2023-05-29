@@ -9,9 +9,8 @@ import Foundation
 import secp256k1
 
 let PUBKEY_HRP = "npub"
-let PRIVKEY_HRP = "nsec"
 
-public struct FullKeypair {
+public struct FullKeypair: Equatable {
     let pubkey: String
     let privkey: String
 }

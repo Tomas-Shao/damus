@@ -7,21 +7,17 @@
 
 import Foundation
 
-public struct NostrPost {
-    public let kind: NostrKind
-    public let content: String
-    public let references: [ReferencedId]
-    public let tags: [[String]]
+struct NostrPost {
+    let kind: NostrKind
+    let content: String
+    let references: [ReferencedId]
+    let tags: [[String]]
     
-    public init (content: String, references: [ReferencedId], kind: NostrKind = .text, tags: [[String]] = []) {
+    init (content: String, references: [ReferencedId], kind: NostrKind = .text, tags: [[String]] = []) {
         self.content = content
         self.references = references
         self.kind = kind
         self.tags = tags
-    }
-    
-    func to_event(keypair: FullKeypair) -> NostrEvent {
-        return post_to_event(post: self, privkey: keypair.privkey, pubkey: keypair.pubkey)
     }
 }
 
