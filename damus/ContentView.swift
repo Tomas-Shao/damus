@@ -43,6 +43,9 @@ public enum ThreadState {
 enum FilterState : Int {
     case posts_and_replies = 1
     case posts = 0
+    #if DamusSDK
+    case universe = 2
+    #endif
     
     func filter(ev: NostrEvent) -> Bool {
         switch self {
@@ -50,6 +53,10 @@ enum FilterState : Int {
             return !ev.is_reply(nil)
         case .posts_and_replies:
             return true
+        #if DamusSDK
+        case .universe:
+            return true
+        #endif
         }
     }
 }
@@ -118,6 +125,19 @@ public struct ContentView: View {
                     contentTimelineView(filter: FilterState.posts_and_replies.filter)
                         .tag(FilterState.posts_and_replies)
                         .id(FilterState.posts_and_replies)
+                    #if DamusSDK
+                    if #available(iOS 16.0, *) {
+                        SearchHomeView(damus_state: damus_state!, model: SearchHomeModel(damus_state: damus_state!))
+                            .tag(FilterState.universe)
+                            .id(FilterState.universe)
+                            .scrollDismissesKeyboard(.immediately)
+                    } else {
+                            // Fallback on earlier versions
+                        SearchHomeView(damus_state: damus_state!, model: SearchHomeModel(damus_state: damus_state!))
+                            .tag(FilterState.universe)
+                            .id(FilterState.universe)
+                    }
+                    #endif
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
                 
@@ -133,6 +153,9 @@ public struct ContentView: View {
                 CustomPicker(selection: $filter_state, content: {
                     Text("Posts", comment: "Label for filter for seeing only posts (instead of posts and replies).").tag(FilterState.posts)
                     Text("Posts & Replies", comment: "Label for filter for seeing posts and replies (instead of only posts).").tag(FilterState.posts_and_replies)
+                    #if DamusSDK
+                    Text("Universe 🛸", comment: "Toolbar label for the universal view where posts from all connected relay servers appear.").tag(FilterState.universe)
+                    #endif
                 })
                 Divider()
                     .frame(height: 1)
