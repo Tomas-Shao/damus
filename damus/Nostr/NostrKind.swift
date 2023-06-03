@@ -7,8 +7,7 @@
 
 import Foundation
 
-
-public enum NostrKind: Int {
+public enum NostrKind: Int, Codable {
     case metadata = 0
     case text = 1
     case contacts = 3

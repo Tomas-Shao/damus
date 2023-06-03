@@ -168,8 +168,8 @@ struct ProfileView: View {
     }
     
     @ViewBuilder
-    func navImage(systemImage: String) -> some View {
-        Image(systemName: systemImage)
+    func navImage(img: String) -> some View {
+        Image(img)
             .frame(width: 33, height: 33)
             .background(Color.black.opacity(0.6))
             .clipShape(Circle())
@@ -179,7 +179,7 @@ struct ProfileView: View {
         Button {
             presentationMode.wrappedValue.dismiss()
         } label: {
-            navImage(systemImage: "chevron.left")
+            navImage(img: "chevron-left")
         }
     }
     
@@ -187,7 +187,7 @@ struct ProfileView: View {
         Button(action: {
             action_sheet_presented = true
         }) {
-            navImage(systemImage: "ellipsis")
+            navImage(img: "share3")
         }
         .confirmationDialog(NSLocalizedString("Actions", comment: "Title for confirmation dialog to either share, report, or mute a profile."), isPresented: $action_sheet_presented) {
             Button(NSLocalizedString("Share", comment: "Button to share the link to a profile.")) {
@@ -242,7 +242,7 @@ struct ProfileView: View {
     }
     
     func lnButton(lnurl: String, profile: Profile) -> some View {
-        let button_img = profile.reactions == false ? "bolt.brakesignal" : "bolt.circle"
+        let button_img = profile.reactions == false ? "zap.fill" : "zap"
         return Button(action: {
             if damus_state.settings.show_wallet_selector  {
                 showing_select_wallet = true
@@ -250,7 +250,8 @@ struct ProfileView: View {
                 open_with_wallet(wallet: damus_state.settings.default_wallet.model, invoice: lnurl)
             }
         }) {
-            Image(systemName: button_img)
+            Image(button_img)
+                .foregroundColor(button_img == "zap.fill" ? .orange : Color.primary)
                 .profile_button_style(scheme: colorScheme)
                 .contextMenu {
                     if profile.reactions == false {
@@ -261,13 +262,13 @@ struct ProfileView: View {
                         Button {
                             UIPasteboard.general.string = addr
                         } label: {
-                            Label(addr, systemImage: "doc.on.doc")
+                            Label(addr, image: "copy2")
                         }
                     } else if let lnurl = profile.lnurl {
                         Button {
                             UIPasteboard.general.string = lnurl
                         } label: {
-                            Label(NSLocalizedString("Copy LNURL", comment: "Context menu option for copying a user's Lightning URL."), systemImage: "doc.on.doc")
+                            Label(NSLocalizedString("Copy LNURL", comment: "Context menu option for copying a user's Lightning URL."), image: "copy")
                         }
                     }
                 }
@@ -283,7 +284,7 @@ struct ProfileView: View {
         let dm_model = damus_state.dms.lookup_or_create(profile.pubkey)
         let dmview = DMChatView(damus_state: damus_state, dms: dm_model)
         return NavigationLink(destination: dmview) {
-            Image(systemName: "bubble.left.circle")
+            Image("messages")
                 .profile_button_style(scheme: colorScheme)
         }
     }
@@ -353,7 +354,9 @@ struct ProfileView: View {
     var followersCount: some View {
         HStack {
             if followers.count == nil {
-                Image(systemName: "square.and.arrow.down")
+                Image("download")
+                    .resizable()
+                    .frame(width: 20, height: 20)
                 Text("Followers", comment: "Label describing followers of a user.")
                     .font(.subheadline)
                     .foregroundColor(.gray)
@@ -370,9 +373,15 @@ struct ProfileView: View {
             let profile_data = damus_state.profiles.lookup(id: profile.pubkey)
             
             nameSection(profile_data: profile_data)
-            
-            Text(ProfileView.markdown.process(profile_data?.about ?? ""))
-                .font(.subheadline).textSelection(.enabled)
+
+            if let about = profile_data?.about {
+                let blocks = parse_mentions(content: about, tags: [])
+                let about_string = render_blocks(blocks: blocks, profiles: damus_state.profiles).content.attributed
+                SelectableText(attributedString: about_string, size: .subheadline)
+            } else {
+                Text(verbatim: "")
+                    .font(.subheadline)
+            }
             
             if let url = profile_data?.website_url {
                 WebsiteLink(url: url)
@@ -496,9 +505,6 @@ struct ProfileView_Previews: PreviewProvider {
 func test_damus_state() -> DamusState {
     let pubkey = "3efdaebb1d8923ebd99c9e7ace3b4194ab45512e2be79c1b7d68d9243e0d2681"
     let damus = DamusState.empty
-    let settings = UserSettingsStore()
-    settings.donation_percent = 100
-    settings.default_zap_amount = 1971
     
     let prof = Profile(name: "damus", display_name: "damus", about: "iOS app!", picture: "https://damus.io/img/logo.png", banner: "", website: "https://damus.io", lud06: nil, lud16: "jb55@sendsats.lol", nip05: "damus.io", damus_donation: nil)
     let tsprof = TimestampedProfile(profile: prof, timestamp: 0, event: test_event)
@@ -534,24 +540,12 @@ struct KeyView: View {
         let bech32 = bech32_pubkey(pubkey) ?? pubkey
         
         HStack {
-            HStack {
-                Button {
-                    copyPubkey(bech32)
-                } label: {
-                    Label(NSLocalizedString("Public Key", comment: "Label indicating that the text is a user's public account key."), systemImage: "key.fill")
-                        .font(.custom("key", size: 12.0))
-                        .labelStyle(IconOnlyLabelStyle())
-                        .foregroundStyle(hex_to_rgb(pubkey))
-                        .symbolRenderingMode(.palette)
-                }
-                .padding(.trailing, 2)
-                Text(verbatim: "\(abbrev_pubkey(bech32, amount: 16))")
-                    .font(.footnote)
-                    .foregroundColor(keyColor())
-            }
-            .padding(2)
-            .padding([.leading, .trailing], 3)
-            .background(RoundedRectangle(cornerRadius: 11).foregroundColor(DamusColors.adaptableGrey))
+            Text(verbatim: "\(abbrev_pubkey(bech32, amount: 16))")
+                .font(.footnote)
+                .foregroundColor(keyColor())
+                .padding(5)
+                .padding([.leading, .trailing], 5)
+                .background(RoundedRectangle(cornerRadius: 11).foregroundColor(DamusColors.adaptableGrey))
                         
             if isCopied != true {
                 Button {
@@ -560,7 +554,8 @@ struct KeyView: View {
                     Label {
                         Text("Public key", comment: "Label indicating that the text is a user's public account key.")
                     } icon: {
-                        Image(systemName: "square.on.square.dashed")
+                        Image("copy2")
+                            .resizable()
                             .contentShape(Rectangle())
                             .foregroundColor(.accentColor)
                             .frame(width: 20, height: 20)
@@ -570,7 +565,8 @@ struct KeyView: View {
                 }
             } else {
                 HStack {
-                    Image(systemName: "checkmark.circle")
+                    Image("check-circle")
+                        .resizable()
                         .frame(width: 20, height: 20)
                     Text(NSLocalizedString("Copied", comment: "Label indicating that a user's key was copied."))
                         .font(.footnote)

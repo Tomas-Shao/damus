@@ -45,11 +45,11 @@ struct ZapButton: View {
     var zap_img: String {
         switch our_zap {
         case .none:
-            return "bolt"
+            return "zap"
         case .zap:
-            return "bolt.fill"
+            return "zap.fill"
         case .pending:
-            return "bolt.fill"
+            return "zap.fill"
         }
     }
     
@@ -120,9 +120,12 @@ struct ZapButton: View {
         HStack(spacing: 4) {
             Button(action: {
             }, label: {
-                Image(systemName: zap_img)
+                Image(zap_img)
+                    .resizable()
                     .foregroundColor(zap_color)
                     .font(.footnote.weight(.medium))
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width:20, height: 20)
             })
 
             if zaps.zap_total > 0 {
@@ -272,8 +275,11 @@ func send_zap(damus_state: DamusState, event: NostrEvent, lnurl: String, is_cust
                 let nwc_req = nwc_pay(url: nwc_state.url,  pool: damus_state.pool, post: damus_state.postbox, invoice: inv, on_flush: flusher)
                 
                 guard let nwc_req, case .nwc(let pzap_state) = pending_zap_state else {
+                    print("nwc: failed to send nwc request for zapreq \(reqid.reqid)")
                     return
                 }
+                
+                print("nwc: sending request \(nwc_req.id) zap_req_id \(reqid.reqid)")
                 
                 if pzap_state.update_state(state: .postbox_pending(nwc_req)) {
                     // we don't need to trigger a ZapsDataModel update here

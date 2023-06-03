@@ -132,11 +132,11 @@ class HomeModel: ObservableObject {
         case .nwc_request:
             break
         case .nwc_response:
-            handle_nwc_response(ev)
+            handle_nwc_response(ev, relay: relay_id)
         }
     }
     
-    func handle_nwc_response(_ ev: NostrEvent) {
+    func handle_nwc_response(_ ev: NostrEvent, relay: String) {
         Task { @MainActor in
             // TODO: Adapt KeychainStorage to StringCodable and instead of parsing to WalletConnectURL every time
             guard let nwc_str = damus_state.settings.nostr_wallet_connect,
@@ -148,25 +148,24 @@ class HomeModel: ObservableObject {
             // since command results are not returned for ephemeral events,
             // remove the request from the postbox which is likely failing over and over
             if damus_state.postbox.remove_relayer(relay_id: nwc.relay.id, event_id: resp.req_id) {
-                print("nwc: got response, removed \(resp.req_id) from the postbox")
+                print("nwc: got response, removed \(resp.req_id) from the postbox [\(relay)]")
             } else {
-                print("nwc: \(resp.req_id) not found in the postbox, nothing to remove")
-            }
-            
-            if resp.response.error == nil {
+                print("nwc: \(resp.req_id) not found in the postbox, nothing to remove [\(relay)]")
             }
             
             guard let err = resp.response.error else {
+                print("nwc success: \(resp.response.result.debugDescription) [\(relay)]")
                 nwc_success(state: self.damus_state, resp: resp)
                 return
             }
             
-            print("nwc error: \(err)")
+            print("nwc error: \(resp.response)")
             nwc_error(zapcache: self.damus_state.zaps, evcache: self.damus_state.events, resp: resp)
         }
     }
     
     func handle_zap_event_with_zapper(profiles: Profiles, ev: NostrEvent, our_keypair: Keypair, zapper: String) {
+        
         guard let zap = Zap.from_zap_event(zap_ev: ev, zapper: zapper, our_privkey: our_keypair.privkey) else {
             return
         }
@@ -398,10 +397,9 @@ class HomeModel: ObservableObject {
 
     /// Send the initial filters, just our contact list mostly
     func send_initial_filters(relay_id: String) {
-        var filter = NostrFilter.filter_contacts
-        filter.authors = [self.damus_state.pubkey]
-        filter.limit = 1
-
+        var filter = NostrFilter(kinds: [.contacts],
+                                 limit: 1,
+                                 authors: [damus_state.pubkey])
         pool.send(.subscribe(.init(filters: [filter], sub_id: init_subid)), to: [relay_id])
     }
 
@@ -412,23 +410,19 @@ class HomeModel: ObservableObject {
         var friends = damus_state.contacts.get_friend_list()
         friends.append(damus_state.pubkey)
 
-        var contacts_filter = NostrFilter.filter_kinds([NostrKind.metadata.rawValue])
+        var contacts_filter = NostrFilter(kinds: [.metadata])
         contacts_filter.authors = friends
         
-        var our_contacts_filter = NostrFilter.filter_kinds([NostrKind.contacts.rawValue, NostrKind.metadata.rawValue])
+        var our_contacts_filter = NostrFilter(kinds: [.contacts, .metadata])
         our_contacts_filter.authors = [damus_state.pubkey]
         
-        var our_blocklist_filter = NostrFilter.filter_kinds([NostrKind.list.rawValue])
+        var our_blocklist_filter = NostrFilter(kinds: [.list])
         our_blocklist_filter.parameter = ["mute"]
         our_blocklist_filter.authors = [damus_state.pubkey]
         
-        var dms_filter = NostrFilter.filter_kinds([
-            NostrKind.dm.rawValue,
-        ])
+        var dms_filter = NostrFilter(kinds: [.dm])
 
-        var our_dms_filter = NostrFilter.filter_kinds([
-            NostrKind.dm.rawValue,
-        ])
+        var our_dms_filter = NostrFilter(kinds: [.dm])
 
         // friends only?...
         //dms_filter.authors = friends
@@ -437,27 +431,27 @@ class HomeModel: ObservableObject {
         our_dms_filter.authors = [ damus_state.pubkey ]
 
         // TODO: separate likes?
-        var home_filter_kinds = [
-            NostrKind.text.rawValue,
-            NostrKind.boost.rawValue
+        var home_filter_kinds: [NostrKind] = [
+            .text,
+            .boost
         ]
         if !damus_state.settings.onlyzaps_mode {
-            home_filter_kinds.append(NostrKind.like.rawValue)
+            home_filter_kinds.append(.like)
         }
-        var home_filter = NostrFilter.filter_kinds(home_filter_kinds)
+        var home_filter = NostrFilter(kinds: home_filter_kinds)
         // include our pubkey as well even if we're not technically a friend
         home_filter.authors = friends
         home_filter.limit = 500
 
-        var notifications_filter_kinds = [
-            NostrKind.text.rawValue,
-            NostrKind.boost.rawValue,
-            NostrKind.zap.rawValue,
+        var notifications_filter_kinds: [NostrKind] = [
+            .text,
+            .boost,
+            .zap,
         ]
         if !damus_state.settings.onlyzaps_mode {
-            notifications_filter_kinds.append(NostrKind.like.rawValue)
+            notifications_filter_kinds.append(.like)
         }
-        var notifications_filter = NostrFilter.filter_kinds(notifications_filter_kinds)
+        var notifications_filter = NostrFilter(kinds: notifications_filter_kinds)
         notifications_filter.pubkeys = [damus_state.pubkey]
         notifications_filter.limit = 500
 
@@ -1203,7 +1197,7 @@ func create_local_notification(profiles: Profiles, notify: LocalNotification) {
         title = String(format: NSLocalizedString("Reposted by %@", comment: "Reposted by heading in local notification"), displayName)
         identifier = "myBoostNotification"
     case .like:
-        title = String(format: NSLocalizedString("%@ reacted with %@", comment: "Reacted by heading in local notification"), displayName, notify.event.content)
+        title = String(format: NSLocalizedString("%@ reacted with %@", comment: "Reacted by heading in local notification"), displayName, to_reaction_emoji(ev: notify.event) ?? "")
         identifier = "myLikeNotification"
     case .dm:
         title = displayName

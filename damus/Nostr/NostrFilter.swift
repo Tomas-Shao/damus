@@ -9,15 +9,15 @@ import Foundation
 
 public struct NostrFilter: Codable, Equatable {
     public var ids: [String]?
-    public var kinds: [Int]?
+    public var kinds: [NostrKind]?
     public var referenced_ids: [String]?
     public var pubkeys: [String]?
     public var since: Int64?
     public var until: Int64?
     public var limit: UInt32?
     public var authors: [String]?
-    public var hashtag: [String]? = nil
-    public var parameter: [String]? = nil
+    public var hashtag: [String]?
+    public var parameter: [String]?
 
     private enum CodingKeys : String, CodingKey {
         case ids
@@ -32,31 +32,23 @@ public struct NostrFilter: Codable, Equatable {
         case limit
     }
     
+    public init(ids: [String]? = nil, kinds: [NostrKind]? = nil, referenced_ids: [String]? = nil, pubkeys: [String]? = nil, since: Int64? = nil, until: Int64? = nil, limit: UInt32? = nil, authors: [String]? = nil, hashtag: [String]? = nil) {
+        self.ids = ids
+        self.kinds = kinds
+        self.referenced_ids = referenced_ids
+        self.pubkeys = pubkeys
+        self.since = since
+        self.until = until
+        self.limit = limit
+        self.authors = authors
+        self.hashtag = hashtag
+    }
+    
     public static func copy(from: NostrFilter) -> NostrFilter {
-        return NostrFilter(ids: from.ids, kinds: from.kinds, referenced_ids: from.referenced_ids, pubkeys: from.pubkeys, since: from.since, until: from.until, authors: from.authors, hashtag: from.hashtag)
+        NostrFilter(ids: from.ids, kinds: from.kinds, referenced_ids: from.referenced_ids, pubkeys: from.pubkeys, since: from.since, until: from.until, authors: from.authors, hashtag: from.hashtag)
     }
     
     public static func filter_hashtag(_ htags: [String]) -> NostrFilter {
-        return NostrFilter(ids: nil, kinds: nil, referenced_ids: nil, pubkeys: nil, since: nil, until: nil, authors: nil, hashtag: htags.map { $0.lowercased() })
-    }
-    
-    public static func filter_ids(_ ids: [String]) -> NostrFilter {
-        return NostrFilter(ids: ids, kinds: nil, referenced_ids: nil, pubkeys: nil, since: nil, until: nil, authors: nil, hashtag: nil)
-    }
-    
-    public static var filter_profiles: NostrFilter {
-        return filter_kinds([NostrKind.metadata.rawValue])
-    }
-
-    public static var filter_contacts: NostrFilter {
-        return filter_kinds([NostrKind.contacts.rawValue])
-    }
-    
-    public static func filter_authors(_ authors: [String]) -> NostrFilter {
-        return NostrFilter(ids: nil, kinds: nil, referenced_ids: nil, pubkeys: nil, since: nil, until: nil, authors: authors)
-    }
-
-    public static func filter_kinds(_ kinds: [Int]) -> NostrFilter {
-        return NostrFilter(ids: nil, kinds: kinds, referenced_ids: nil, pubkeys: nil, since: nil, until: nil, authors: nil)
+        NostrFilter(hashtag: htags.map { $0.lowercased() })
     }
 }

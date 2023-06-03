@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import AVKit
 
 struct TimestampedProfile {
     let profile: Profile
@@ -335,7 +336,7 @@ public struct ContentView: View {
                                                 self.active_sheet = .filter
                                             }) {
                                                 // checklist, checklist.checked, lisdt.bullet, list.bullet.circle, line.3.horizontal.decrease...,  line.3.horizontail.decrease
-                                                Label(NSLocalizedString("Filter", comment: "Button label text for filtering relay servers."), systemImage: "line.3.horizontal.decrease")
+                                                Label(NSLocalizedString("Filter", comment: "Button label text for filtering relay servers."), image: "filter")
                                                     .foregroundColor(.gray)
                                                     //.contentShape(Rectangle())
                                             }
@@ -360,6 +361,7 @@ public struct ContentView: View {
         .ignoresSafeArea(.keyboard)
         .onAppear() {
             self.connect()
+            try? AVAudioSession.sharedInstance().setCategory(AVAudioSession.Category.playback, mode: .default, options: .mixWithOthers)
             setup_notifications()
         }
         .sheet(item: $active_sheet) { item in
@@ -737,7 +739,7 @@ func update_filters_with_since(last_of_kind: [Int: NostrEvent], filters: [NostrF
         let kinds = filter.kinds ?? []
         let initial: Int64? = nil
         let earliest = kinds.reduce(initial) { earliest, kind in
-            let last = last_of_kind[kind]
+            let last = last_of_kind[kind.rawValue]
             let since: Int64? = get_since_time(last_event: last)
             
             if earliest == nil {
@@ -791,10 +793,10 @@ func find_event(state: DamusState, evid: String, search_type: SearchType, find_f
     
     var has_event = false
     
-    var filter = search_type == .event ? NostrFilter.filter_ids([ evid ]) : NostrFilter.filter_authors([ evid ])
+    var filter = search_type == .event ? NostrFilter(ids: [evid]) : NostrFilter(authors: [evid])
     
     if search_type == .profile {
-        filter.kinds = [NostrKind.metadata.rawValue]
+        filter.kinds = [.metadata]
     }
     
     filter.limit = 1
