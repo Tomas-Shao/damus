@@ -268,12 +268,12 @@
 		4CFF8F6D29CD022E008DB934 /* WideEventView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CFF8F6C29CD022E008DB934 /* WideEventView.swift */; };
 		4FE60CDD295E1C5E00105A1F /* Wallet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FE60CDC295E1C5E00105A1F /* Wallet.swift */; };
 		50088DA129E8271A008A1FDF /* WebSocket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50088DA029E8271A008A1FDF /* WebSocket.swift */; };
-		501F8C802A0220E1001AFC1D /* KeychainStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 501F8C7F2A0220E1001AFC1D /* KeychainStorage.swift */; };
-		501F8C822A0224EB001AFC1D /* KeychainStorageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 501F8C812A0224EB001AFC1D /* KeychainStorageTests.swift */; };
 		5019CADD2A0FB0A9000069E1 /* ProfileDatabaseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5019CADC2A0FB0A9000069E1 /* ProfileDatabaseTests.swift */; };
 		501F8C5529FF5EF6001AFC1D /* PersistedProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 501F8C5429FF5EF6001AFC1D /* PersistedProfile.swift */; };
 		501F8C5829FF5FC5001AFC1D /* Damus.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 501F8C5629FF5FC5001AFC1D /* Damus.xcdatamodeld */; };
 		501F8C5A29FF70F5001AFC1D /* ProfileDatabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 501F8C5929FF70F5001AFC1D /* ProfileDatabase.swift */; };
+		501F8C802A0220E1001AFC1D /* KeychainStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 501F8C7F2A0220E1001AFC1D /* KeychainStorage.swift */; };
+		501F8C822A0224EB001AFC1D /* KeychainStorageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 501F8C812A0224EB001AFC1D /* KeychainStorageTests.swift */; };
 		50A50A8D29A09E1C00C01BE7 /* RequestTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50A50A8C29A09E1C00C01BE7 /* RequestTests.swift */; };
 		50B5685329F97CB400A23243 /* CredentialHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50B5685229F97CB400A23243 /* CredentialHandler.swift */; };
 		50DA11262A16A23F00236234 /* Launch.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 50DA11252A16A23F00236234 /* Launch.storyboard */; };
@@ -613,6 +613,15 @@
 		80DBC9B329F95B12001D03AF /* DamusSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 80736E4029EEE0D500901A2F /* DamusSDK.framework */; };
 		80DBC9B429F95B12001D03AF /* DamusSDK.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 80736E4029EEE0D500901A2F /* DamusSDK.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		80DBC9B829F95D94001D03AF /* DamusSDK.h in Headers */ = {isa = PBXBuildFile; fileRef = 80736E4229EEE0D500901A2F /* DamusSDK.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		80DF51212A2ACDD9002DDCB3 /* DamusLogoGradient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C0707D02A1ECB38004E7B51 /* DamusLogoGradient.swift */; };
+		80DF51222A2ACDE7002DDCB3 /* GradientButtonStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C6E1DAC2A193EC2008FC15A /* GradientButtonStyle.swift */; };
+		80DF51232A2ACDF6002DDCB3 /* PinkGradient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C6E1DAE2A194075008FC15A /* PinkGradient.swift */; };
+		80DF51242A2ACDFE002DDCB3 /* PersistedProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 501F8C5429FF5EF6001AFC1D /* PersistedProfile.swift */; };
+		80DF51252A2ACE0E002DDCB3 /* ProfileDatabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 501F8C5929FF70F5001AFC1D /* ProfileDatabase.swift */; };
+		80DF51262A2ACE22002DDCB3 /* VideoPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CCF9AAE2A1FDBDB00E03CFB /* VideoPlayer.swift */; };
+		80DF51282A2ACE4F002DDCB3 /* GSPlayer in Frameworks */ = {isa = PBXBuildFile; productRef = 80DF51272A2ACE4F002DDCB3 /* GSPlayer */; };
+		80DF51292A2ACE6B002DDCB3 /* DamusVideoPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C1A9A2929DDF54400516EAC /* DamusVideoPlayer.swift */; };
+		80DF512A2A2ACE7D002DDCB3 /* SearchSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4FA1C022A24BB7F00482697 /* SearchSettingsView.swift */; };
 		9609F058296E220800069BF3 /* BannerImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9609F057296E220800069BF3 /* BannerImageView.swift */; };
 		9C83F89329A937B900136C08 /* TextViewWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C83F89229A937B900136C08 /* TextViewWrapper.swift */; };
 		9CA876E229A00CEA0003B9A3 /* AttachMediaUtility.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CA876E129A00CE90003B9A3 /* AttachMediaUtility.swift */; };
@@ -1062,12 +1071,12 @@
 		4CFF8F6C29CD022E008DB934 /* WideEventView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WideEventView.swift; sourceTree = "<group>"; };
 		4FE60CDC295E1C5E00105A1F /* Wallet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Wallet.swift; sourceTree = "<group>"; };
 		50088DA029E8271A008A1FDF /* WebSocket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebSocket.swift; sourceTree = "<group>"; };
-		501F8C7F2A0220E1001AFC1D /* KeychainStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStorage.swift; sourceTree = "<group>"; };
-		501F8C812A0224EB001AFC1D /* KeychainStorageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStorageTests.swift; sourceTree = "<group>"; };
 		5019CADC2A0FB0A9000069E1 /* ProfileDatabaseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileDatabaseTests.swift; sourceTree = "<group>"; };
 		501F8C5429FF5EF6001AFC1D /* PersistedProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistedProfile.swift; sourceTree = "<group>"; };
 		501F8C5729FF5FC5001AFC1D /* Damus.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Damus.xcdatamodel; sourceTree = "<group>"; };
 		501F8C5929FF70F5001AFC1D /* ProfileDatabase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileDatabase.swift; sourceTree = "<group>"; };
+		501F8C7F2A0220E1001AFC1D /* KeychainStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStorage.swift; sourceTree = "<group>"; };
+		501F8C812A0224EB001AFC1D /* KeychainStorageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStorageTests.swift; sourceTree = "<group>"; };
 		50A50A8C29A09E1C00C01BE7 /* RequestTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestTests.swift; sourceTree = "<group>"; };
 		50B5685229F97CB400A23243 /* CredentialHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CredentialHandler.swift; sourceTree = "<group>"; };
 		50DA11252A16A23F00236234 /* Launch.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = Launch.storyboard; sourceTree = "<group>"; };
@@ -1142,6 +1151,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				80736F4629EEE29D00901A2F /* Kingfisher in Frameworks */,
+				80DF51282A2ACE4F002DDCB3 /* GSPlayer in Frameworks */,
 				80736F4429EEE29D00901A2F /* secp256k1 in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1998,6 +2008,7 @@
 			packageProductDependencies = (
 				80736F4329EEE29D00901A2F /* secp256k1 */,
 				80736F4529EEE29D00901A2F /* Kingfisher */,
+				80DF51272A2ACE4F002DDCB3 /* GSPlayer */,
 			);
 			productName = DamusSDK;
 			productReference = 80736E4029EEE0D500901A2F /* DamusSDK.framework */;
@@ -2567,6 +2578,7 @@
 				80736EE229EEE21E00901A2F /* SearchingEventView.swift in Sources */,
 				80736EDA29EEE21500901A2F /* ZapSettingsView.swift in Sources */,
 				80736EAF29EEE1FE00901A2F /* (null) in Sources */,
+				80DF51252A2ACE0E002DDCB3 /* ProfileDatabase.swift in Sources */,
 				80736EA629EEE1FE00901A2F /* ZapsModel.swift in Sources */,
 				80736F1129EEE25700901A2F /* (null) in Sources */,
 				80736E7529EEE1E500901A2F /* RelayMetadatas.swift in Sources */,
@@ -2580,6 +2592,7 @@
 				80736E8729EEE1EE00901A2F /* Zap.swift in Sources */,
 				80736F1A29EEE25700901A2F /* CreateAccountView.swift in Sources */,
 				8039FC6F2A24DF57001F13A3 /* GoldSupportGradient.swift in Sources */,
+				80DF512A2A2ACE7D002DDCB3 /* SearchSettingsView.swift in Sources */,
 				80736EDC29EEE21500901A2F /* KeySettingsView.swift in Sources */,
 				80736EA829EEE1FE00901A2F /* DraftsModel.swift in Sources */,
 				80736F0B29EEE24B00901A2F /* RepostedEvent.swift in Sources */,
@@ -2634,6 +2647,8 @@
 				80736F1529EEE25700901A2F /* DirectMessagesView.swift in Sources */,
 				80736F0E29EEE25300901A2F /* ShareAction.swift in Sources */,
 				80736F2E29EEE26000901A2F /* EventDetailView.swift in Sources */,
+				80DF51212A2ACDD9002DDCB3 /* DamusLogoGradient.swift in Sources */,
+				80DF51262A2ACE22002DDCB3 /* VideoPlayer.swift in Sources */,
 				80736F9F29EEE4D300901A2F /* nostr_bech32.c in Sources */,
 				80736E8229EEE1EE00901A2F /* AccountDeletion.swift in Sources */,
 				80736E6129EEE1D600901A2F /* SelectableText.swift in Sources */,
@@ -2664,6 +2679,7 @@
 				80736E9A29EEE1EF00901A2F /* Translator.swift in Sources */,
 				80736E6D29EEE1D600901A2F /* ThiccDivider.swift in Sources */,
 				80736EF429EEE23600901A2F /* RelayPaidDetail.swift in Sources */,
+				80DF51242A2ACDFE002DDCB3 /* PersistedProfile.swift in Sources */,
 				80736F2B29EEE26000901A2F /* NoteContentView.swift in Sources */,
 				80736ED429EEE20400901A2F /* NostrLink.swift in Sources */,
 				8003225629F94CDD00C969FB /* BigButton.swift in Sources */,
@@ -2686,6 +2702,8 @@
 				8039FC712A24E0EF001F13A3 /* ConnectWalletView.swift in Sources */,
 				80736F0329EEE24600901A2F /* ZapEvent.swift in Sources */,
 				80736EBD29EEE1FE00901A2F /* Liked.swift in Sources */,
+				80DF51232A2ACDF6002DDCB3 /* PinkGradient.swift in Sources */,
+				80DF51222A2ACDE7002DDCB3 /* GradientButtonStyle.swift in Sources */,
 				80736EB229EEE1FE00901A2F /* EventRef.swift in Sources */,
 				8039FC782A24E219001F13A3 /* ScannerViewController.swift in Sources */,
 				80736E9B29EEE1EF00901A2F /* DebouncedOnChange.swift in Sources */,
@@ -2728,6 +2746,7 @@
 				80736EAA29EEE1FE00901A2F /* ReplyMap.swift in Sources */,
 				80736E6829EEE1D600901A2F /* Highlight.swift in Sources */,
 				8039FC752A24E19E001F13A3 /* AlbyGradient.swift in Sources */,
+				80DF51292A2ACE6B002DDCB3 /* DamusVideoPlayer.swift in Sources */,
 				80736E9029EEE1EE00901A2F /* EventHolder.swift in Sources */,
 				80736E9929EEE1EF00901A2F /* DisplayName.swift in Sources */,
 				80736EB829EEE1FE00901A2F /* Contacts.swift in Sources */,
@@ -3413,6 +3432,11 @@
 			package = 4C64987F286E0EE300EAE2B3 /* XCRemoteSwiftPackageReference "secp256k1" */;
 			productName = secp256k1;
 		};
+		4CCF9AB12A1FE80C00E03CFB /* GSPlayer */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4CCF9AB02A1FE80B00E03CFB /* XCRemoteSwiftPackageReference "GSPlayer" */;
+			productName = GSPlayer;
+		};
 		80736F4329EEE29D00901A2F /* secp256k1 */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 4C64987F286E0EE300EAE2B3 /* XCRemoteSwiftPackageReference "secp256k1" */;
@@ -3432,7 +3456,8 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 4C06670228FC7EC500038D2A /* XCRemoteSwiftPackageReference "Kingfisher" */;
 			productName = Kingfisher;
-		4CCF9AB12A1FE80C00E03CFB /* GSPlayer */ = {
+		};
+		80DF51272A2ACE4F002DDCB3 /* GSPlayer */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 4CCF9AB02A1FE80B00E03CFB /* XCRemoteSwiftPackageReference "GSPlayer" */;
 			productName = GSPlayer;

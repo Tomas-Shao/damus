@@ -16,10 +16,14 @@ func hex_col(r: UInt8, g: UInt8, b: UInt8) -> Color {
 }
 
 
-struct SetupView: View {
+public struct SetupView: View {
     @State private var eula = false
+
+    public init(eula: Bool = false) {
+        self.eula = eula
+    }
     
-    var body: some View {
+    public var body: some View {
         NavigationView {
             ZStack {
                 VStack(alignment: .center) {
