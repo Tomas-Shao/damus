@@ -257,16 +257,16 @@ struct CustomizeZapView: View {
         }) {
             switch zap_type {
             case .pub:
-                Image("globe")
+                Image("globe", bundle: Bundle(for: DamusColors.self))
                 Text("Public", comment: "Button text to indicate that the zap type is a public zap.")
             case .anon:
-                Image("question")
+                Image("question", bundle: Bundle(for: DamusColors.self))
                 Text("Anonymous", comment: "Button text to indicate that the zap type is a anonymous zap.")
             case .priv:
-                Image("lock")
+                Image("lock", bundle: Bundle(for: DamusColors.self))
                 Text("Private", comment: "Button text to indicate that the zap type is a private zap.")
             case .non_zap:
-                Image("zap")
+                Image("zap", bundle: Bundle(for: DamusColors.self))
                 Text("None", comment: "Button text to indicate that the zap type is a private zap.")
             }
         }

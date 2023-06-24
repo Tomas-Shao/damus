@@ -169,7 +169,7 @@ struct ProfileView: View {
     
     @ViewBuilder
     func navImage(img: String) -> some View {
-        Image(img)
+        Image(img, bundle: Bundle(for: DamusColors.self))
             .frame(width: 33, height: 33)
             .background(Color.black.opacity(0.6))
             .clipShape(Circle())
@@ -250,7 +250,7 @@ struct ProfileView: View {
                 open_with_wallet(wallet: damus_state.settings.default_wallet.model, invoice: lnurl)
             }
         }) {
-            Image(button_img)
+            Image(button_img, bundle: Bundle(for: DamusColors.self))
                 .foregroundColor(button_img == "zap.fill" ? .orange : Color.primary)
                 .profile_button_style(scheme: colorScheme)
                 .contextMenu {
@@ -284,7 +284,7 @@ struct ProfileView: View {
         let dm_model = damus_state.dms.lookup_or_create(profile.pubkey)
         let dmview = DMChatView(damus_state: damus_state, dms: dm_model)
         return NavigationLink(destination: dmview) {
-            Image("messages")
+            Image("messages", bundle: Bundle(for: DamusColors.self))
                 .profile_button_style(scheme: colorScheme)
         }
     }
@@ -354,7 +354,7 @@ struct ProfileView: View {
     var followersCount: some View {
         HStack {
             if followers.count == nil {
-                Image("download")
+                Image("download", bundle: Bundle(for: DamusColors.self))
                     .resizable()
                     .frame(width: 20, height: 20)
                 Text("Followers", comment: "Label describing followers of a user.")
@@ -554,7 +554,7 @@ struct KeyView: View {
                     Label {
                         Text("Public key", comment: "Label indicating that the text is a user's public account key.")
                     } icon: {
-                        Image("copy2")
+                        Image("copy2", bundle: Bundle(for: DamusColors.self))
                             .resizable()
                             .contentShape(Rectangle())
                             .foregroundColor(.accentColor)
@@ -565,7 +565,7 @@ struct KeyView: View {
                 }
             } else {
                 HStack {
-                    Image("check-circle")
+                    Image("check-circle", bundle: Bundle(for: DamusColors.self))
                         .resizable()
                         .frame(width: 20, height: 20)
                     Text(NSLocalizedString("Copied", comment: "Label indicating that a user's key was copied."))

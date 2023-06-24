@@ -14,12 +14,12 @@ struct SupporterBadge: View {
     
     var body: some View {
         if percent < 100 {
-            Image("star.fill")
+            Image("star.fill", bundle: Bundle(for: DamusColors.self))
                 .resizable()
                 .frame(width:size, height:size)
                 .foregroundColor(support_level_color(percent))
         } else {
-            Image("star.fill")
+            Image("star.fill", bundle: Bundle(for: DamusColors.self))
                 .resizable()
                 .frame(width:size, height:size)
                 .foregroundStyle(GoldGradient)

@@ -23,7 +23,7 @@ struct MaybeAnonPfpView: View {
     var body: some View {
         Group {
             if is_anon {
-                Image("question")
+                Image("question", bundle: Bundle(for: DamusColors.self))
                     .resizable()
                     .font(.largeTitle)
                     .frame(width: size, height: size)

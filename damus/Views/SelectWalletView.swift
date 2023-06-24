@@ -28,7 +28,7 @@ struct SelectWalletView: View {
                         
                         Spacer()
                         
-                        Image(self.invoice_copied ? "check-circle" : "copy2").foregroundColor(.blue)
+                        Image(self.invoice_copied ? "check-circle" : "copy2", bundle: Bundle(for: DamusColors.self)).foregroundColor(.blue)
                     }.clipShape(RoundedRectangle(cornerRadius: 5)).onTapGesture {
                         UIPasteboard.general.string = invoice
                         self.invoice_copied = true
@@ -50,7 +50,7 @@ struct SelectWalletView: View {
                                     open_with_wallet(wallet: wallet, invoice: invoice)
                                 } label: {
                                     HStack {
-                                        Image(wallet.image).resizable().frame(width: 32.0, height: 32.0,alignment: .center).cornerRadius(5)
+                                        Image(wallet.image, bundle: Bundle(for: DamusColors.self)).resizable().frame(width: 32.0, height: 32.0,alignment: .center).cornerRadius(5)
                                         Text(wallet.displayName).font(.body)
                                     }
                                 }.buttonStyle(.plain)

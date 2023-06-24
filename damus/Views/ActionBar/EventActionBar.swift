@@ -161,7 +161,7 @@ struct EventActionBar: View {
 
 func EventActionButton(img: String, col: Color?, action: @escaping () -> ()) -> some View {
     Button(action: action) {
-        Image(img)
+        Image(img, bundle: Bundle(for: DamusColors.self))
             .resizable()
             .foregroundColor(col == nil ? Color.gray : col!)
             .font(.footnote.weight(.medium))
@@ -191,13 +191,13 @@ struct LikeButton: View {
         }) {
             if liked {
                 LINEAR_GRADIENT
-                    .mask(Image("shaka.fill")
+                    .mask(Image("shaka.fill", bundle: Bundle(for: DamusColors.self))
                         .resizable()
                         .aspectRatio(contentMode: .fit)
                     )
                     .frame(width: 20, height: 20)
             } else {
-                Image("shaka")
+                Image("shaka", bundle: Bundle(for: DamusColors.self))
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 20, height: 20)

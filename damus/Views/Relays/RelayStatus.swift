@@ -41,7 +41,7 @@ struct RelayStatus: View {
                     .frame(width: 20, height: 20)
                     .padding(.trailing, 5)
             } else {
-                Image(conn_image)
+                Image(conn_image, bundle: Bundle(for: DamusColors.self))
                     .resizable()
                     .frame(width: 20, height: 20)
                     .foregroundColor(conn_color)

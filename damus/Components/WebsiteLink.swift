@@ -13,7 +13,7 @@ struct WebsiteLink: View {
 
     var body: some View {
         HStack {
-            Image("link")
+            Image("link", bundle: Bundle(for: DamusColors.self))
                 .foregroundColor(.gray)
                 .font(.footnote)
             

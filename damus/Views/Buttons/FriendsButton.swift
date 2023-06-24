@@ -21,11 +21,11 @@ struct FriendsButton: View {
         }) {
             if filter == .friends {
                 LINEAR_GRADIENT
-                    .mask(Image("user-added")
+                    .mask(Image("user-added", bundle: Bundle(for: DamusColors.self))
                         .resizable()
                     ).frame(width: 28, height: 28)
             } else {
-                Image("user-added")
+                Image("user-added", bundle: Bundle(for: DamusColors.self))
                     .resizable()
                     .frame(width: 28, height: 28)
                     .foregroundColor(DamusColors.adaptableGrey)

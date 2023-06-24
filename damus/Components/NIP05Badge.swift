@@ -32,11 +32,11 @@ struct NIP05Badge: View {
         Group {
             if nip05_color {
                 LINEAR_GRADIENT
-                    .mask(Image("check-circle.fill")
+                    .mask(Image("check-circle.fill", bundle: Bundle(for: DamusColors.self))
                         .resizable()
                     ).frame(width: 14, height: 14)
             } else if show_domain {
-                Image("check-circle.fill")
+                Image("check-circle.fill", bundle: Bundle(for: DamusColors.self))
                     .font(.footnote)
                     .nip05_colorized(gradient: nip05_color)
             }

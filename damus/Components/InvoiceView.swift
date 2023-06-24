@@ -25,10 +25,10 @@ struct InvoiceView: View {
             UIPasteboard.general.string = invoice.string
         } label: {
             if !copied {
-                Image("copy2")
+                Image("copy2", bundle: Bundle(for: DamusColors.self))
                     .foregroundColor(.gray)
             } else {
-                Image("check-circle")
+                Image("check-circle", bundle: Bundle(for: DamusColors.self))
                     .foregroundColor(DamusColors.green)
             }
         }

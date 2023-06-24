@@ -27,7 +27,7 @@ struct ShareActionButton: View {
     var body: some View {
         Button(action: action) {
             VStack() {
-                Image(img)
+                Image(img, bundle: Bundle(for: DamusColors.self))
                     .foregroundColor(col)
                     .font(.system(size: 23, weight: .bold))
                     .overlay {

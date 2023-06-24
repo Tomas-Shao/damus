@@ -114,7 +114,7 @@ struct LoginView: View {
             .padding()
         }
         .background(
-            Image("login-header")
+            Image("login-header", bundle: Bundle(for: DamusColors.self))
                 .resizable()
                 .frame(maxWidth: .infinity, maxHeight: 350, alignment: .center)
                 .ignoresSafeArea(),
@@ -305,7 +305,7 @@ struct KeyInput: View {
 struct SignInHeader: View {
     var body: some View {
         VStack {
-            Image("logo-nobg")
+            Image("logo-nobg", bundle: Bundle(for: DamusColors.self))
                 .resizable()
                 .frame(width: 56, height: 56, alignment: .center)
                 .shadow(color: DamusColors.purple, radius: 2)

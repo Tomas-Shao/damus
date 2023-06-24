@@ -114,7 +114,7 @@ struct PostView: View {
         Button(action: {
             attach_media = true
         }, label: {
-            Image("images")
+            Image("images", bundle: Bundle(for: DamusColors.self))
                 .padding(6)
         })
     }
@@ -123,7 +123,7 @@ struct PostView: View {
         Button(action: {
             attach_camera = true
         }, label: {
-            Image("camera")
+            Image("camera", bundle: Bundle(for: DamusColors.self))
                 .padding(6)
         })
     }
@@ -475,7 +475,7 @@ struct PVImageCarouselView: View {
                                     }
                                 }
                             }
-                        Image("close-circle")
+                        Image("close-circle", bundle: Bundle(for: DamusColors.self))
                             .foregroundColor(.white)
                             .padding(20)
                             .shadow(radius: 5)

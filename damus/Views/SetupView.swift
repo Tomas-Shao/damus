@@ -33,7 +33,7 @@ public struct SetupView: View {
                     
                     Spacer()
                     
-                    Image("logo-nobg")
+                    Image("logo-nobg", bundle: Bundle(for: DamusColors.self))
                         .resizable()
                         .shadow(color: DamusColors.purple, radius: 2)
                         .frame(width: 56, height: 56, alignment: .center)
@@ -75,7 +75,7 @@ public struct SetupView: View {
                 }
             }
             .background(
-                Image("login-header")
+                Image("login-header", bundle: Bundle(for: DamusColors.self))
                     .resizable()
                     .frame(maxWidth: .infinity, maxHeight: 300, alignment: .center)
                     .ignoresSafeArea(),
@@ -108,7 +108,7 @@ struct LearnAboutNostrLink: View {
 struct WhatIsNostr: View {
     var body: some View {
         HStack(alignment: .top) {
-            Image("nostr-logo")
+            Image("nostr-logo", bundle: Bundle(for: DamusColors.self))
             VStack(alignment: .leading) {
                 Text("What is nostr?")
                     .fontWeight(.bold)
@@ -127,7 +127,7 @@ struct WhatIsNostr: View {
 struct WhyWeNeedNostr: View {
     var body: some View {
         HStack(alignment: .top) {
-            Image("lightbulb")
+            Image("lightbulb", bundle: Bundle(for: DamusColors.self))
             VStack(alignment: .leading) {
                 Text("Why we need nostr?")
                     .fontWeight(.bold)

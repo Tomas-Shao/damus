@@ -14,7 +14,7 @@ struct Reposted: View {
     
     var body: some View {
         HStack(alignment: .center) {
-            Image("repost")
+            Image("repost", bundle: Bundle(for: DamusColors.self))
                 .foregroundColor(Color.gray)
             ProfileName(pubkey: pubkey, profile: profile, damus: damus, show_nip5_domain: false)
                     .foregroundColor(Color.gray)

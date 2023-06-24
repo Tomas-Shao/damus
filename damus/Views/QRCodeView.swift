@@ -30,7 +30,7 @@ struct QRCodeView: View {
                 Button {
                     presentationMode.wrappedValue.dismiss()
                 } label: {
-                    Image("close")
+                    Image("close", bundle: Bundle(for: DamusColors.self))
                         .foregroundColor(.white)
                         .font(.subheadline)
                         .padding(.leading, 20)

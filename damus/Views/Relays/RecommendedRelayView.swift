@@ -52,14 +52,14 @@ struct RecommendedRelayView: View {
                     
                     Spacer()
                     
-                    Image("info")
+                    Image("info", bundle: Bundle(for: DamusColors.self))
                         .resizable()
                         .frame(width: 20, height: 20)
                         .foregroundColor(Color.accentColor)
                 } else {
                     Spacer()
 
-                    Image("question")
+                    Image("question", bundle: Bundle(for: DamusColors.self))
                         .resizable()
                         .frame(width: 20, height: 20)
                         .foregroundColor(.gray)
@@ -98,7 +98,7 @@ struct RecommendedRelayView: View {
             if showText {
                 Text(NSLocalizedString("Connect", comment: "Button to connect to recommended relay server."))
             }
-            Image("plus-circle")
+            Image("plus-circle", bundle: Bundle(for: DamusColors.self))
                 .resizable()
                 .frame(width: 20, height: 20)
                 .foregroundColor(.accentColor)

@@ -21,7 +21,7 @@ struct AlbyButton: View {
             action()
         }) {
             HStack {
-                Image("alby")
+                Image("alby", bundle: Bundle(for: DamusColors.self))
                 
                 Text("Attach Alby Wallet", comment:  "Button to attach an Alby Wallet, a service that provides a Lightning wallet for zapping sats. Alby is the name of the service and should not be translated.")
             }

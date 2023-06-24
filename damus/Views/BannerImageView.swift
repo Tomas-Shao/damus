@@ -11,7 +11,7 @@ import Kingfisher
 struct InnerBannerImageView: View {
     let disable_animation: Bool
     let url: URL?
-    let defaultImage = UIImage(named: "profile-banner") ?? UIImage()
+    let defaultImage = UIImage(named: "profile-banner", in: Bundle(for: DamusColors.self), with: nil) ?? UIImage()
 
     var body: some View {
         ZStack {

@@ -99,7 +99,7 @@ struct ProfileName: View {
                 FriendIcon(friend: friend)
             }
             if onlyzapper {
-                Image("zap-hashtag")
+                Image("zap-hashtag", bundle: Bundle(for: DamusColors.self))
                     .frame(width: 14, height: 14)
             }
             if let supporter {

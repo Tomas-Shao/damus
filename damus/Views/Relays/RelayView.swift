@@ -36,7 +36,7 @@ struct RelayView: View {
                     
                     Spacer()
 
-                    Image("info")
+                    Image("info", bundle: Bundle(for: DamusColors.self))
                         .resizable()
                         .frame(width: 20, height: 20)
                         .foregroundColor(Color.accentColor)
@@ -45,7 +45,7 @@ struct RelayView: View {
                     
                     Spacer()
                     
-                    Image("question")
+                    Image("question", bundle: Bundle(for: DamusColors.self))
                         .resizable()
                         .frame(width: 20, height: 20)
                         .foregroundColor(.gray)
@@ -93,7 +93,7 @@ struct RelayView: View {
                 Text(NSLocalizedString("Disconnect", comment: "Button to disconnect from a relay server."))
             }
             
-            Image("minus-circle")
+            Image("minus-circle", bundle: Bundle(for: DamusColors.self))
                 .resizable()
                 .frame(width: 20, height: 20)
                 .foregroundColor(.red)

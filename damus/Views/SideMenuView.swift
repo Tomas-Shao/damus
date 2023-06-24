@@ -156,7 +156,7 @@ struct SideMenuView: View {
                         Button(action: {
                             showQRCode.toggle()
                         }, label: {
-                            Image("qr-code")
+                            Image("qr-code", bundle: Bundle(for: DamusColors.self))
                                 .font(.title)
                                 .foregroundColor(textColor())
                                 .dynamicTypeSize(.xSmall)
@@ -190,7 +190,7 @@ struct SideMenuView: View {
     
     @ViewBuilder
     func navLabel(title: String, img: String) -> some View {
-        Image(img)
+        Image(img, bundle: Bundle(for: DamusColors.self))
             .tint(DamusColors.adaptableBlack)
         
         Text(title)

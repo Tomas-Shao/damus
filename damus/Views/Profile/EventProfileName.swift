@@ -81,7 +81,7 @@ struct EventProfileName: View {
             }
             
             if onlyzapper {
-                Image("zap-hashtag")
+                Image("zap-hashtag", bundle: Bundle(for: DamusColors.self))
                     .frame(width: 14, height: 14)
             }
             

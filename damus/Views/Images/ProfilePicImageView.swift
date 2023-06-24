@@ -49,7 +49,7 @@ struct NavDismissBarView: View {
             Button(action: {
                 presentationMode.wrappedValue.dismiss()
             }, label: {
-                Image("close")
+                Image("close", bundle: Bundle(for: DamusColors.self))
                     .frame(width: 33, height: 33)
                     .background(.regularMaterial)
                     .clipShape(Circle())

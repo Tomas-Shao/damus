@@ -73,7 +73,7 @@ struct ZapTypePicker: View {
         Button(action: action) {
             VStack(alignment: .leading, spacing: 5) {
                 HStack {
-                    Image(img)
+                    Image(img, bundle: Bundle(for: DamusColors.self))
                         .resizable()
                         .aspectRatio(contentMode: .fit)
                         .frame(width: 20, height: 20)

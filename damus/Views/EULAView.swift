@@ -111,7 +111,7 @@ struct EULAView: View {
             }
         }
         .background(
-            Image("eula-bg")
+            Image("eula-bg", bundle: Bundle(for: DamusColors.self))
                 .resizable()
                 .blur(radius: 70)
                 .ignoresSafeArea(),

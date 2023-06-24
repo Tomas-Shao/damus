@@ -59,7 +59,7 @@ func hashtag_str(_ htag: String) -> CompatibleText {
             attributed_string_attach_icon(&attributedString, img: img)
         }
         text = Text(attributedString)
-        let img = Image("\(name)-hashtag")
+        let img = Image("\(name)-hashtag", bundle: Bundle(for: DamusColors.self))
         text = text + Text("\(img)").baselineOffset(custom_hashtag.offset ?? 0.0)
     } else {
         attributedString.foregroundColor = DamusColors.purple

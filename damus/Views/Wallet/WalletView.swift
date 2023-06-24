@@ -113,7 +113,7 @@ struct WalletView: View {
                     
                     VStack {
                         HStack {
-                            Text("\(Image("zap.fill")) \(format_msats_abbrev(Int64(model.settings.default_zap_amount) * 1000))")
+                            Text("\(Image("zap.fill", bundle: Bundle(for: DamusColors.self))) \(format_msats_abbrev(Int64(model.settings.default_zap_amount) * 1000))")
                                 .font(.title)
                                 .foregroundColor(percent == 0 ? .gray : .yellow)
                                 .frame(width: 120)
@@ -131,7 +131,7 @@ struct WalletView: View {
                     
                     VStack {
                         HStack {
-                            Text("\(Image("zap.fill")) \(tip_msats)")
+                            Text("\(Image("zap.fill", bundle: Bundle(for: DamusColors.self))) \(tip_msats)")
                                 .font(.title)
                                 .foregroundColor(percent == 0 ? .gray : Color.yellow)
                                 .frame(width: 120)

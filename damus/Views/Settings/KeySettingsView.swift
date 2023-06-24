@@ -66,7 +66,7 @@ struct KeySettingsView: View {
             }
         }) {
             let copied = is_pk ? self.pubkey_copied : self.privkey_copied
-            Image(copied ? "check-circle" : "copy2")
+            Image(copied ? "check-circle" : "copy2", bundle: Bundle(for: DamusColors.self))
         }
     }
     

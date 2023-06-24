@@ -120,7 +120,7 @@ struct ZapButton: View {
         HStack(spacing: 4) {
             Button(action: {
             }, label: {
-                Image(zap_img)
+                Image(zap_img, bundle: Bundle(for: DamusColors.self))
                     .resizable()
                     .foregroundColor(zap_color)
                     .font(.footnote.weight(.medium))

@@ -229,7 +229,7 @@ public struct ContentView: View {
             ToolbarItem(placement: .principal) {
                 VStack {
                     if selected_timeline == .home, !IS_DAMUS_SDK {
-                        Image("damus-home")
+                        Image("damus-home", bundle: Bundle(for: DamusColors.self))
                             .resizable()
                             .frame(width:30,height:30)
                             .shadow(color: DamusColors.purple, radius: 2)

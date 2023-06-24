@@ -55,7 +55,7 @@ struct TabButton: View {
             let bits = timeline_to_notification_bits(timeline, ev: nil)
             new_events = NewEventsBits(rawValue: new_events.rawValue & ~bits.rawValue)
         }) {
-            Image(selected != timeline ? img : "\(img).fill")
+            Image(selected != timeline ? img : "\(img).fill", bundle: Bundle(for: DamusColors.self))
                 .contentShape(Rectangle())
                 .frame(maxWidth: .infinity, minHeight: 30.0)
         }
