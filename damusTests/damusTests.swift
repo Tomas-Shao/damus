@@ -95,6 +95,15 @@ class damusTests: XCTestCase {
         XCTAssertEqual(parsed, expected)
     }
     
+    func testBech32Url2()  {
+        let parsed = decode_nostr_uri("nostr:npub1ry06rpuhg7a73nz9udeq5pwtl3m6fmc4ralfc7e6x657hlmwnw4s8hzj2s")
+        
+        let hexpk = "191fa1879747bbe8cc45e3720a05cbfc77a4ef151f7e9c7b3a36a9ebff6e9bab"
+        let expected: NostrLink = .ref(ReferencedId(ref_id: hexpk, relay_id: nil, key: "p"))
+        
+        XCTAssertEqual(parsed, expected)
+    }
+    
     func testSaveRelayFilters() {
         var filters = Set<RelayFilter>()
         
