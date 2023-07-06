@@ -9,7 +9,6 @@ import SwiftUI
 
 struct InvoiceView: View {
     @Environment(\.colorScheme) var colorScheme
-    @Environment(\.openURL) private var openURL
     let our_pubkey: String
     let invoice: Invoice
     @State var showing_select_wallet: Bool = false
@@ -26,10 +25,10 @@ struct InvoiceView: View {
             UIPasteboard.general.string = invoice.string
         } label: {
             if !copied {
-                Image(systemName: "doc.on.clipboard")
+                Image("copy2", bundle: Bundle(for: DamusColors.self))
                     .foregroundColor(.gray)
             } else {
-                Image(systemName: "checkmark.circle")
+                Image("check-circle", bundle: Bundle(for: DamusColors.self))
                     .foregroundColor(DamusColors.green)
             }
         }
@@ -64,7 +63,7 @@ struct InvoiceView: View {
             
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
-                    Label("", systemImage: "bolt.fill")
+                    Label("", image: "zap.fill")
                         .foregroundColor(.orange)
                     Text("Lightning Invoice", comment: "Indicates that the view is for paying a Lightning invoice.")
                     Spacer()

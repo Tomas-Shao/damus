@@ -12,7 +12,6 @@ struct SelectWalletView: View {
     @Binding var showingSelectWallet: Bool
     let our_pubkey: String
     let invoice: String
-    @Environment(\.openURL) private var openURL
     @State var invoice_copied: Bool = false
     
     @State var allWalletModels: [Wallet.Model] = Wallet.allModels
@@ -29,7 +28,7 @@ struct SelectWalletView: View {
                         
                         Spacer()
                         
-                        Image(systemName: self.invoice_copied ? "checkmark.circle" : "doc.on.doc").foregroundColor(.blue)
+                        Image(self.invoice_copied ? "check-circle" : "copy2", bundle: Bundle(for: DamusColors.self)).foregroundColor(.blue)
                     }.clipShape(RoundedRectangle(cornerRadius: 5)).onTapGesture {
                         UIPasteboard.general.string = invoice
                         self.invoice_copied = true
@@ -51,7 +50,7 @@ struct SelectWalletView: View {
                                     open_with_wallet(wallet: wallet, invoice: invoice)
                                 } label: {
                                     HStack {
-                                        Image(wallet.image).resizable().frame(width: 32.0, height: 32.0,alignment: .center).cornerRadius(5)
+                                        Image(wallet.image, bundle: Bundle(for: DamusColors.self)).resizable().frame(width: 32.0, height: 32.0,alignment: .center).cornerRadius(5)
                                         Text(wallet.displayName).font(.body)
                                     }
                                 }.buttonStyle(.plain)
@@ -70,7 +69,6 @@ struct SelectWalletView: View {
 
 struct SelectWalletView_Previews: PreviewProvider {
     @State static var show: Bool = true
-    @State static var invoice: String = ""
     
     static var previews: some View {
         SelectWalletView(default_wallet: .lnlink, showingSelectWallet: $show, our_pubkey: "", invoice: "")

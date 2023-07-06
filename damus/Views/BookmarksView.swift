@@ -29,7 +29,7 @@ struct BookmarksView: View {
         Group {
             if bookmarks.isEmpty {
                 VStack {
-                    Image(systemName: "bookmark")
+                    Image("bookmark", bundle: Bundle(for: DamusColors.self))
                         .resizable()
                         .scaledToFit()
                         .frame(width: 32.0, height: 32.0)
@@ -37,7 +37,7 @@ struct BookmarksView: View {
                 }
             } else {
                 ScrollView {
-                    InnerTimelineView(events: EventHolder(events: bookmarks, incoming: []), damus: state, show_friend_icon: true, filter: noneFilter)
+                    InnerTimelineView(events: EventHolder(events: bookmarks, incoming: []), damus: state, filter: noneFilter)
 
                 }
             }

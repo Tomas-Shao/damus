@@ -37,7 +37,7 @@ public struct RelayURL: Hashable {
     }
 }
 
-final public class RelayConnection {
+final class RelayConnection {
     private(set) var isConnected = false
     private(set) var isConnecting = false
     
@@ -50,7 +50,7 @@ final public class RelayConnection {
     private var handleEvent: (NostrConnectionEvent) -> ()
     private let url: RelayURL
 
-    public init(url: RelayURL, handleEvent: @escaping (NostrConnectionEvent) -> ()) {
+    init(url: RelayURL, handleEvent: @escaping (NostrConnectionEvent) -> ()) {
         self.url = url
         self.handleEvent = handleEvent
     }

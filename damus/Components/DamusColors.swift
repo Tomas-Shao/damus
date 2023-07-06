@@ -10,6 +10,7 @@ import SwiftUI
 
 class DamusColors {
     static let adaptableGrey = Color("DamusAdaptableGrey", bundle: Bundle(for: DamusColors.self))
+    static let adaptableBlack = Color("DamusAdaptableBlack", bundle: Bundle(for: DamusColors.self))
     static let white = Color("DamusWhite", bundle: Bundle(for: DamusColors.self))
     static let black = Color("DamusBlack", bundle: Bundle(for: DamusColors.self))
     static let brown = Color("DamusBrown", bundle: Bundle(for: DamusColors.self))

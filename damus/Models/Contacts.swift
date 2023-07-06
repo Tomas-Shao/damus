@@ -8,16 +8,16 @@
 import Foundation
 
 
-public class Contacts {
+class Contacts {
     private var friends: Set<String> = Set()
     private var friend_of_friends: Set<String> = Set()
     private var muted: Set<String> = Set()
     
-    public let our_pubkey: String
-    public var event: NostrEvent?
-    public var mutelist: NostrEvent?
+    let our_pubkey: String
+    var event: NostrEvent?
+    var mutelist: NostrEvent?
     
-    public init(our_pubkey: String) {
+    init(our_pubkey: String) {
         self.our_pubkey = our_pubkey
     }
     
@@ -56,22 +56,12 @@ public class Contacts {
         }
     }
     
-    func get_friendosphere() -> [String] {
-        var fs = get_friend_list()
-        fs.append(contentsOf: get_friend_of_friend_list())
-        return fs
-    }
-    
     func remove_friend(_ pubkey: String) {
         friends.remove(pubkey)
     }
     
     func get_friend_list() -> [String] {
         return Array(friends)
-    }
-    
-    func get_friend_of_friend_list() -> [String] {
-        return Array(friend_of_friends)
     }
     
     func add_friend_pubkey(_ pubkey: String) {
@@ -107,24 +97,6 @@ public class Contacts {
         return is_friend(pubkey) ? .follows : .unfollows
     }
 }
-
-
-func create_contacts(relays: [RelayDescriptor], our_pubkey: String, follow: ReferencedId) -> NostrEvent {
-    let kind = NostrKind.contacts.rawValue
-    let content = create_contacts_content(relays) ?? "{}"
-    let tags = [refid_to_tag(follow)]
-    return NostrEvent(content: content, pubkey: our_pubkey, kind: kind, tags: tags)
-}
-
-func create_contacts_content(_ relays: [RelayDescriptor]) -> String? {
-    // TODO: just create a new one of this is corrupted?
-    let crelays = make_contact_relays(relays)
-    guard let encoded = encode_json(crelays) else {
-        return nil
-    }
-    return encoded
-}
-
 
 func follow_user(pool: RelayPool, our_contacts: NostrEvent?, pubkey: String, privkey: String, follow: ReferencedId) -> NostrEvent? {
     guard let ev = follow_user_event(our_contacts: our_contacts, our_pubkey: pubkey, follow: follow) else {
@@ -244,38 +216,4 @@ func make_contact_relays(_ relays: [RelayDescriptor]) -> [String: RelayInfo] {
     return relays.reduce(into: [:]) { acc, relay in
         acc[relay.url.url.absoluteString] = relay.info
     }
-}
-
-// TODO: tests for this
-func is_friend_event(_ ev: NostrEvent, keypair: Keypair, contacts: Contacts) -> Bool
-{
-    if !contacts.is_friend(ev.pubkey) {
-        return false
-    }
-    
-    if ev.is_reply(keypair.privkey) {
-        return true
-    }
-    
-    let pks = get_referenced_id_set(tags: ev.tags, key: "p")
-    
-    // reply to self
-    if pks.count == 0 {
-        return true
-    }
-    
-    // allow reply-to-self-or-friend case
-    if pks.count == 1 && contacts.is_friend(pks.first!.ref_id) {
-        return true
-    }
-    
-    // show our replies?
-    for pk in pks {
-        // don't count self mentions here
-        if pk.ref_id != ev.pubkey && contacts.is_friend(pk.ref_id) {
-            return true
-        }
-    }
-    
-    return false
 }

@@ -136,7 +136,7 @@ struct CustomizeZapView: View {
         VStack(alignment: .center, spacing: 0) {
             TextField("", text: $custom_amount)
             .placeholder(when: custom_amount.isEmpty, alignment: .center) {
-                Text(String("0"))
+                Text(verbatim: 0.formatted())
             }
             .accentColor(.clear)
             .font(.system(size: 72, weight: .heavy))
@@ -257,16 +257,16 @@ struct CustomizeZapView: View {
         }) {
             switch zap_type {
             case .pub:
-                Image(systemName: "person.2")
+                Image("globe", bundle: Bundle(for: DamusColors.self))
                 Text("Public", comment: "Button text to indicate that the zap type is a public zap.")
             case .anon:
-                Image(systemName: "person.fill.questionmark")
+                Image("question", bundle: Bundle(for: DamusColors.self))
                 Text("Anonymous", comment: "Button text to indicate that the zap type is a anonymous zap.")
             case .priv:
-                Image(systemName: "lock")
+                Image("lock", bundle: Bundle(for: DamusColors.self))
                 Text("Private", comment: "Button text to indicate that the zap type is a private zap.")
             case .non_zap:
-                Image(systemName: "bolt")
+                Image("zap", bundle: Bundle(for: DamusColors.self))
                 Text("None", comment: "Button text to indicate that the zap type is a private zap.")
             }
         }

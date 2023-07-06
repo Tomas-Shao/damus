@@ -14,9 +14,9 @@ struct Reposted: View {
     
     var body: some View {
         HStack(alignment: .center) {
-            Image(systemName: "arrow.2.squarepath")
+            Image("repost", bundle: Bundle(for: DamusColors.self))
                 .foregroundColor(Color.gray)
-            ProfileName(pubkey: pubkey, profile: profile, damus: damus, show_friend_confirmed: true, show_nip5_domain: false)
+            ProfileName(pubkey: pubkey, profile: profile, damus: damus, show_nip5_domain: false)
                     .foregroundColor(Color.gray)
             Text("Reposted", comment: "Text indicating that the post was reposted (i.e. re-shared).")
                 .foregroundColor(Color.gray)

@@ -10,21 +10,12 @@ import SwiftUI
 struct ShareActionButton: View {
     let img: String
     let text: String
-    let color: Color?
     let action: () -> ()
-    
-    init(img: String, text: String, col: Color?, action: @escaping () -> ()) {
-        self.img = img
-        self.text = text
-        self.color = col
-        self.action = action
-    }
     
     init(img: String, text: String, action: @escaping () -> ()) {
         self.img = img
         self.text = text
         self.action = action
-        self.color = nil
     }
     
     var col: Color {
@@ -36,7 +27,7 @@ struct ShareActionButton: View {
     var body: some View {
         Button(action: action) {
             VStack() {
-                Image(systemName: img)
+                Image(img, bundle: Bundle(for: DamusColors.self))
                     .foregroundColor(col)
                     .font(.system(size: 23, weight: .bold))
                     .overlay {
@@ -57,6 +48,6 @@ struct ShareActionButton: View {
 
 struct ShareActionButton_Previews: PreviewProvider {
     static var previews: some View {
-        ShareActionButton(img: "figure.flexibility", text: "Stretch", action: {})
+        ShareActionButton(img: "link", text: "Stretch", action: {})
     }
 }

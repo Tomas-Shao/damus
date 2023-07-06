@@ -39,7 +39,7 @@ struct EditProfilePictureControl: View {
             if viewModel.isLoading {
                 ProgressView()
             } else {
-                Image(systemName: "camera")
+                Image("camera", bundle: Bundle(for: DamusColors.self))
                     .resizable()
                     .scaledToFit()
                     .frame(width: 25, height: 25)

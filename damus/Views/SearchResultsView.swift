@@ -34,19 +34,6 @@ enum Search: Identifiable {
     }
 }
 
-struct AnySearchResultsView: View {
-    let damus_state: DamusState
-    let searches: [Search]
-    
-    var body: some View {
-        VStack {
-            ForEach(searches) { r in
-                InnerSearchResults(damus_state: damus_state, search: r)
-            }
-        }
-    }
-}
-
 struct InnerSearchResults: View {
     let damus_state: DamusState
     let search: Search?
@@ -195,7 +182,7 @@ func make_hashtagable(_ str: String) -> String {
 
 func search_profiles(profiles: Profiles, search: String) -> [SearchedUser] {
     let new = search.lowercased()
-    return profiles.profiles.enumerated().reduce(into: []) { acc, els in
+    return profiles.enumerated().reduce(into: []) { acc, els in
         let pk = els.element.key
         let prof = els.element.value.profile
         

@@ -27,8 +27,6 @@ struct EventActionBar: View {
         _bar = ObservedObject(wrappedValue: bar ?? make_actionbar_model(ev: event.id, damus: damus_state))
     }
     
-    @Environment(\.colorScheme) var colorScheme
-    
     var lnurl: String? {
         damus_state.profiles.lookup(id: event.pubkey)?.lnurl
     }
@@ -45,7 +43,7 @@ struct EventActionBar: View {
         HStack {
             if damus_state.keypair.privkey != nil {
                 HStack(spacing: 4) {
-                    EventActionButton(img: "bubble.left", col: bar.replied ? DamusColors.purple : Color.gray) {
+                    EventActionButton(img: "bubble2", col: bar.replied ? DamusColors.purple : Color.gray) {
                         notify(.compose, PostAction.replying_to(event))
                     }
                     .accessibilityLabel(NSLocalizedString("Reply", comment: "Accessibility label for reply button"))
@@ -57,7 +55,7 @@ struct EventActionBar: View {
             Spacer()
             HStack(spacing: 4) {
                 
-                EventActionButton(img: "arrow.2.squarepath", col: bar.boosted ? Color.green : nil) {
+                EventActionButton(img: "repost", col: bar.boosted ? Color.green : nil) {
                     if bar.boosted {
                         notify(.delete, bar.our_boost)
                     } else {
@@ -90,11 +88,11 @@ struct EventActionBar: View {
 
             if let lnurl = self.lnurl {
                 Spacer()
-                ZapButton(damus_state: damus_state, event: event, lnurl: lnurl, bar: bar)
+                ZapButton(damus_state: damus_state, event: event, lnurl: lnurl, zaps: self.damus_state.events.get_cache_data(self.event.id).zaps_model)
             }
 
             Spacer()
-            EventActionButton(img: "square.and.arrow.up", col: Color.gray) {
+            EventActionButton(img: "upload", col: Color.gray) {
                 show_share_action = true
             }
             .accessibilityLabel(NSLocalizedString("Share", comment: "Button to share a post"))
@@ -122,7 +120,7 @@ struct EventActionBar: View {
         
             if #available(iOS 16.0, *) {
                 RepostAction(damus_state: self.damus_state, event: event)
-                    .presentationDetents([.height(300)])
+                    .presentationDetents([.height(220)])
                     .presentationDragIndicator(.visible)
             } else {
                 RepostAction(damus_state: self.damus_state, event: event)
@@ -163,17 +161,18 @@ struct EventActionBar: View {
 
 func EventActionButton(img: String, col: Color?, action: @escaping () -> ()) -> some View {
     Button(action: action) {
-        Image(systemName: img)
+        Image(img, bundle: Bundle(for: DamusColors.self))
+            .resizable()
             .foregroundColor(col == nil ? Color.gray : col!)
             .font(.footnote.weight(.medium))
+            .aspectRatio(contentMode: .fit)
+            .frame(width: 20, height: 20)
     }
 }
 
 struct LikeButton: View {
     let liked: Bool
     let action: () -> ()
-    
-    @Environment(\.colorScheme) var colorScheme
 
     // Following four are Shaka animation properties
     let timer = Timer.publish(every: 0.10, on: .main, in: .common).autoconnect()
@@ -192,11 +191,16 @@ struct LikeButton: View {
         }) {
             if liked {
                 LINEAR_GRADIENT
-                    .mask(Image("shaka-full")
+                    .mask(Image("shaka.fill", bundle: Bundle(for: DamusColors.self))
                         .resizable()
-                    ).frame(width: 14, height: 14)
+                        .aspectRatio(contentMode: .fit)
+                    )
+                    .frame(width: 20, height: 20)
             } else {
-                Image("shaka-line")
+                Image("shaka", bundle: Bundle(for: DamusColors.self))
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 20, height: 20)
                     .foregroundColor(.gray)
             }
         }
@@ -231,8 +235,7 @@ struct EventActionBar_Previews: PreviewProvider {
         let likedbar_ours = ActionBarModel(likes: 10, boosts: 0, zaps: 0, zap_total: 0, replies: 0, our_like: test_event, our_boost: nil, our_zap: nil, our_reply: nil)
         let maxed_bar = ActionBarModel(likes: 999, boosts: 999, zaps: 999, zap_total: 99999999, replies: 999, our_like: test_event, our_boost: test_event, our_zap: nil, our_reply: nil)
         let extra_max_bar = ActionBarModel(likes: 9999, boosts: 9999, zaps: 9999, zap_total: 99999999, replies: 9999, our_like: test_event, our_boost: test_event, our_zap: nil, our_reply: test_event)
-        let mega_max_bar = ActionBarModel(likes: 9999999, boosts: 99999, zaps: 9999, zap_total: 99999999, replies: 9999999,  our_like: test_event, our_boost: test_event, our_zap: test_zap, our_reply: test_event)
-        let zapbar = ActionBarModel(likes: 0, boosts: 0, zaps: 5, zap_total: 10000000, replies: 0, our_like: nil, our_boost: nil, our_zap: nil, our_reply: nil)
+        let mega_max_bar = ActionBarModel(likes: 9999999, boosts: 99999, zaps: 9999, zap_total: 99999999, replies: 9999999,  our_like: test_event, our_boost: test_event, our_zap: .zap(test_zap), our_reply: test_event)
         
         VStack(spacing: 50) {
             EventActionBar(damus_state: ds, event: ev, bar: bar)

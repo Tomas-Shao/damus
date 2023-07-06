@@ -68,15 +68,11 @@ func event_group_author_name(profiles: Profiles, ind: Int, group: EventGroupType
     if let zapgrp = group.zap_group {
         let zap = zapgrp.zaps[ind]
         
-        if let privzap = zap.private_request {
-            return event_author_name(profiles: profiles, pubkey: privzap.pubkey)
-        }
-        
         if zap.is_anon {
             return NSLocalizedString("Anonymous", comment: "Placeholder author name of the anonymous person who zapped an event.")
         }
         
-        return event_author_name(profiles: profiles, pubkey: zap.request.ev.pubkey)
+        return event_author_name(profiles: profiles, pubkey: zap.request.pubkey)
     } else {
         let ev = group.events[ind]
         return event_author_name(profiles: profiles, pubkey: ev.pubkey)
@@ -172,7 +168,7 @@ struct EventGroupView: View {
     func ZapIcon(_ zapgrp: ZapGroup) -> some View {
         let fmt = format_msats_abbrev(zapgrp.msat_total)
         return VStack(alignment: .center) {
-            Image(systemName: "bolt.fill")
+            Image("zap.fill", bundle: Bundle(for: DamusColors.self))
                 .foregroundColor(.orange)
             Text(verbatim: fmt)
                 .foregroundColor(Color.orange)
@@ -183,13 +179,15 @@ struct EventGroupView: View {
         Group {
             switch group {
             case .repost:
-                Image(systemName: "arrow.2.squarepath")
+                Image("repost", bundle: Bundle(for: DamusColors.self))
                     .foregroundColor(DamusColors.green)
             case .reaction:
                 LINEAR_GRADIENT
-                    .mask(Image("shaka-full")
+                    .mask(Image("shaka.fill", bundle: Bundle(for: DamusColors.self))
                         .resizable()
-                    ).frame(width: 24, height: 24)
+                        .aspectRatio(contentMode: .fit)
+                    )
+                    .frame(width: 20, height: 20)
             case .profile_zap(let zapgrp):
                 ZapIcon(zapgrp)
             case .zap(let zapgrp):

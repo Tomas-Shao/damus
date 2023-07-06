@@ -12,7 +12,6 @@ struct QRCodeView: View {
     let damus_state: DamusState
     @State var pubkey: String
     
-    @Environment(\.dismiss) var dismiss
     @Environment(\.presentationMode) var presentationMode
 
     var maybe_key: String? {
@@ -31,7 +30,7 @@ struct QRCodeView: View {
                 Button {
                     presentationMode.wrappedValue.dismiss()
                 } label: {
-                    Image(systemName: "xmark")
+                    Image("close", bundle: Bundle(for: DamusColors.self))
                         .foregroundColor(.white)
                         .font(.subheadline)
                         .padding(.leading, 20)
@@ -81,10 +80,17 @@ struct QRCodeView: View {
                 
                 Spacer()
                 
-                Text("Follow me on nostr", comment: "Text on QR code view to prompt viewer looking at screen to follow the user.")
-                    .foregroundColor(DamusColors.white)
-                    .font(.system(size: 24, weight: .heavy))
-                    .padding(.top)
+                if (pubkey == damus_state.pubkey) {
+                    Text("Follow me on nostr", comment: "Text on QR code view to prompt viewer looking at screen to follow the user.")
+                        .foregroundColor(DamusColors.white)
+                        .font(.system(size: 24, weight: .heavy))
+                        .padding(.top)
+                } else {
+                    Text("Follow them on nostr", comment: "Text on QR code view to prompt viewer looking at screen to follow the user (someone else).")
+                        .foregroundColor(DamusColors.white)
+                        .font(.system(size: 24, weight: .heavy))
+                        .padding(.top)
+                }
                 
                 Text("Scan the code", comment: "Text on QR code view to prompt viewer to scan the QR code on screen with their device camera.")
                     .foregroundColor(DamusColors.white)

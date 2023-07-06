@@ -18,26 +18,12 @@ enum ValidationResult: Decodable {
     case ok
     case bad_id
     case bad_sig
-    
-    var is_bad: Bool {
-        return self == .bad_id || self == .bad_sig
-    }
-}
-
-struct OtherEvent {
-    let event_id: String
-    let relay_url: String
-}
-
-public struct KeyEvent {
-    public let key: String
-    public let relay_url: String
 }
 
 public struct ReferencedId: Identifiable, Hashable, Equatable {
-    public let ref_id: String
-    public let relay_id: String?
-    public let key: String
+    let ref_id: String
+    let relay_id: String?
+    let key: String
 
     public var id: String {
         return ref_id
@@ -49,18 +35,6 @@ public struct ReferencedId: Identifiable, Hashable, Equatable {
     
     static func e(_ id: String, relay_id: String? = nil) -> ReferencedId {
         return ReferencedId(ref_id: id, relay_id: relay_id, key: "e")
-    }
-    
-    static func p(_ id: String, relay_id: String? = nil) -> ReferencedId {
-        return ReferencedId(ref_id: id, relay_id: relay_id, key: "p")
-    }
-}
-
-struct EventId: Identifiable, CustomStringConvertible {
-    let id: String
-
-    var description: String {
-        id
     }
 }
 
@@ -186,21 +160,9 @@ public class NostrEvent: Codable, Identifiable, CustomStringConvertible, Equatab
         }
         
         return content
-        
-        /*
-        switch validity {
-        case .ok:
-            return content
-        case .bad_id:
-            return content + "\n\n*WARNING: invalid note id, could be forged!*"
-        case .bad_sig:
-            return content + "\n\n*WARNING: invalid signature, could be forged!*"
-        }
-         */
     }
 
     public var description: String {
-        //let p = pow.map { String($0) } ?? "?"
         return "NostrEvent { id: \(id) pubkey \(pubkey) kind \(kind) tags \(tags) content '\(content)' }"
     }
 
@@ -213,21 +175,11 @@ public class NostrEvent: Codable, Identifiable, CustomStringConvertible, Equatab
     }
 
     private func get_referenced_ids(key: String) -> [ReferencedId] {
-#if DamusSDK
+        #if DamusSDK
         return DamusSDK.get_referenced_ids(tags: self.tags, key: key)
-#else
+        #else
         return damus.get_referenced_ids(tags: self.tags, key: key)
         #endif
-
-    }
-
-    public func is_root_event() -> Bool {
-        for tag in tags {
-            if tag.count >= 1 && tag[0] == "e" {
-                return false
-            }
-        }
-        return true
     }
 
     public func direct_replies(_ privkey: String?) -> [ReferencedId] {
@@ -304,29 +256,8 @@ public class NostrEvent: Codable, Identifiable, CustomStringConvertible, Equatab
         return get_referenced_ids(key: "e")
     }
 
-    public func count_ids() -> Int {
-        return count_refs("e")
-    }
-
-    public func count_refs(_ type: String) -> Int {
-        var count: Int = 0
-        for tag in tags {
-            if tag.count >= 2 && tag[0] == "e" {
-                count += 1
-            }
-        }
-        return count
-    }
-
     public var referenced_pubkeys: [ReferencedId] {
         return get_referenced_ids(key: "p")
-    }
-
-    /// Make a local event
-    public static func local(content: String, pubkey: String) -> NostrEvent {
-        let ev = NostrEvent(content: content, pubkey: pubkey)
-        ev.flags |= 1
-        return ev
     }
 
     public var is_local: Bool {
@@ -344,49 +275,17 @@ public class NostrEvent: Codable, Identifiable, CustomStringConvertible, Equatab
         self.created_at = createdAt
     }
 
-    init(from: NostrEvent, content: String? = nil) {
-        self.id = from.id
-        self.sig = from.sig
-
-        self.content = content ?? from.content
-        self.pubkey = from.pubkey
-        self.kind = from.kind
-        self.tags = from.tags
-        self.created_at = from.created_at
-    }
-
     func calculate_id() {
         self.id = calculate_event_id(ev: self)
-        //self.pow = count_hash_leading_zero_bits(self.id)
-    }
-
-    // TODO: timeout
-    /*
-    func mine_id(pow: Int, done: @escaping (String) -> ()) {
-        let nonce_ind = self.ensure_nonce_tag()
-        let nonce: Int64 = 0
-
-        DispatchQueue.global(qos: .background).async {
-            while
-        }
-    }
-     */
-
-    private func ensure_nonce_tag() -> Int {
-        for (i, tags) in self.tags.enumerated() {
-            for tag in tags {
-                if tags.count == 2 && tag == "nonce" {
-                    return i
-                }
-            }
-        }
-
-        self.tags.append(["nonce", "0"])
-        return self.tags.count - 1
     }
 
     func sign(privkey: String) {
         self.sig = sign_event(privkey: privkey, ev: self)
+    }
+    
+    var age: TimeInterval {
+        let event_date = Date(timeIntervalSince1970: TimeInterval(created_at))
+        return Date.now.timeIntervalSince(event_date)
     }
 }
 
@@ -543,18 +442,6 @@ func get_referenced_ids(tags: [[String]], key: String) -> [ReferencedId] {
     }
 }
 
-func get_referenced_id_set(tags: [[String]], key: String) -> Set<ReferencedId> {
-    return tags.reduce(into: Set()) { (acc, tag) in
-        if tag.count >= 2 && tag[0] == key {
-            var relay_id: String? = nil
-            if tag.count >= 3 {
-                relay_id = tag[2]
-            }
-            acc.insert(ReferencedId(ref_id: tag[1], relay_id: relay_id, key: key))
-        }
-    }
-}
-
 public func make_first_contact_event(keypair: Keypair) -> NostrEvent? {
     guard let privkey = keypair.privkey else {
         return nil
@@ -571,11 +458,9 @@ public func make_first_contact_event(keypair: Keypair) -> NostrEvent? {
     let relay_json = encode_json(relays)!
     let damus_pubkey = "3efdaebb1d8923ebd99c9e7ace3b4194ab45512e2be79c1b7d68d9243e0d2681"
     let jb55_pubkey = "32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245" // lol
-//    let test_pubkey = "npub1sp09gsfpkq3c3tqut442tsmsvz2y99v7ym9ftr58euy4ge29sems0jjnpw"
     let tags = [
         ["p", damus_pubkey],
         ["p", jb55_pubkey],
-//        ["p", test_pubkey],
         ["p", keypair.pubkey] // you're a friend of yourself!
     ]
     let ev = NostrEvent(content: relay_json,
@@ -587,11 +472,7 @@ public func make_first_contact_event(keypair: Keypair) -> NostrEvent? {
     return ev
 }
 
-public func make_metadata_event(keypair: Keypair, metadata: Profile) -> NostrEvent? {
-    guard let privkey = keypair.privkey else {
-        return nil
-    }
-
+public func make_metadata_event(keypair: FullKeypair, metadata: Profile) -> NostrEvent {
     let metadata_json = encode_json(metadata)!
     let ev = NostrEvent(content: metadata_json,
                         pubkey: keypair.pubkey,
@@ -599,7 +480,7 @@ public func make_metadata_event(keypair: Keypair, metadata: Profile) -> NostrEve
                         tags: [])
 
     ev.calculate_id()
-    ev.sign(privkey: privkey)
+    ev.sign(privkey: keypair.privkey)
     return ev
 }
 
@@ -615,11 +496,11 @@ func make_boost_event(pubkey: String, privkey: String, boosted: NostrEvent) -> N
     return ev
 }
 
-func make_like_event(pubkey: String, privkey: String, liked: NostrEvent) -> NostrEvent {
+func make_like_event(pubkey: String, privkey: String, liked: NostrEvent, content: String = "🤙") -> NostrEvent {
     var tags: [[String]] = liked.tags.filter { tag in tag.count >= 2 && (tag[0] == "e" || tag[0] == "p") }
     tags.append(["e", liked.id])
     tags.append(["p", liked.pubkey])
-    let ev = NostrEvent(content: "🤙", pubkey: pubkey, kind: 7, tags: tags)
+    let ev = NostrEvent(content: content, pubkey: pubkey, kind: 7, tags: tags)
     ev.calculate_id()
     ev.sign(privkey: privkey)
 
@@ -635,7 +516,12 @@ func zap_target_to_tags(_ target: ZapTarget) -> [[String]] {
     }
 }
 
-func make_private_zap_request_event(identity: FullKeypair, enc_key: FullKeypair, target: ZapTarget, message: String) -> String? {
+struct PrivateZapRequest {
+    let req: ZapRequest
+    let enc: String
+}
+
+func make_private_zap_request_event(identity: FullKeypair, enc_key: FullKeypair, target: ZapTarget, message: String) -> PrivateZapRequest? {
     // target tags must be the same as zap request target tags
     let tags = zap_target_to_tags(target)
     
@@ -643,10 +529,13 @@ func make_private_zap_request_event(identity: FullKeypair, enc_key: FullKeypair,
     note.id = calculate_event_id(ev: note)
     note.sig = sign_event(privkey: identity.privkey, ev: note)
     
-    guard let note_json = encode_json(note) else {
+    guard let note_json = encode_json(note),
+          let enc = encrypt_message(message: note_json, privkey: enc_key.privkey, to_pk: target.pubkey, encoding: .bech32)
+    else {
         return nil
     }
-    return encrypt_message(message: note_json, privkey: enc_key.privkey, to_pk: target.pubkey, encoding: .bech32)
+    
+    return PrivateZapRequest(req: ZapRequest(ev: note), enc: enc)
 }
 
 func decrypt_private_zap(our_privkey: String, zapreq: NostrEvent, target: ZapTarget) -> NostrEvent? {
@@ -710,7 +599,30 @@ func generate_private_keypair(our_privkey: String, id: String, created_at: Int64
     return FullKeypair(pubkey: pubkey, privkey: privkey)
 }
 
-func make_zap_request_event(keypair: FullKeypair, content: String, relays: [RelayDescriptor], target: ZapTarget, zap_type: ZapType) -> NostrEvent? {
+enum MakeZapRequest {
+    case priv(ZapRequest, PrivateZapRequest)
+    case normal(ZapRequest)
+    
+    var private_inner_request: ZapRequest {
+        switch self {
+        case .priv(_, let pzr):
+            return pzr.req
+        case .normal(let zr):
+            return zr
+        }
+    }
+    
+    var potentially_anon_outer_request: ZapRequest {
+        switch self {
+        case .priv(let zr, _):
+            return zr
+        case .normal(let zr):
+            return zr
+        }
+    }
+}
+
+func make_zap_request_event(keypair: FullKeypair, content: String, relays: [RelayDescriptor], target: ZapTarget, zap_type: ZapType) -> MakeZapRequest? {
     var tags = zap_target_to_tags(target)
     var relay_tag = ["relays"]
     relay_tag.append(contentsOf: relays.map { $0.url.id })
@@ -719,6 +631,8 @@ func make_zap_request_event(keypair: FullKeypair, content: String, relays: [Rela
     var kp = keypair
     
     let now = Int64(Date().timeIntervalSince1970)
+    
+    var privzap_req: PrivateZapRequest?
     
     var message = content
     switch zap_type {
@@ -737,14 +651,20 @@ func make_zap_request_event(keypair: FullKeypair, content: String, relays: [Rela
         guard let privreq = make_private_zap_request_event(identity: keypair, enc_key: kp, target: target, message: message) else {
             return nil
         }
-        tags.append(["anon", privreq])
+        tags.append(["anon", privreq.enc])
         message = ""
+        privzap_req = privreq
     }
     
     let ev = NostrEvent(content: message, pubkey: kp.pubkey, kind: 9734, tags: tags, createdAt: now)
     ev.id = calculate_event_id(ev: ev)
     ev.sig = sign_event(privkey: kp.privkey, ev: ev)
-    return ev
+    let zapreq = ZapRequest(ev: ev)
+    if let privzap_req {
+        return .priv(zapreq, privzap_req)
+    } else {
+        return .normal(zapreq)
+    }
 }
 
 func uniq<T: Hashable>(_ xs: [T]) -> [T] {
@@ -1025,14 +945,6 @@ func last_etag(tags: [[String]]) -> String? {
     return e
 }
 
-func inner_event_or_self(ev: NostrEvent, cache: EventCache) -> NostrEvent {
-    guard let inner_ev = ev.get_inner_event(cache: cache) else {
-        return ev
-    }
-    
-    return inner_ev
-}
-
 func first_eref_mention(ev: NostrEvent, privkey: String?) -> Mention? {
     let blocks = ev.blocks(privkey).filter { block in
         guard case .mention(let mention) = block else {
@@ -1056,6 +968,28 @@ func first_eref_mention(ev: NostrEvent, privkey: String?) -> Mention? {
     }
     
     return nil
+}
+
+/**
+ Transforms a `NostrEvent` of known kind `NostrKind.like`to a human-readable emoji.
+ If the known kind is not a `NostrKind.like`, it will return `nil`.
+ If the event content is an empty string or `+`, it will map that to a heart ❤️ emoji.
+ If the event content is a "-", it will map that to a dislike 👎 emoji.
+ Otherwise, it will return the event content at face value without transforming it.
+ */
+func to_reaction_emoji(ev: NostrEvent) -> String? {
+    guard ev.known_kind == NostrKind.like else {
+        return nil
+    }
+
+    switch ev.content {
+    case "", "+":
+        return "❤️"
+    case "-":
+        return "👎"
+    default:
+        return ev.content
+    }
 }
 
 extension [ReferencedId] {

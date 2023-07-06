@@ -8,49 +8,26 @@
 import Foundation
 import Network
 
-public struct SubscriptionId: Identifiable, CustomStringConvertible {
-    public let id: String
-
-    public var description: String {
-        id
-    }
+struct RelayHandler {
+    let sub_id: String
+    let callback: (String, NostrConnectionEvent) -> ()
 }
 
-public struct RelayId: Identifiable, CustomStringConvertible {
-    public let id: String
-
-    public var description: String {
-        id
-    }
-}
-
-public struct RelayHandler {
-    public let sub_id: String
-    public let callback: (String, NostrConnectionEvent) -> ()
-}
-
-public struct QueuedRequest {
-    public let req: NostrRequest
-    public let relay: String
-}
-
-public struct NostrRequestId: Equatable, Hashable {
-    public let relay: String?
-    public let sub_id: String
+struct QueuedRequest {
+    let req: NostrRequest
+    let relay: String
 }
 
 public class RelayPool {
-    public var relays: [Relay] = []
-    public var handlers: [RelayHandler] = []
-    public var request_queue: [QueuedRequest] = []
-    public var seen: Set<String> = Set()
-    public var counts: [String: UInt64] = [:]
-
+    var relays: [Relay] = []
+    var handlers: [RelayHandler] = []
+    var request_queue: [QueuedRequest] = []
+    var seen: Set<String> = Set()
+    var counts: [String: UInt64] = [:]
     
     private let network_monitor = NWPathMonitor()
     private let network_monitor_queue = DispatchQueue(label: "io.damus.network_monitor")
     private var last_network_status: NWPath.Status = .unsatisfied
-
 
     public init() {
         network_monitor.pathUpdateHandler = { [weak self] path in
@@ -65,12 +42,12 @@ public class RelayPool {
         network_monitor.start(queue: network_monitor_queue)
     }
     
-    var descriptors: [RelayDescriptor] {
-        relays.map { $0.descriptor }
+    var our_descriptors: [RelayDescriptor] {
+        return all_descriptors.filter { d in !d.ephemeral }
     }
     
-    var num_connecting: Int {
-        return relays.reduce(0) { n, r in n + (r.connection.isConnecting ? 1 : 0) }
+    var all_descriptors: [RelayDescriptor] {
+        relays.map { r in r.descriptor }
     }
     
     var num_connected: Int {
@@ -81,7 +58,7 @@ public class RelayPool {
         self.handlers = handlers.filter { $0.sub_id != sub_id }
         print("removing \(sub_id) handler, current: \(handlers.count)")
     }
-
+    
     func ping() {
         for relay in relays {
             relay.connection.ping()
@@ -114,7 +91,8 @@ public class RelayPool {
         }
     }
     
-    func add_relay(_ url: RelayURL, info: RelayInfo) throws {
+    func add_relay(_ desc: RelayDescriptor) throws {
+        let url = desc.url
         let relay_id = get_relay_id(url)
         if get_relay(relay_id) != nil {
             throw RelayError.RelayAlreadyExists
@@ -122,8 +100,7 @@ public class RelayPool {
         let conn = RelayConnection(url: url) { event in
             self.handle_event(relay_id: relay_id, event: event)
         }
-        let descriptor = RelayDescriptor(url: url, info: info)
-        let relay = Relay(descriptor: descriptor, connection: conn)
+        let relay = Relay(descriptor: desc, connection: conn)
         self.relays.append(relay)
     }
     
@@ -151,12 +128,6 @@ public class RelayPool {
         for relay in relays {
             // don't try to reconnect to broken relays
             relay.connection.reconnect()
-        }
-    }
-    
-    func mark_broken(_ relay_id: String) {
-        for relay in relays {
-            relay.mark_broken()
         }
     }
 
@@ -213,10 +184,22 @@ public class RelayPool {
         request_queue.append(QueuedRequest(req: r, relay: relay))
     }
     
-    public func send(_ req: NostrRequest, to: [String]? = nil) {
+    public func send(_ req: NostrRequest, to: [String]? = nil, skip_ephemeral: Bool = true) {
         let relays = to.map{ get_relays($0) } ?? self.relays
 
         for relay in relays {
+            if req.is_read && !(relay.descriptor.info.read ?? true) {
+                continue
+            }
+            
+            if req.is_write && !(relay.descriptor.info.write ?? true) {
+                continue
+            }
+            
+            if relay.descriptor.ephemeral && skip_ephemeral {
+                continue
+            }
+            
             guard relay.connection.isConnected else {
                 queue_req(r: req, relay: relay.id)
                 continue
@@ -227,6 +210,7 @@ public class RelayPool {
     }
     
     func get_relays(_ ids: [String]) -> [Relay] {
+        // don't include ephemeral relays in the default list to query
         relays.filter { ids.contains($0.id) }
     }
     
@@ -282,7 +266,7 @@ public func add_rw_relay(_ pool: RelayPool, _ url: String) {
     guard let url = RelayURL(url) else {
         return
     }
-    try? pool.add_relay(url, info: RelayInfo.rw)
+    try? pool.add_relay(RelayDescriptor(url: url, info: .rw))
 }
 
 

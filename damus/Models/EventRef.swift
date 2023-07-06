@@ -7,7 +7,7 @@
 
 import Foundation
 
-public enum EventRef {
+enum EventRef {
     case mention(Mention)
     case thread_id(ReferencedId)
     case reply(ReferencedId)
@@ -58,15 +58,6 @@ public enum EventRef {
             return refid
         }
     }
-}
-
-func has_any_e_refs(_ tags: [[String]]) -> Bool {
-    for tag in tags {
-        if tag.count >= 2 && tag[0] == "e" {
-            return true
-        }
-    }
-    return false
 }
 
 func build_mention_indices(_ blocks: [Block], type: MentionType) -> Set<Int> {

@@ -12,6 +12,7 @@ enum EventViewKind {
     case small
     case normal
     case selected
+    case subheadline
 }
 
 struct EventView: View {
@@ -19,8 +20,6 @@ struct EventView: View {
     let options: EventViewOptions
     let damus: DamusState
     let pubkey: String
-
-    @EnvironmentObject var action_bar: ActionBarModel
 
     init(damus: DamusState, event: NostrEvent, pubkey: String? = nil, options: EventViewOptions = []) {
         self.event = event
@@ -75,16 +74,9 @@ extension View {
             Button {
                     UIPasteboard.general.string = bech32_pubkey
             } label: {
-                Label(NSLocalizedString("Copy Account ID", comment: "Context menu option for copying the ID of the account that created the note."), systemImage: "doc.on.doc")
+                Label(NSLocalizedString("Copy Account ID", comment: "Context menu option for copying the ID of the account that created the note."), image: "copy2")
             }
         }
-    }
-    
-    func event_context_menu(_ event: NostrEvent, keypair: Keypair, target_pubkey: String, bookmarks: BookmarksManager, muted_threads: MutedThreadsManager) -> some View {
-        return self.contextMenu {
-            EventMenuContext(event: event, keypair: keypair, target_pubkey: target_pubkey, bookmarks: bookmarks, muted_threads: muted_threads)
-        }
-
     }
 }
 
@@ -115,6 +107,8 @@ func eventviewsize_to_font(_ size: EventViewKind) -> Font {
         return .body
     case .selected:
         return .custom("selected", size: 21.0)
+    case .subheadline:
+        return .subheadline
     }
 }
 
@@ -126,6 +120,8 @@ func eventviewsize_to_uifont(_ size: EventViewKind) -> UIFont {
         return .preferredFont(forTextStyle: .body)
     case .selected:
         return .preferredFont(forTextStyle: .title2)
+    case .subheadline:
+        return .preferredFont(forTextStyle: .subheadline)
     }
 }
 
