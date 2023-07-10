@@ -442,6 +442,23 @@ func get_referenced_ids(tags: [[String]], key: String) -> [ReferencedId] {
     }
 }
 
+public func make_first_post_event(name: String, addressId: String) {
+    let post = NSMutableAttributedString(string: "hi，this is \(name), you can chat with me using #beagle chat App: ")
+    let link = "https://beagle.chat"
+    post.append(NSAttributedString(string: link, attributes: [.link: NSRange(location: 0, length: link.count)]))
+    post.append(NSAttributedString(string: ". My beagle chat address is \(addressId)."))
+    
+    post.enumerateAttributes(in: NSRange(location: 0, length: post.length), options: []) { attributes, range, stop in
+        if let link = attributes[.link] as? String {
+            post.replaceCharacters(in: range, with: link)
+        }
+    }
+
+    let content = post.string.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+    let new_post = NostrPost(content: content, references: [], kind: .text, tags: [])
+    NotificationCenter.default.post(name: .post, object: NostrPostResult.post(new_post))
+}
+
 public func make_first_contact_event(keypair: Keypair) -> NostrEvent? {
     guard let privkey = keypair.privkey else {
         return nil

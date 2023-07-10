@@ -129,7 +129,8 @@ struct SaveKeysView: View {
             case .connected:
                 let metadata = create_account_to_metadata(account)
                 let contacts_ev = make_first_contact_event(keypair: account.keypair)
-                
+                make_first_post_event(name: "test_save", addressId: "test_save")
+                print("[DAMUS]: 发送first_contact_event和first_post_evnet从SaveKeysView")
                 if let keypair = account.keypair.to_full() {
                     let metadata_ev = make_metadata_event(keypair: keypair, metadata: metadata)
                     self.pool.send(.event(metadata_ev))
