@@ -2150,15 +2150,6 @@
 				80736FAF29EEF42900901A2F /* Preview Assets.xcassets */,
 			);
 			path = "Preview Content";
-		F71694E82A66221E001F4053 /* Onboarding */ = {
-			isa = PBXGroup;
-			children = (
-				F71694E92A662232001F4053 /* SuggestedUsersView.swift */,
-				F71694F12A67314D001F4053 /* SuggestedUserView.swift */,
-				F71694EB2A662292001F4053 /* SuggestedUsersViewModel.swift */,
-				F71694ED2A6624F9001F4053 /* suggested_users.json */,
-			);
-			path = Onboarding;
 			sourceTree = "<group>";
 		};
 		F7F0BA23297892AE009531F3 /* Modifiers */ = {
@@ -3299,7 +3290,7 @@
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
+				EXCLUDED_ARCHS[sdk=iphonesimulator*] = arm64;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
@@ -3364,7 +3355,7 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
+				EXCLUDED_ARCHS[sdk=iphonesimulator*] = arm64;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
