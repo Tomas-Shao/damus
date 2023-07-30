@@ -361,6 +361,18 @@
 		8039FC772A24E1C4001F13A3 /* ScannerCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C7D096B2A0AEA0400943473 /* ScannerCoordinator.swift */; };
 		8039FC782A24E219001F13A3 /* ScannerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C7D096C2A0AEA0400943473 /* ScannerViewController.swift */; };
 		8039FC792A24E23A001F13A3 /* FillAndStroke.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C7D09752A0AF19E00943473 /* FillAndStroke.swift */; };
+		804B559F2A76A1A7001B622A /* suggested_users.json in Resources */ = {isa = PBXBuildFile; fileRef = 804B559B2A76A1A7001B622A /* suggested_users.json */; };
+		804B55A02A76A1A7001B622A /* suggested_users.json in Resources */ = {isa = PBXBuildFile; fileRef = 804B559B2A76A1A7001B622A /* suggested_users.json */; };
+		804B55A12A76A1A7001B622A /* suggested_users.json in Resources */ = {isa = PBXBuildFile; fileRef = 804B559B2A76A1A7001B622A /* suggested_users.json */; };
+		804B55A22A76A1A7001B622A /* SuggestedUsersViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 804B559C2A76A1A7001B622A /* SuggestedUsersViewModel.swift */; };
+		804B55A32A76A1A7001B622A /* SuggestedUsersViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 804B559C2A76A1A7001B622A /* SuggestedUsersViewModel.swift */; };
+		804B55A42A76A1A7001B622A /* SuggestedUsersViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 804B559C2A76A1A7001B622A /* SuggestedUsersViewModel.swift */; };
+		804B55A52A76A1A7001B622A /* SuggestedUserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 804B559D2A76A1A7001B622A /* SuggestedUserView.swift */; };
+		804B55A62A76A1A7001B622A /* SuggestedUserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 804B559D2A76A1A7001B622A /* SuggestedUserView.swift */; };
+		804B55A72A76A1A7001B622A /* SuggestedUserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 804B559D2A76A1A7001B622A /* SuggestedUserView.swift */; };
+		804B55A82A76A1A7001B622A /* SuggestedUsersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 804B559E2A76A1A7001B622A /* SuggestedUsersView.swift */; };
+		804B55A92A76A1A7001B622A /* SuggestedUsersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 804B559E2A76A1A7001B622A /* SuggestedUsersView.swift */; };
+		804B55AA2A76A1A7001B622A /* SuggestedUsersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 804B559E2A76A1A7001B622A /* SuggestedUsersView.swift */; };
 		80736E5C29EEE1D000901A2F /* SwipeToDismiss.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7F0BA24297892BD009531F3 /* SwipeToDismiss.swift */; };
 		80736E5D29EEE1D600901A2F /* WebsiteLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CBCA92F297DB57F00EC6B2F /* WebsiteLink.swift */; };
 		80736E5E29EEE1D600901A2F /* TruncatedText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C8D00C929DF80350036AF10 /* TruncatedText.swift */; };
@@ -386,14 +398,14 @@
 		80736E7229EEE1E000901A2F /* KFOptionSetter+.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C95CAED299DCEF1009DCB67 /* KFOptionSetter+.swift */; };
 		80736E7329EEE1E000901A2F /* (null) in Sources */ = {isa = PBXBuildFile; };
 		80736E7429EEE1E500901A2F /* RelayBootstrap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CC6193929DC777C006A86D1 /* RelayBootstrap.swift */; };
-		80736E7529EEE1E500901A2F /* RelayMetadatas.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CE8794B2995B59E00F758CC /* RelayMetadatas.swift */; };
+		80736E7529EEE1E500901A2F /* (null) in Sources */ = {isa = PBXBuildFile; };
 		80736E7629EEE1E500901A2F /* RelayFilters.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CE8794729941DA700F758CC /* RelayFilters.swift */; };
 		80736E7729EEE1E900901A2F /* AnyCodable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CF0ABE829844AF100D66079 /* AnyCodable.swift */; };
 		80736E7829EEE1E900901A2F /* AnyDecodable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CF0ABEB29844B4700D66079 /* AnyDecodable.swift */; };
 		80736E7929EEE1E900901A2F /* AnyEncodable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CF0ABED29844B5500D66079 /* AnyEncodable.swift */; };
 		80736E7A29EEE1EE00901A2F /* EventCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C30AC7729A577AB00E2BD5A /* EventCache.swift */; };
 		80736E7B29EEE1EE00901A2F /* Parser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C363A8328233689006E126D /* Parser.swift */; };
-		80736E7C29EEE1EE00901A2F /* Markdown.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C3A1D322960DB0500558C0F /* Markdown.swift */; };
+		80736E7C29EEE1EE00901A2F /* (null) in Sources */ = {isa = PBXBuildFile; };
 		80736E7D29EEE1EE00901A2F /* Hashtags.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C8D00CB29DF92DF0036AF10 /* Hashtags.swift */; };
 		80736E7E29EEE1EE00901A2F /* Bech32Object.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CF0ABEF29857E9200D66079 /* Bech32Object.swift */; };
 		80736E7F29EEE1EE00901A2F /* TimeAgo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CEE2AF4280B29E600AB5EEF /* TimeAgo.swift */; };
@@ -500,13 +512,13 @@
 		80736EE429EEE22300901A2F /* EventGroupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C30AC7329A5680900E2BD5A /* EventGroupView.swift */; };
 		80736EE529EEE22300901A2F /* NotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C30AC7129A5677A00E2BD5A /* NotificationsView.swift */; };
 		80736EE629EEE22300901A2F /* ProfilePicturesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C30AC7F29A6A53F00E2BD5A /* ProfilePicturesView.swift */; };
-		80736EE729EEE22700901A2F /* LoadMoreButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CE0E2B129A3DF6900DB4CA2 /* LoadMoreButton.swift */; };
+		80736EE729EEE22700901A2F /* (null) in Sources */ = {isa = PBXBuildFile; };
 		80736EE829EEE22700901A2F /* InnerTimelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CE0E2B529A3ED5500DB4CA2 /* InnerTimelineView.swift */; };
 		80736EE929EEE22B00901A2F /* CustomizeZapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C9F18E129AA9B6C008C55EC /* CustomizeZapView.swift */; };
 		80736EEA29EEE22B00901A2F /* ZapsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CE879572996C45300F758CC /* ZapsView.swift */; };
 		80736EEB29EEE23200901A2F /* ProfileName.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CEE2AF6280B2DEA00AB5EEF /* ProfileName.swift */; };
 		80736EEC29EEE23200901A2F /* MaybeAnonPfpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C9F18E329ABDE6D008C55EC /* MaybeAnonPfpView.swift */; };
-		80736EED29EEE23200901A2F /* EditProfilePictureControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = F79C7FAC29D5E9620000F946 /* EditProfilePictureControl.swift */; };
+		80736EED29EEE23200901A2F /* EditPictureControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = F79C7FAC29D5E9620000F946 /* EditPictureControl.swift */; };
 		80736EEE29EEE23200901A2F /* EventProfileName.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C9BB83329C12D9900FC4E37 /* EventProfileName.swift */; };
 		80736EEF29EEE23200901A2F /* ProfileNameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CB9D4A62992D02B00A9A7E4 /* ProfileNameView.swift */; };
 		80736EF029EEE23200901A2F /* ProfilePictureSelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C285C892838B985008A31F1 /* ProfilePictureSelector.swift */; };
@@ -517,7 +529,7 @@
 		80736EF529EEE23A00901A2F /* RecommendedRelayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CB55EF2295E5D59007FD187 /* RecommendedRelayView.swift */; };
 		80736EF629EEE23A00901A2F /* RelayType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CE879512996B68900F758CC /* RelayType.swift */; };
 		80736EF729EEE23A00901A2F /* RelayToggle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CE8794D2996B16A00F758CC /* RelayToggle.swift */; };
-		80736EF829EEE23A00901A2F /* RelayStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CE8794F2996B2BD00F758CC /* RelayStatus.swift */; };
+		80736EF829EEE23A00901A2F /* RelayStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CE8794F2996B2BD00F758CC /* RelayStatusView.swift */; };
 		80736EF929EEE23A00901A2F /* RelayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C06670028FC7C5900038D2A /* RelayView.swift */; };
 		80736EFA29EEE23A00901A2F /* RelayConfigView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CAAD8AF29888AD200060CEA /* RelayConfigView.swift */; };
 		80736EFB29EEE23A00901A2F /* RelayDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7908E91298B0F0700AB113A /* RelayDetailView.swift */; };
@@ -1211,6 +1223,10 @@
 		7C902AE22981D55B002AB16E /* ZoomableScrollView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZoomableScrollView.swift; sourceTree = "<group>"; };
 		7C95CAED299DCEF1009DCB67 /* KFOptionSetter+.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "KFOptionSetter+.swift"; sourceTree = "<group>"; };
 		7CFF6316299FEFE5005D382A /* SelectableText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectableText.swift; sourceTree = "<group>"; };
+		804B559B2A76A1A7001B622A /* suggested_users.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = suggested_users.json; sourceTree = "<group>"; };
+		804B559C2A76A1A7001B622A /* SuggestedUsersViewModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SuggestedUsersViewModel.swift; sourceTree = "<group>"; };
+		804B559D2A76A1A7001B622A /* SuggestedUserView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SuggestedUserView.swift; sourceTree = "<group>"; };
+		804B559E2A76A1A7001B622A /* SuggestedUsersView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SuggestedUsersView.swift; sourceTree = "<group>"; };
 		80736E4029EEE0D500901A2F /* DamusSDK.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = DamusSDK.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		80736E4229EEE0D500901A2F /* DamusSDK.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DamusSDK.h; sourceTree = "<group>"; };
 		80736FA629EEF42700901A2F /* Demo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Demo.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -1323,23 +1339,6 @@
 				4CA9276F2A2A5D470098A105 /* parser.h */,
 				4CA9276E2A2A5D110098A105 /* wasm.c */,
 				4CA9276D2A2A5D110098A105 /* wasm.h */,
-				4C06670928FDE64700038D2A /* damus.h */,
-				4C06670A28FDE64700038D2A /* damus.c */,
-				4C06670828FDE64700038D2A /* damus-Bridging-Header.h */,
-				4C06670C28FDEAA000038D2A /* utf8.h */,
-				4C06670D28FDEAA000038D2A /* utf8.c */,
-				4C3EA63B28FF52D600C48A62 /* bolt11.h */,
-				4C3EA63C28FF52D600C48A62 /* bolt11.c */,
-				4C3EA63E28FF54BD00C48A62 /* short_types.h */,
-				4C3EA63F28FF553900C48A62 /* hash_u5.h */,
-				4C3EA64028FF553900C48A62 /* hash_u5.c */,
-				4C3EA64228FF558100C48A62 /* sha256.h */,
-				4C3EA64328FF558100C48A62 /* sha256.c */,
-				4C3EA64528FF56D300C48A62 /* config.h */,
-				4C3EA64628FF570F00C48A62 /* node_id.h */,
-				4C3EA64728FF597700C48A62 /* bech32.h */,
-				4C3EA64828FF597700C48A62 /* bech32.c */,
-				4C3EA64A28FF59AC00C48A62 /* bech32_util.h */,
 				4C3EA64B28FF59AC00C48A62 /* bech32_util.c */,
 				4C3EA64A28FF59AC00C48A62 /* bech32_util.h */,
 				4C3EA64828FF597700C48A62 /* bech32.c */,
@@ -1558,7 +1557,7 @@
 		4C75EFA227FA576C0006080F /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				F71694E82A66221E001F4053 /* Onboarding */,
+				804B559A2A76A1A7001B622A /* Onboarding */,
 				4C190F232A547D1700027FD5 /* NostrScript */,
 				4C7D09692A0AEA0400943473 /* CodeScanner */,
 				4C7D095A2A098C5C00943473 /* Wallet */,
@@ -1933,6 +1932,7 @@
 				80736FA729EEF42700901A2F /* Demo */,
 				4CE6DEE427F7A08100C66700 /* Products */,
 				4CEE2AE62804F57B00AB5EEF /* Frameworks */,
+				804B55992A76A0CA001B622A /* Recovered References */,
 			);
 			indentWidth = 4;
 			sourceTree = "<group>";
@@ -2124,6 +2124,32 @@
 				4C7D09752A0AF19E00943473 /* FillAndStroke.swift */,
 			);
 			path = Extensions;
+			sourceTree = "<group>";
+		};
+		804B55992A76A0CA001B622A /* Recovered References */ = {
+			isa = PBXGroup;
+			children = (
+				F71694F12A67314D001F4053 /* SuggestedUserView.swift */,
+				F71694E92A662232001F4053 /* SuggestedUsersView.swift */,
+				4C3EA66C28FF782800C48A62 /* amount.c */,
+				F71694EB2A662292001F4053 /* SuggestedUsersViewModel.swift */,
+				F71694ED2A6624F9001F4053 /* suggested_users.json */,
+				4C3EA65A28FF5BC900C48A62 /* alignof.h */,
+				4C3EA65E28FF5DA400C48A62 /* amount.h */,
+				4C3EA66128FF5EA800C48A62 /* array_size.h */,
+			);
+			name = "Recovered References";
+			sourceTree = "<group>";
+		};
+		804B559A2A76A1A7001B622A /* Onboarding */ = {
+			isa = PBXGroup;
+			children = (
+				804B559B2A76A1A7001B622A /* suggested_users.json */,
+				804B559C2A76A1A7001B622A /* SuggestedUsersViewModel.swift */,
+				804B559D2A76A1A7001B622A /* SuggestedUserView.swift */,
+				804B559E2A76A1A7001B622A /* SuggestedUsersView.swift */,
+			);
+			path = Onboarding;
 			sourceTree = "<group>";
 		};
 		80736E4129EEE0D500901A2F /* DamusSDK */ = {
@@ -2422,6 +2448,7 @@
 				4C198DF129F88C6B004C165C /* License.txt in Resources */,
 				4C198DF029F88C6B004C165C /* Readme.md in Resources */,
 				F71694EE2A6624F9001F4053 /* suggested_users.json in Resources */,
+				804B559F2A76A1A7001B622A /* suggested_users.json in Resources */,
 				3A4325A82961E11400BFCD9D /* Localizable.stringsdict in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -2446,6 +2473,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				804B55A02A76A1A7001B622A /* suggested_users.json in Resources */,
 				80736ED629EEE20B00901A2F /* Localizable.strings in Resources */,
 				8003225229F9477A00C969FB /* Assets.xcassets in Resources */,
 				80736ED729EEE21000901A2F /* InfoPlist.strings in Resources */,
@@ -2456,6 +2484,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				804B55A12A76A1A7001B622A /* suggested_users.json in Resources */,
 				80736FB029EEF42900901A2F /* Preview Assets.xcassets in Resources */,
 				8003225329F947BE00C969FB /* Assets.xcassets in Resources */,
 				80736FAD29EEF42900901A2F /* Assets.xcassets in Resources */,
@@ -2486,6 +2515,7 @@
 				4C363AA828297703006E126D /* InsertSort.swift in Sources */,
 				4C285C86283892E7008A31F1 /* CreateAccountModel.swift in Sources */,
 				4C64987C286D03E000EAE2B3 /* DirectMessagesView.swift in Sources */,
+				804B55A22A76A1A7001B622A /* SuggestedUsersViewModel.swift in Sources */,
 				7C902AE32981D55B002AB16E /* ZoomableScrollView.swift in Sources */,
 				4C190F252A547D2000027FD5 /* LoadScript.swift in Sources */,
 				4C363A8C28236B92006E126D /* PubkeyView.swift in Sources */,
@@ -2551,6 +2581,7 @@
 				F7F0BA25297892BD009531F3 /* SwipeToDismiss.swift in Sources */,
 				4C8D00CA29DF80350036AF10 /* TruncatedText.swift in Sources */,
 				4C4DD3DB2A6CA7E8005B4E85 /* ContentParsing.swift in Sources */,
+				804B55A82A76A1A7001B622A /* SuggestedUsersView.swift in Sources */,
 				F71694F22A67314D001F4053 /* SuggestedUserView.swift in Sources */,
 				4C9BB83429C12D9900FC4E37 /* EventProfileName.swift in Sources */,
 				4C7D09602A098C5D00943473 /* WalletView.swift in Sources */,
@@ -2573,6 +2604,7 @@
 				E9E4ED0B295867B900DD7078 /* ThreadView.swift in Sources */,
 				4CD348EF29C3659D00497EB2 /* ImageUploadModel.swift in Sources */,
 				4C7D096E2A0AEA0400943473 /* ScannerCoordinator.swift in Sources */,
+				804B55A52A76A1A7001B622A /* SuggestedUserView.swift in Sources */,
 				4C3BEFDC281DCE6100B3DE84 /* Liked.swift in Sources */,
 				501F8C5A29FF70F5001AFC1D /* ProfileDatabase.swift in Sources */,
 				4CF0ABE7298444FD00D66079 /* MutedEventView.swift in Sources */,
@@ -2831,6 +2863,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				804B55A32A76A1A7001B622A /* SuggestedUsersViewModel.swift in Sources */,
 				80736EF029EEE23200901A2F /* ProfilePictureSelector.swift in Sources */,
 				80736EFE29EEE24100901A2F /* MutelistView.swift in Sources */,
 				80736E8B29EEE1EE00901A2F /* Debouncer.swift in Sources */,
@@ -2839,6 +2872,7 @@
 				8039FC6B2A24DEAF001F13A3 /* DamusGradient.swift in Sources */,
 				80736E8129EEE1EE00901A2F /* InsertSort.swift in Sources */,
 				80736F7829EEE4D300901A2F /* bech32.c in Sources */,
+				804B55A62A76A1A7001B622A /* SuggestedUserView.swift in Sources */,
 				80736F2529EEE26000901A2F /* RepostsView.swift in Sources */,
 				80736F3729EEE26000901A2F /* ParticipantsView.swift in Sources */,
 				80736ED929EEE21500901A2F /* NotificationSettingsView.swift in Sources */,
@@ -2846,7 +2880,7 @@
 				80736E9529EEE1EE00901A2F /* InputDismissKeyboard.swift in Sources */,
 				80736E8C29EEE1EE00901A2F /* Keys.swift in Sources */,
 				80736ECB29EEE20400901A2F /* NostrKind.swift in Sources */,
-				80736E7C29EEE1EE00901A2F /* Markdown.swift in Sources */,
+				80736E7C29EEE1EE00901A2F /* (null) in Sources */,
 				80736F3E29EEE26000901A2F /* TimelineView.swift in Sources */,
 				80736EBB29EEE1FE00901A2F /* DirectMessagesModel.swift in Sources */,
 				80736E9229EEE1EE00901A2F /* PreviewCache.swift in Sources */,
@@ -2863,7 +2897,8 @@
 				80736F2229EEE26000901A2F /* ReportView.swift in Sources */,
 				80736EBC29EEE1FE00901A2F /* FollowersModel.swift in Sources */,
 				80736E6429EEE1D600901A2F /* ImageCarousel.swift in Sources */,
-				80736EF829EEE23A00901A2F /* RelayStatus.swift in Sources */,
+				804B55A92A76A1A7001B622A /* SuggestedUsersView.swift in Sources */,
+				80736EF829EEE23A00901A2F /* RelayStatusView.swift in Sources */,
 				80736ECC29EEE20400901A2F /* (null) in Sources */,
 				80736ED529EEE20400901A2F /* Nostr.swift in Sources */,
 				80736EC429EEE1FE00901A2F /* CreateAccountModel.swift in Sources */,
@@ -2921,11 +2956,11 @@
 				80DF51252A2ACE0E002DDCB3 /* ProfileDatabase.swift in Sources */,
 				80736EA629EEE1FE00901A2F /* ZapsModel.swift in Sources */,
 				80736F1129EEE25700901A2F /* (null) in Sources */,
-				80736E7529EEE1E500901A2F /* RelayMetadatas.swift in Sources */,
+				80736E7529EEE1E500901A2F /* (null) in Sources */,
 				80736EA329EEE1FE00901A2F /* DamusState.swift in Sources */,
 				80736E6729EEE1D600901A2F /* InvoicesView.swift in Sources */,
 				8003225929F94CF900C969FB /* ZapTypePicker.swift in Sources */,
-				80736EE729EEE22700901A2F /* LoadMoreButton.swift in Sources */,
+				80736EE729EEE22700901A2F /* (null) in Sources */,
 				80736E6529EEE1D600901A2F /* CustomPicker.swift in Sources */,
 				80736EF329EEE23200901A2F /* FollowsYou.swift in Sources */,
 				80736F0929EEE24600901A2F /* TextEvent.swift in Sources */,
@@ -3028,7 +3063,7 @@
 				80D3E6752A08CBA3004A4A8F /* CredentialHandler.swift in Sources */,
 				80736EFB29EEE23A00901A2F /* RelayDetailView.swift in Sources */,
 				80736EB929EEE1FE00901A2F /* Reply.swift in Sources */,
-				80736EED29EEE23200901A2F /* EditProfilePictureControl.swift in Sources */,
+				80736EED29EEE23200901A2F /* EditPictureControl.swift in Sources */,
 				80736EA929EEE1FE00901A2F /* NotificationsModel.swift in Sources */,
 				80736F1629EEE25700901A2F /* BlocksView.swift in Sources */,
 				80736EA729EEE1FE00901A2F /* BookmarksManager.swift in Sources */,
@@ -3118,7 +3153,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				804B55A72A76A1A7001B622A /* SuggestedUserView.swift in Sources */,
 				80736FA929EEF42700901A2F /* DemoApp.swift in Sources */,
+				804B55A42A76A1A7001B622A /* SuggestedUsersViewModel.swift in Sources */,
+				804B55AA2A76A1A7001B622A /* SuggestedUsersView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3290,8 +3328,8 @@
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -3355,8 +3393,8 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				"GCC_PREPROCESSOR_DEFINITIONS[arch=*]" = "";
