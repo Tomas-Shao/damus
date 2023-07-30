@@ -11,6 +11,7 @@ import Foundation
 enum NostrLink: Equatable {
     case ref(ReferencedId)
     case filter(NostrFilter)
+    case script([UInt8])
 }
 
 func encode_pubkey_uri(_ ref: ReferencedId) -> String {
@@ -60,24 +61,13 @@ func parse_nostr_ref_uri(_ p: Parser) -> ReferencedId? {
     if !parse_str(p, "nostr:") {
         return nil
     }
-    
-    guard let typ = parse_nostr_ref_uri_type(p) else {
+
+    guard let ref = parse_post_bech32_mention(p) else {
         p.pos = start
         return nil
     }
-    
-    if !parse_char(p, ":") {
-        p.pos = start
-        return nil
-    }
-    
-    guard let pk = parse_hexstr(p, len: 64) else {
-        p.pos = start
-        return nil
-    }
-    
-    // TODO: parse relays from nostr uris
-    return ReferencedId(ref_id: pk, relay_id: nil, key: typ)
+
+    return ref
 }
 
 func decode_universal_link(_ s: String) -> NostrLink? {
@@ -116,6 +106,8 @@ func decode_nostr_bech32_uri(_ s: String) -> NostrLink? {
         return .ref(ReferencedId(ref_id: pubkey, relay_id: nil, key: "p"))
     case .note(let id):
         return .ref(ReferencedId(ref_id: id, relay_id: nil, key: "e"))
+    case .nscript(let data):
+        return .script(data)
     }
 }
 
@@ -124,8 +116,12 @@ func decode_nostr_uri(_ s: String) -> NostrLink? {
         return decode_universal_link(s)
     }
 
-    var uri = s.replacingOccurrences(of: "nostr://", with: "")
+    var uri = s
+    uri = uri.replacingOccurrences(of: "nostr://", with: "")
     uri = uri.replacingOccurrences(of: "nostr:", with: "")
+
+    // Fix for non-latin characters resulting in second colon being encoded
+    uri = uri.replacingOccurrences(of: "damus:t%3A", with: "t:")
     
     uri = uri.replacingOccurrences(of: "damus://", with: "")
     uri = uri.replacingOccurrences(of: "damus:", with: "")

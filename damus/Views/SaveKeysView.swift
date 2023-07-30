@@ -129,10 +129,9 @@ struct SaveKeysView: View {
             case .connected:
                 let metadata = create_account_to_metadata(account)
                 let contacts_ev = make_first_contact_event(keypair: account.keypair)
-                make_first_post_event(name: "test_save", addressId: "test_save")
-                print("[DAMUS]: 发送first_contact_event和first_post_evnet从SaveKeysView")
-                if let keypair = account.keypair.to_full() {
-                    let metadata_ev = make_metadata_event(keypair: keypair, metadata: metadata)
+                
+                if let keypair = account.keypair.to_full(),
+                   let metadata_ev = make_metadata_event(keypair: keypair, metadata: metadata) {
                     self.pool.send(.event(metadata_ev))
                 }
                 
@@ -240,5 +239,5 @@ struct SaveKeysView_Previews: PreviewProvider {
 }
 
 public func create_account_to_metadata(_ model: CreateAccountModel) -> Profile {
-    return Profile(name: model.nick_name, display_name: model.real_name, about: model.about, picture: model.profile_image, banner: nil, website: nil, lud06: nil, lud16: nil, nip05: nil, damus_donation: nil)
+    return Profile(name: model.nick_name, display_name: model.real_name, about: model.about, picture: model.profile_image?.absoluteString, banner: nil, website: nil, lud06: nil, lud16: nil, nip05: nil, damus_donation: nil)
 }

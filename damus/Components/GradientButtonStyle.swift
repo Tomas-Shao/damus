@@ -8,13 +8,19 @@
 import SwiftUI
 
 struct GradientButtonStyle: ButtonStyle {
+    let padding: CGFloat
+
+    init(padding: CGFloat = 16.0) {
+        self.padding = padding
+    }
+
     func makeBody(configuration: Self.Configuration) -> some View {
         return configuration.label
-            .padding()
+            .padding(padding)
             .foregroundColor(Color.white)
             .background {
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(PinkGradient.gradient)
+                    .fill(PinkGradient)
             }
             .scaleEffect(configuration.isPressed ? 0.8 : 1)
     }
@@ -24,9 +30,11 @@ struct GradientButtonStyle: ButtonStyle {
 struct GradientButtonStyle_Previews: PreviewProvider {
     static var previews: some View {
         VStack {
-            Button("Dynamic Size", action: {
+            Button(action: {
                 print("dynamic size")
-            })
+            }) {
+                Text(verbatim: "Dynamic Size")
+            }
             .buttonStyle(GradientButtonStyle())
             
             
@@ -34,7 +42,7 @@ struct GradientButtonStyle_Previews: PreviewProvider {
                 print("infinite width")
             }) {
                 HStack {
-                    Text("Infinite Width")
+                    Text(verbatim: "Infinite Width")
                 }
                 .frame(minWidth: 300, maxWidth: .infinity, alignment: .center)
             }

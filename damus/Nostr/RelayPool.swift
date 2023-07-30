@@ -14,15 +14,21 @@ struct RelayHandler {
 }
 
 struct QueuedRequest {
-    let req: NostrRequest
+    let req: NostrRequestType
     let relay: String
+    let skip_ephemeral: Bool
+}
+
+struct SeenEvent: Hashable {
+    let relay_id: String
+    let evid: String
 }
 
 public class RelayPool {
     var relays: [Relay] = []
     var handlers: [RelayHandler] = []
     var request_queue: [QueuedRequest] = []
-    var seen: Set<String> = Set()
+    var seen: Set<SeenEvent> = Set()
     var counts: [String: UInt64] = [:]
     
     private let network_monitor = NWPathMonitor()
@@ -34,6 +40,12 @@ public class RelayPool {
             if (path.status == .satisfied || path.status == .requiresConnection) && self?.last_network_status != path.status {
                 DispatchQueue.main.async {
                     self?.connect_to_disconnected()
+                }
+            }
+            
+            if let self, path.status != self.last_network_status {
+                for relay in self.relays {
+                    relay.connection.log?.add("Network state: \(path.status)")
                 }
             }
             
@@ -83,6 +95,7 @@ public class RelayPool {
         
         for relay in relays {
             if relay.id == relay_id {
+                relay.connection.disablePermanently()
                 relays.remove(at: i)
                 break
             }
@@ -102,6 +115,13 @@ public class RelayPool {
         }
         let relay = Relay(descriptor: desc, connection: conn)
         self.relays.append(relay)
+    }
+    
+    func setLog(_ log: RelayLog, for relay_id: String) {
+        // add the current network state to the log
+        log.add("Network state: \(network_monitor.currentPath.status)")
+        
+        get_relay(relay_id)?.connection.log = log
     }
     
     /// This is used to retry dead connections
@@ -173,18 +193,18 @@ public class RelayPool {
         return c
     }
     
-    func queue_req(r: NostrRequest, relay: String) {
+    func queue_req(r: NostrRequestType, relay: String, skip_ephemeral: Bool) {
         let count = count_queued(relay: relay)
         guard count <= 10 else {
             print("can't queue, too many queued events for \(relay)")
             return
         }
         
-        print("queueing request: \(r) for \(relay)")
-        request_queue.append(QueuedRequest(req: r, relay: relay))
+        print("queueing request for \(relay)")
+        request_queue.append(QueuedRequest(req: r, relay: relay, skip_ephemeral: skip_ephemeral))
     }
     
-    public func send(_ req: NostrRequest, to: [String]? = nil, skip_ephemeral: Bool = true) {
+    public func send_raw(_ req: NostrRequestType, to: [String]? = nil, skip_ephemeral: Bool = true) {
         let relays = to.map{ get_relays($0) } ?? self.relays
 
         for relay in relays {
@@ -201,12 +221,16 @@ public class RelayPool {
             }
             
             guard relay.connection.isConnected else {
-                queue_req(r: req, relay: relay.id)
+                queue_req(r: req, relay: relay.id, skip_ephemeral: skip_ephemeral)
                 continue
             }
             
             relay.connection.send(req)
         }
+    }
+    
+    func send(_ req: NostrRequest, to: [String]? = nil, skip_ephemeral: Bool = true) {
+        send_raw(.typical(req), to: to, skip_ephemeral: skip_ephemeral)
     }
     
     func get_relays(_ ids: [String]) -> [Relay] {
@@ -226,14 +250,14 @@ public class RelayPool {
             }
             
             print("running queueing request: \(req.req) for \(relay_id)")
-            self.send(req.req, to: [relay_id])
+            self.send_raw(req.req, to: [relay_id], skip_ephemeral: false)
         }
     }
     
     func record_seen(relay_id: String, event: NostrConnectionEvent) {
         if case .nostr_event(let ev) = event {
             if case .event(_, let nev) = ev {
-                let k = relay_id + nev.id
+                let k = SeenEvent(relay_id: relay_id, evid: nev.id)
                 if !seen.contains(k) {
                     seen.insert(k)
                     if counts[relay_id] == nil {

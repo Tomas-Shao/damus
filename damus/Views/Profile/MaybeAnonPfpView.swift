@@ -28,7 +28,7 @@ struct MaybeAnonPfpView: View {
                     .font(.largeTitle)
                     .frame(width: size, height: size)
             } else {
-                NavigationLink(destination: ProfileView(damus_state: state, pubkey: pubkey)) {
+                NavigationLink(value: Route.ProfileByKey(pubkey: pubkey)) {
                     ProfilePicView(pubkey: pubkey, size: size, highlight: .none, profiles: state.profiles, disable_animation: state.settings.disable_animation)
                 }
             }
@@ -38,6 +38,6 @@ struct MaybeAnonPfpView: View {
 
 struct MaybeAnonPfpView_Previews: PreviewProvider {
     static var previews: some View {
-        MaybeAnonPfpView(state: test_damus_state(), is_anon: true, pubkey: "anon", size: PFP_SIZE)
+        MaybeAnonPfpView(state: test_damus_state(), is_anon: true, pubkey: ANON_PUBKEY, size: PFP_SIZE)
     }
 }

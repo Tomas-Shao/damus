@@ -18,16 +18,16 @@ struct ConfigView: View {
     @State var delete_account_warning: Bool = false
     @State var confirm_delete_account: Bool = false
     @State var delete_text: String = ""
-    
+
     @ObservedObject var settings: UserSettingsStore
 
     private let DELETE_KEYWORD = "DELETE"
-    
+
     init(state: DamusState) {
         self.state = state
         _settings = ObservedObject(initialValue: state.settings)
     }
-    
+
     func textColor() -> Color {
         colorScheme == .light ? DamusColors.black : DamusColors.white
     }
@@ -36,31 +36,38 @@ struct ConfigView: View {
         ZStack(alignment: .leading) {
             Form {
                 Section {
-                    NavigationLink(destination: KeySettingsView(keypair: state.keypair)) {
-                        IconLabel(NSLocalizedString("Keys", comment: "Settings section for managing keys"), img_name: "key", color: .purple)
+                    NavigationLink(value: Route.KeySettings(keypair: state.keypair)) {
+                        IconLabel(NSLocalizedString("Keys", comment: "Settings section for managing keys"), img_name: "Key", color: .purple)
                     }
-                    
-                    NavigationLink(destination: AppearanceSettingsView(settings: settings)) {
+
+                    NavigationLink(value: Route.AppearanceSettings(settings: settings)) {
                         IconLabel(NSLocalizedString("Appearance", comment: "Section header for text and appearance settings"), img_name: "eye", color: .red)
                     }
-                    
-                    NavigationLink(destination: SearchSettingsView(settings: settings)) {
-                        IconLabel(NSLocalizedString("Search/Universe", comment: "Section header for search/universe settings"), img_name: "magnifyingglass", color: .red)
+
+                    NavigationLink(value: Route.SearchSettings(settings: settings)) {
+                        IconLabel(NSLocalizedString("Search/Universe", comment: "Section header for search/universe settings"), img_name: "search", color: .red)
                     }
-                    
-                    NavigationLink(destination: NotificationSettingsView(settings: settings)) {
+
+                    NavigationLink(value: Route.NotificationSettings(settings: settings)) {
                         IconLabel(NSLocalizedString("Notifications", comment: "Section header for Damus notifications"), img_name: "notification-bell-on", color: .blue)
                     }
-                    
-                    NavigationLink(destination: ZapSettingsView(settings: settings)) {
+
+                    NavigationLink(value: Route.ZapSettings(settings: settings)) {
                         IconLabel(NSLocalizedString("Zaps", comment: "Section header for zap settings"), img_name: "zap.fill", color: .orange)
                     }
-                    
-                    NavigationLink(destination: TranslationSettingsView(settings: settings)) {
+
+                    NavigationLink(value: Route.TranslationSettings(settings: settings)) {
                         IconLabel(NSLocalizedString("Translation", comment: "Section header for text and appearance settings"), img_name: "globe", color: .green)
                     }
+                    
+                    NavigationLink(value: Route.DeveloperSettings(settings: settings)) {
+                        IconLabel(NSLocalizedString("Developer", comment: "Section header for developer settings"), img_name: "magic-stick2.fill", color: DamusColors.adaptableBlack)
+                    }
+                    
+                    NavigationLink(value: Route.ReactionsSettings(settings: settings)) {
+                        IconLabel(NSLocalizedString("Reactions", comment: "Section header for reactions settings"), img_name: "shaka.fill", color: .purple)
+                    }
                 }
-                
 
                 Section(NSLocalizedString("Sign Out", comment: "Section title for signing out")) {
                     Button(action: {
@@ -113,15 +120,11 @@ struct ConfigView: View {
                 confirm_delete_account = false
             }
             Button(NSLocalizedString("Delete", comment: "Button for deleting the users account."), role: .destructive) {
-                guard let full_kp = state.keypair.to_full() else {
+                guard let keypair = state.keypair.to_full(),
+                      delete_text == DELETE_KEYWORD,
+                      let ev = created_deleted_account_profile(keypair: keypair) else {
                     return
                 }
-                
-                guard delete_text == DELETE_KEYWORD else {
-                    return
-                }
-                
-                let ev = created_deleted_account_profile(keypair: full_kp)
                 state.postbox.send(ev)
                 notify(.logout, ())
             }
@@ -164,7 +167,7 @@ func handle_string_amount(new_value: String) -> Int? {
     guard let amt = NumberFormatter().number(from: filtered) as? Int else {
         return nil
     }
-    
+
     return amt
 }
 

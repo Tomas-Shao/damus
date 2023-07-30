@@ -9,10 +9,15 @@ import Foundation
 import secp256k1
 
 let PUBKEY_HRP = "npub"
+let ANON_PUBKEY = "anon"
 
 public struct FullKeypair: Equatable {
     let pubkey: String
     let privkey: String
+
+    func to_keypair() -> Keypair {
+        return Keypair(pubkey: pubkey, privkey: privkey)
+    }
 }
 
 public struct Keypair {
@@ -71,6 +76,14 @@ func bech32_pubkey(_ pubkey: String) -> String? {
     return bech32_encode(hrp: "npub", bytes)
 }
 
+func bech32_pubkey_decode(_ pubkey: String) -> String? {
+    guard let decoded = try? bech32_decode(pubkey), decoded.hrp == "npub" else {
+        return nil
+    }
+
+    return hex_encode(decoded.data)
+}
+
 func bech32_nopre_pubkey(_ pubkey: String) -> String? {
     guard let bytes = hex_decode(pubkey) else {
         return nil
@@ -92,14 +105,16 @@ public func generate_new_keypair() -> Keypair {
     return Keypair(pubkey: pubkey, privkey: privkey)
 }
 
-public func privkey_to_pubkey(privkey: String) -> String? {
-    guard let sec = hex_decode(privkey) else {
-        return nil
-    }
+public func privkey_to_pubkey_raw(sec: [UInt8]) -> String? {
     guard let key = try? secp256k1.Signing.PrivateKey(rawRepresentation: sec) else {
         return nil
     }
     return hex_encode(Data(key.publicKey.xonly.bytes))
+}
+
+public func privkey_to_pubkey(privkey: String) -> String? {
+    guard let sec = hex_decode(privkey) else { return nil }
+    return privkey_to_pubkey_raw(sec: sec)
 }
 
 public func save_pubkey(pubkey: String) {

@@ -35,16 +35,8 @@ struct ProfileName: View {
     @State var display_name: DisplayName?
     @State var nip05: NIP05?
     @State var donation: Int?
-
-    init(pubkey: String, profile: Profile?, damus: DamusState, show_nip5_domain: Bool = true) {
-        self.pubkey = pubkey
-        self.profile = profile
-        self.prefix = ""
-        self.show_nip5_domain = show_nip5_domain
-        self.damus_state = damus
-    }
     
-    init(pubkey: String, profile: Profile?, prefix: String, damus: DamusState, show_nip5_domain: Bool = true) {
+    init(pubkey: String, profile: Profile?, prefix: String = "", damus: DamusState, show_nip5_domain: Bool = true) {
         self.pubkey = pubkey
         self.profile = profile
         self.prefix = prefix
@@ -65,7 +57,7 @@ struct ProfileName: View {
     }
     
     var name_choice: String {
-        return prefix == "@" ? current_display_name.username : current_display_name.display_name
+        return prefix == "@" ? current_display_name.username.truncate(maxLength: 50) : current_display_name.display_name.truncate(maxLength: 50)
     }
     
     var onlyzapper: Bool {
@@ -93,7 +85,7 @@ struct ProfileName: View {
                 .font(.body)
                 .fontWeight(prefix == "@" ? .none : .bold)
             if let nip05 = current_nip05 {
-                NIP05Badge(nip05: nip05, pubkey: pubkey, contacts: damus_state.contacts, show_domain: show_nip5_domain, clickable: true)
+                NIP05Badge(nip05: nip05, pubkey: pubkey, contacts: damus_state.contacts, show_domain: show_nip5_domain, profiles: damus_state.profiles)
             }
             if let friend = friend_type, current_nip05 == nil {
                 FriendIcon(friend: friend)

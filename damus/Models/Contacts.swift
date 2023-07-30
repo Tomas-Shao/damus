@@ -11,6 +11,8 @@ import Foundation
 class Contacts {
     private var friends: Set<String> = Set()
     private var friend_of_friends: Set<String> = Set()
+    /// Tracks which friends are friends of a given pubkey.
+    private var pubkey_to_our_friends = [String : Set<String>]()
     private var muted: Set<String> = Set()
     
     let our_pubkey: String
@@ -38,15 +40,15 @@ class Contacts {
         
         for d in diff {
             if new.contains(d) {
-                new_mutes.append(d)
+                new_mutes.append(d.string())
             } else {
-                new_unmutes.append(d)
+                new_unmutes.append(d.string())
             }
         }
-        
+
         // TODO: set local mutelist here
-        self.muted = Set(ev.referenced_pubkeys.map({ $0.ref_id }))
-        
+        self.muted = Set(ev.referenced_pubkeys.map({ $0.ref_id.string() }))
+
         if new_mutes.count > 0 {
             notify(.new_mutes, new_mutes)
         }
@@ -58,21 +60,38 @@ class Contacts {
     
     func remove_friend(_ pubkey: String) {
         friends.remove(pubkey)
+
+        pubkey_to_our_friends.forEach {
+            pubkey_to_our_friends[$0.key]?.remove(pubkey)
+        }
     }
     
-    func get_friend_list() -> [String] {
-        return Array(friends)
+    func get_friend_list() -> Set<String> {
+        return friends
     }
-    
+
+    func get_followed_hashtags() -> Set<String> {
+        guard let ev = self.event else { return Set() }
+        return Set(ev.referenced_hashtags.map({ $0.ref_id.string() }))
+    }
+
     func add_friend_pubkey(_ pubkey: String) {
         friends.insert(pubkey)
     }
     
     func add_friend_contact(_ contact: NostrEvent) {
         friends.insert(contact.pubkey)
-        for tag in contact.tags {
-            if tag.count >= 2 && tag[0] == "p" {
-                friend_of_friends.insert(tag[1])
+        for tag in contact.referenced_pubkeys {
+            let pk = tag.id.string()
+            friend_of_friends.insert(pk)
+
+            // Exclude themself and us.
+            if contact.pubkey != our_pubkey && contact.pubkey != pk {
+                if pubkey_to_our_friends[pk] == nil {
+                    pubkey_to_our_friends[pk] = Set<String>()
+                }
+
+                pubkey_to_our_friends[pk]?.insert(contact.pubkey)
             }
         }
     }
@@ -96,49 +115,57 @@ class Contacts {
     func follow_state(_ pubkey: String) -> FollowState {
         return is_friend(pubkey) ? .follows : .unfollows
     }
+
+    /// Gets the list of pubkeys of our friends who follow the given pubkey.
+    func get_friended_followers(_ pubkey: String) -> [String] {
+        return Array((pubkey_to_our_friends[pubkey] ?? Set()))
+    }
 }
 
-func follow_user(pool: RelayPool, our_contacts: NostrEvent?, pubkey: String, privkey: String, follow: ReferencedId) -> NostrEvent? {
-    guard let ev = follow_user_event(our_contacts: our_contacts, our_pubkey: pubkey, follow: follow) else {
+func follow_reference(box: PostBox, our_contacts: NostrEvent?, keypair: FullKeypair, follow: ReferencedId) -> NostrEvent? {
+    guard let ev = follow_user_event(our_contacts: our_contacts, keypair: keypair, follow: follow) else {
         return nil
     }
     
-    ev.calculate_id()
-    ev.sign(privkey: privkey)
-    
-    
-    pool.send(.event(ev))
-    
+    box.send(ev)
+
     return ev
 }
 
-func unfollow_user(postbox: PostBox, our_contacts: NostrEvent?, pubkey: String, privkey: String, unfollow: String) -> NostrEvent? {
+func unfollow_reference(postbox: PostBox, our_contacts: NostrEvent?, keypair: FullKeypair, unfollow: ReferencedId) -> NostrEvent? {
     guard let cs = our_contacts else {
         return nil
     }
     
-    let ev = unfollow_user_event(our_contacts: cs, our_pubkey: pubkey, unfollow: unfollow)
-    ev.calculate_id()
-    ev.sign(privkey: privkey)
-    
+    guard let ev = unfollow_reference_event(our_contacts: cs, keypair: keypair, unfollow: unfollow) else {
+        return nil
+    }
+
     postbox.send(ev)
     
     return ev
 }
 
-func unfollow_user_event(our_contacts: NostrEvent, our_pubkey: String, unfollow: String) -> NostrEvent {
-    let tags = our_contacts.tags.filter { tag in
-        if tag.count >= 2 && tag[0] == "p" && tag[1] == unfollow {
-            return false
+func unfollow_reference_event(our_contacts: NostrEvent, keypair: FullKeypair, unfollow: ReferencedId) -> NostrEvent? {
+    let tags = our_contacts.tags.reduce(into: [[String]]()) { ts, tag in
+        if tag.count >= 2,
+           let fst = unfollow.key.first,
+           let afst = AsciiCharacter(fst),
+           tag[0].matches_char(afst),
+           tag[1].matches_str(unfollow.ref_id)
+        {
+            return
         }
-        return true
+
+        ts.append(tag.strings())
     }
-    
+
     let kind = NostrKind.contacts.rawValue
-    return NostrEvent(content: our_contacts.content, pubkey: our_pubkey, kind: kind, tags: tags)
+
+    return NostrEvent(content: our_contacts.content, keypair: keypair.to_keypair(), kind: kind, tags: Array(tags))
 }
 
-func follow_user_event(our_contacts: NostrEvent?, our_pubkey: String, follow: ReferencedId) -> NostrEvent? {
+func follow_user_event(our_contacts: NostrEvent?, keypair: FullKeypair, follow: ReferencedId) -> NostrEvent? {
     guard let cs = our_contacts else {
         // don't create contacts for now so we don't nuke our contact list due to connectivity issues
         // we should only create contacts during profile creation
@@ -146,7 +173,7 @@ func follow_user_event(our_contacts: NostrEvent?, our_pubkey: String, follow: Re
         return nil
     }
 
-    guard let ev = follow_with_existing_contacts(our_pubkey: our_pubkey, our_contacts: cs, follow: follow) else {
+    guard let ev = follow_with_existing_contacts(keypair: keypair, our_contacts: cs, follow: follow) else {
         return nil
     }
     
@@ -158,23 +185,18 @@ func decode_json_relays(_ content: String) -> [String: RelayInfo]? {
     return decode_json(content)
 }
 
-func remove_relay(ev: NostrEvent, current_relays: [RelayDescriptor], privkey: String, relay: String) -> NostrEvent? {
+func remove_relay(ev: NostrEvent, current_relays: [RelayDescriptor], keypair: FullKeypair, relay: String) -> NostrEvent?{
     var relays = ensure_relay_info(relays: current_relays, content: ev.content)
-    
     relays.removeValue(forKey: relay)
     
-    print("remove_relay \(relays)")
     guard let content = encode_json(relays) else {
         return nil
     }
     
-    let new_ev = NostrEvent(content: content, pubkey: ev.pubkey, kind: 3, tags: ev.tags)
-    new_ev.calculate_id()
-    new_ev.sign(privkey: privkey)
-    return new_ev
+    return NostrEvent(content: content, keypair: keypair.to_keypair(), kind: 3, tags: ev.tags.strings())
 }
 
-func add_relay(ev: NostrEvent, privkey: String, current_relays: [RelayDescriptor], relay: String, info: RelayInfo) -> NostrEvent? {
+func add_relay(ev: NostrEvent, keypair: FullKeypair, current_relays: [RelayDescriptor], relay: String, info: RelayInfo) -> NostrEvent? {
     var relays = ensure_relay_info(relays: current_relays, content: ev.content)
     
     guard relays.index(forKey: relay) == nil else {
@@ -187,10 +209,7 @@ func add_relay(ev: NostrEvent, privkey: String, current_relays: [RelayDescriptor
         return nil
     }
     
-    let new_ev = NostrEvent(content: content, pubkey: ev.pubkey, kind: 3, tags: ev.tags)
-    new_ev.calculate_id()
-    new_ev.sign(privkey: privkey)
-    return new_ev
+    return NostrEvent(content: content, keypair: keypair.to_keypair(), kind: 3, tags: ev.tags.strings())
 }
 
 func ensure_relay_info(relays: [RelayDescriptor], content: String) -> [String: RelayInfo] {
@@ -200,16 +219,23 @@ func ensure_relay_info(relays: [RelayDescriptor], content: String) -> [String: R
     return relay_info
 }
 
-func follow_with_existing_contacts(our_pubkey: String, our_contacts: NostrEvent, follow: ReferencedId) -> NostrEvent? {
+func is_already_following(contacts: NostrEvent, follow: ReferencedId) -> Bool {
+    guard let key = follow.key.first_char() else { return false }
+    return contacts.references(id: follow.ref_id, key: key)
+}
+
+func follow_with_existing_contacts(keypair: FullKeypair, our_contacts: NostrEvent, follow: ReferencedId) -> NostrEvent? {
     // don't update if we're already following
-    if our_contacts.references(id: follow.ref_id, key: "p") {
+    if is_already_following(contacts: our_contacts, follow: follow) {
         return nil
     }
-    
+
     let kind = NostrKind.contacts.rawValue
-    var tags = our_contacts.tags
+
+    var tags = our_contacts.tags.strings()
     tags.append(refid_to_tag(follow))
-    return NostrEvent(content: our_contacts.content, pubkey: our_pubkey, kind: kind, tags: tags)
+
+    return NostrEvent(content: our_contacts.content, keypair: keypair.to_keypair(), kind: kind, tags: tags)
 }
 
 func make_contact_relays(_ relays: [RelayDescriptor]) -> [String: RelayInfo] {

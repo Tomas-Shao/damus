@@ -33,13 +33,11 @@ enum ParsedKey {
 }
 
 struct LoginView: View {
-    @State private var create_account = false
     @State var key: String = ""
     @State var is_pubkey: Bool = false
     @State var error: String? = nil
     @State private var credential_handler = CredentialHandler()
-    
-    @Binding var accepted: Bool
+    var nav: NavigationCoordinator
 
     func get_error(parsed_key: ParsedKey?) -> String? {
         if self.error != nil {
@@ -55,12 +53,6 @@ struct LoginView: View {
     
     var body: some View {
         ZStack(alignment: .top) {
-            if accepted {
-                NavigationLink(destination: CreateAccountView(), isActive: $create_account) {
-                    EmptyView()
-                }
-            }
-            
             VStack {
                 SignInHeader()
                     .padding(.top, 100)
@@ -80,9 +72,10 @@ struct LoginView: View {
                 }
 
                 if parsed?.is_pub ?? false {
-                    Text("This is a public key, you will not be able to make posts or interact in any way. This is used for viewing accounts from their perspective.", comment: "Warning that the inputted account key is a public key and the result of what happens because of it.")
+                    Text("This is a public key, you will not be able to make notes or interact in any way. This is used for viewing accounts from their perspective.", comment: "Warning that the inputted account key is a public key and the result of what happens because of it.")
                         .foregroundColor(Color.orange)
                         .bold()
+                        .fixedSize(horizontal: false, vertical: true)
                 }
 
                 if let p = parsed {
@@ -106,25 +99,34 @@ struct LoginView: View {
                     .padding(.top, 10)
                 }
 
-                CreateAccountPrompt(create_account: $create_account)
+                CreateAccountPrompt(nav: nav)
                     .padding(.top, 10)
 
                 Spacer()
             }
             .padding()
         }
-        .background(
-            Image("login-header", bundle: Bundle(for: DamusColors.self))
-                .resizable()
-                .frame(maxWidth: .infinity, maxHeight: 350, alignment: .center)
-                .ignoresSafeArea(),
-            alignment: .top
-        )
+        .background(DamusBackground(maxHeight: 350), alignment: .top)
         .onAppear {
             credential_handler.check_credentials()
         }
         .navigationBarBackButtonHidden(true)
         .navigationBarItems(leading: BackNav())
+    }
+}
+
+extension View {
+    func nsecLoginStyle(key: String, title: String) -> some View {
+        self
+            .placeholder(when: key.isEmpty) {
+                Text(title).foregroundColor(.white.opacity(0.6))
+            }
+            .padding(10)
+            .autocapitalization(.none)
+            .autocorrectionDisabled(true)
+            .textInputAutocapitalization(.never)
+            .font(.body.monospaced())
+            .textContentType(.password)
     }
 }
 
@@ -268,6 +270,7 @@ func get_nip05_pubkey(id: String) async -> NIP05User? {
 struct KeyInput: View {
     let title: String
     let key: Binding<String>
+    @State private var is_secured: Bool = true
 
     init(_ title: String, key: Binding<String>) {
         self.title = title
@@ -283,16 +286,18 @@ struct KeyInput: View {
                         self.key.wrappedValue = pastedkey
                     }
                 }
-            TextField("", text: key)
-                .placeholder(when: key.wrappedValue.isEmpty) {
-                    Text(title).foregroundColor(.white.opacity(0.6))
+            if is_secured  {
+                     SecureField("", text: key)
+                         .nsecLoginStyle(key: key.wrappedValue, title: title)
+                 } else {
+                     TextField("", text: key)
+                         .nsecLoginStyle(key: key.wrappedValue, title: title)
+                 }
+            Image(systemName: "eye.slash")
+                .foregroundColor(.gray)
+                .onTapGesture {
+                    is_secured.toggle()
                 }
-                .padding(10)
-                .autocapitalization(.none)
-                .autocorrectionDisabled(true)
-                .textInputAutocapitalization(.never)
-                .font(.body.monospaced())
-                .textContentType(.password)
         }
         .padding(.horizontal, 10)
         .overlay {
@@ -336,14 +341,14 @@ struct SignInEntry: View {
 }
 
 struct CreateAccountPrompt: View {
-    @Binding var create_account: Bool
+    var nav: NavigationCoordinator
     var body: some View {
         HStack {
-            Text("New to nostr?", comment: "Ask the user if they are new to nostr")
+            Text("New to Nostr?", comment: "Ask the user if they are new to Nostr")
                 .foregroundColor(Color("DamusMediumGrey"))
             
             Button(NSLocalizedString("Create account", comment: "Button to navigate to create account view.")) {
-                create_account.toggle()
+                nav.push(route: Route.CreateAccount)
             }
             
             Spacer()
@@ -357,8 +362,8 @@ struct LoginView_Previews: PreviewProvider {
         let pubkey = "npub18m76awca3y37hkvuneavuw6pjj4525fw90necxmadrvjg0sdy6qsngq955"
         let bech32_pubkey = "KeyInput"
         Group {
-            LoginView(key: pubkey, accepted: .constant(true))
-            LoginView(key: bech32_pubkey, accepted: .constant(true))
+            LoginView(key: pubkey, nav: .init())
+            LoginView(key: bech32_pubkey, nav: .init())
         }
     }
 }

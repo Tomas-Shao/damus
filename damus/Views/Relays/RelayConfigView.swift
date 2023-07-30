@@ -12,6 +12,7 @@ struct RelayConfigView: View {
     @State var new_relay: String = ""
     @State var relays: [RelayDescriptor]
     @State private var showActionButtons = false
+    @State var relayAddErrorMessage: String? = nil
     
     @Environment(\.dismiss) var dismiss
     
@@ -53,7 +54,7 @@ struct RelayConfigView: View {
                 VStack {
                     HStack {
                         Spacer()
-                        if(!new_relay.isEmpty) {
+                        if !new_relay.isEmpty {
                             Button(NSLocalizedString("Cancel", comment: "Button to cancel out of view adding user inputted relay.")) {
                                 new_relay = ""
                                 UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
@@ -75,27 +76,28 @@ struct RelayConfigView: View {
                                     new_relay.removeLast();
                                 }
                                 
-                                guard let url = RelayURL(new_relay) else {
-                                    return
-                                }
-                                
-                                guard let ev = state.contacts.event else {
-                                    return
-                                }
-                                
-                                guard let privkey = state.keypair.privkey else {
+                                guard let url = RelayURL(new_relay),
+                                      let ev = state.contacts.event,
+                                      let keypair = state.keypair.to_full() else {
                                     return
                                 }
                                 
                                 let info = RelayInfo.rw
                                 let descriptor = RelayDescriptor(url: url, info: info)
-                                guard (try? state.pool.add_relay(descriptor)) != nil else {
+
+                                do {
+                                    try state.pool.add_relay(descriptor)
+                                    relayAddErrorMessage = nil	// Clear error message
+                                } catch RelayError.RelayAlreadyExists {
+                                    relayAddErrorMessage = NSLocalizedString("This relay is already in your list", comment: "An error message that appears when the user attempts to add a relay that has already been added.")
+                                    return
+                                } catch {
                                     return
                                 }
                                 
                                 state.pool.connect(to: [new_relay])
                                 
-                                guard let new_ev = add_relay(ev: ev, privkey: privkey, current_relays: state.pool.our_descriptors, relay: new_relay, info: info) else {
+                                guard let new_ev = add_relay(ev: ev, keypair: keypair, current_relays: state.pool.our_descriptors, relay: new_relay, info: info) else {
                                     return
                                 }
                                 
@@ -113,6 +115,13 @@ struct RelayConfigView: View {
                             .background(LINEAR_GRADIENT)
                             .clipShape(Capsule())
                             .padding(EdgeInsets(top: 15, leading: 0, bottom: 0, trailing: 0))
+                        }
+                    }
+                    if let errorMessage = relayAddErrorMessage {
+                        HStack {
+                            Spacer()
+                            Text(errorMessage)
+                                .foregroundColor(Color.red)
                         }
                     }
                 }

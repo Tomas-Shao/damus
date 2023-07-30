@@ -10,7 +10,8 @@ import Foundation
 public class Profile: Codable {
     var value: [String: AnyCodable]
     
-    public init (name: String?, display_name: String?, about: String?, picture: String?, banner: String?, website: String?, lud06: String?, lud16: String?, nip05: String?, damus_donation: Int?) {
+    public init(name: String? = nil, display_name: String? = nil, about: String? = nil, picture: String? = nil, banner: String? = nil, website: String? = nil, lud06: String? = nil, lud16: String? = nil, nip05: String? = nil, damus_donation: Int? = nil) {
+
         self.value = [:]
         self.name = name
         self.display_name = display_name
@@ -100,8 +101,8 @@ public class Profile: Codable {
     }
     
     var damus_donation: Int? {
-        get { return int("damus_donation"); }
-        set(s) { set_int("damus_donation", s) }
+        get { return int("damus_donation_v2"); }
+        set(s) { set_int("damus_donation_v2", s) }
     }
     
     var picture: String? {

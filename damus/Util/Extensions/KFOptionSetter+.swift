@@ -40,7 +40,7 @@ extension KFOptionSetter {
     
     func onFailure(fallbackUrl: URL?, cacheKey: String?) -> Self {
         guard let url = fallbackUrl, let key = cacheKey else { return self }
-        let imageResource = ImageResource(downloadURL: url, cacheKey: key)
+        let imageResource = Kingfisher.ImageResource(downloadURL: url, cacheKey: key)
         let source = imageResource.convertToSource()
         options.alternativeSources = [source]
         
@@ -86,7 +86,7 @@ struct CustomImageProcessor: ImageProcessor {
     func process(item: ImageProcessItem, options: KingfisherParsedOptionsInfo) -> KFCrossPlatformImage? {
         
         switch item {
-        case .image(_):
+        case .image:
             // This case will never run
             return DefaultImageProcessor.default.process(item: item, options: options)
         case .data(let data):

@@ -51,7 +51,7 @@ enum NotificationItem {
         }
     }
     
-    var last_event_at: Int64 {
+    var last_event_at: UInt32 {
         switch self {
         case .reaction(_, let evgrp):
             return evgrp.last_event_at
@@ -99,34 +99,20 @@ enum NotificationItem {
 }
 
 class NotificationsModel: ObservableObject, ScrollQueue {
-    var incoming_zaps: [Zapping]
-    var incoming_events: [NostrEvent]
-    var should_queue: Bool
+    var incoming_zaps: [Zapping] = []
+    var incoming_events: [NostrEvent] = []
+    var should_queue: Bool = true
     
     // mappings from events to
-    var zaps: [String: ZapGroup]
-    var profile_zaps: ZapGroup
-    var reactions: [String: EventGroup]
-    var reposts: [String: EventGroup]
-    var replies: [NostrEvent]
-    var has_reply: Set<String>
-    var has_ev: Set<String>
+    var zaps: [String: ZapGroup] = [:]
+    var profile_zaps = ZapGroup()
+    var reactions: [String: EventGroup] = [:]
+    var reposts: [String: EventGroup] = [:]
+    var replies: [NostrEvent] = []
+    var has_reply = Set<String>()
+    var has_ev = Set<String>()
     
-    @Published var notifications: [NotificationItem]
-    
-    init() {
-        self.zaps = [:]
-        self.reactions = [:]
-        self.reposts = [:]
-        self.replies = []
-        self.has_reply = Set()
-        self.should_queue = true
-        self.incoming_zaps = []
-        self.incoming_events = []
-        self.profile_zaps = ZapGroup()
-        self.notifications = []
-        self.has_ev = Set()
-    }
+    @Published var notifications: [NotificationItem] = []
     
     func set_should_queue(_ val: Bool) {
         self.should_queue = val
@@ -150,7 +136,7 @@ class NotificationsModel: ObservableObject, ScrollQueue {
         }
         
         for zap in incoming_zaps {
-            pks.insert(zap.request.pubkey)
+            pks.insert(zap.request.ev.pubkey)
         }
         
         return Array(pks)
@@ -228,11 +214,11 @@ class NotificationsModel: ObservableObject, ScrollQueue {
         
         let id = ref_id.id
         
-        if let evgrp = self.reactions[id] {
+        if let evgrp = self.reactions[id.string()] {
             return evgrp.insert(ev)
         } else {
             let evgrp = EventGroup()
-            self.reactions[id] = evgrp
+            self.reactions[id.string()] = evgrp
             return evgrp.insert(ev)
         }
     }
@@ -307,7 +293,7 @@ class NotificationsModel: ObservableObject, ScrollQueue {
         changed = changed || incoming_events.count != count
         
         count = profile_zaps.zaps.count
-        profile_zaps.zaps = profile_zaps.zaps.filter { zap in isIncluded(zap.request) }
+        profile_zaps.zaps = profile_zaps.zaps.filter { zap in isIncluded(zap.request.ev) }
         changed = changed || profile_zaps.zaps.count != count
         
         for el in reactions {
@@ -325,7 +311,7 @@ class NotificationsModel: ObservableObject, ScrollQueue {
         for el in zaps {
             count = el.value.zaps.count
             el.value.zaps = el.value.zaps.filter {
-                isIncluded($0.request)
+                isIncluded($0.request.ev)
             }
             changed = changed || el.value.zaps.count != count
         }

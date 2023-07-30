@@ -13,16 +13,21 @@ enum NostrPostResult {
     case cancel
 }
 
-let POST_PLACEHOLDER = NSLocalizedString("Type your post here...", comment: "Text box prompt to ask user to type their post.")
+let POST_PLACEHOLDER = NSLocalizedString("Type your note here...", comment: "Text box prompt to ask user to type their note.")
 
 class TagModel: ObservableObject {
     var diff = 0
 }
 
+enum PostTarget {
+    case none
+    case user(String)
+}
+
 enum PostAction {
     case replying_to(NostrEvent)
     case quoting(NostrEvent)
-    case posting
+    case posting(PostTarget)
     
     var ev: NostrEvent? {
         switch self {
@@ -71,43 +76,26 @@ struct PostView: View {
     }
     
     func send_post() {
-        var kind: NostrKind = .text
-
-        if case .replying_to(let ev) = action, ev.known_kind == .chat {
-            kind = .chat
-        }
-
-        post.enumerateAttributes(in: NSRange(location: 0, length: post.length), options: []) { attributes, range, stop in
-            if let link = attributes[.link] as? String {
-                post.replaceCharacters(in: range, with: link)
-            }
-        }
-
-        var content = self.post.string.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
-
-        let imagesString = uploadedMedias.map { $0.uploadedURL.absoluteString }.joined(separator: " ")
-        
-        let img_meta_tags = uploadedMedias.compactMap { $0.metadata?.to_tag() }
-        
-        if !imagesString.isEmpty {
-            content.append(" " + imagesString + " ")
-        }
-
-        if case .quoting(let ev) = action, let id = bech32_note_id(ev.id) {
-            content.append(" nostr:" + id)
-        }
-        
-        let new_post = NostrPost(content: content, references: references, kind: kind, tags: img_meta_tags)
+        let new_post = build_post(post: self.post, action: action, uploadedMedias: uploadedMedias, references: references)
 
         NotificationCenter.default.post(name: .post, object: NostrPostResult.post(new_post))
-        
+
         clear_draft()
 
         dismiss()
+
     }
 
     var is_post_empty: Bool {
         return post.string.allSatisfy { $0.isWhitespace } && uploadedMedias.isEmpty
+    }
+
+    var uploading_disabled: Bool {
+        return image_upload.progress != nil
+    }
+
+    var posting_disabled: Bool {
+        return is_post_empty || uploading_disabled
     }
     
     var ImageButton: some View {
@@ -133,7 +121,7 @@ struct PostView: View {
             ImageButton
             CameraButton
         }
-        .disabled(image_upload.progress != nil)
+        .disabled(uploading_disabled)
     }
     
     var PostButton: some View {
@@ -144,18 +132,31 @@ struct PostView: View {
                 self.send_post()
             }
         }
-        .disabled(is_post_empty)
+        .disabled(posting_disabled)
         .font(.system(size: 14, weight: .bold))
         .frame(width: 80, height: 30)
         .foregroundColor(.white)
         .background(LINEAR_GRADIENT)
-        .opacity(is_post_empty ? 0.5 : 1.0)
+        .opacity(posting_disabled ? 0.5 : 1.0)
         .clipShape(Capsule())
     }
     
-    var isEmpty: Bool {
-        self.uploadedMedias.count == 0 &&
-        self.post.mutableString.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    func isEmpty() -> Bool {
+        return self.uploadedMedias.count == 0 &&
+            self.post.mutableString.trimmingCharacters(in: .whitespacesAndNewlines) ==
+                initialString().mutableString.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    
+    func initialString() -> NSMutableAttributedString {
+        guard case .posting(let target) = action,
+              case .user(let pubkey) = target,
+              damus_state.pubkey != pubkey else {
+            return .init(string: "")
+        }
+        
+        let profile = damus_state.profiles.lookup(id: pubkey)
+        let bech32_pubkey = bech32_pubkey(pubkey) ?? ""
+        return user_tag_attr_string(profile: profile, pubkey: bech32_pubkey)
     }
     
     func clear_draft() {
@@ -170,40 +171,26 @@ struct PostView: View {
 
     }
     
-    func load_draft() {
+    func load_draft() -> Bool {
         guard let draft = load_draft_for_post(drafts: self.damus_state.drafts, action: self.action) else {
             self.post = NSMutableAttributedString("")
             self.uploadedMedias = []
-            return
+            
+            return false
         }
         
         self.uploadedMedias = draft.media
         self.post = draft.content
+        return true
     }
-    
+
     func post_changed(post: NSMutableAttributedString, media: [UploadedMedia]) {
-        switch action {
-        case .replying_to(let ev):
-            if let draft = damus_state.drafts.replies[ev] {
-                draft.content = post
-                draft.media = media
-            } else {
-                damus_state.drafts.replies[ev] = DraftArtifacts(content: post, media: media)
-            }
-        case .quoting(let ev):
-            if let draft = damus_state.drafts.quotes[ev] {
-                draft.content = post
-                draft.media = media
-            } else {
-                damus_state.drafts.quotes[ev] = DraftArtifacts(content: post, media: media)
-            }
-        case .posting:
-            if let draft = damus_state.drafts.post {
-                draft.content = post
-                draft.media = media
-            } else {
-                damus_state.drafts.post = DraftArtifacts(content: post, media: media)
-            }
+        if let draft = load_draft_for_post(drafts: damus_state.drafts, action: action) {
+            draft.content = post
+            draft.media = media
+        } else {
+            let artifacts = DraftArtifacts(content: post, media: media)
+            set_draft_for_post(drafts: damus_state.drafts, action: action, artifacts: artifacts)
         }
     }
     
@@ -259,7 +246,7 @@ struct PostView: View {
     
     func handle_upload(media: MediaUpload) {
         let uploader = damus_state.settings.default_media_uploader
-        Task.init {
+        Task {
             let img = getImage(media: media)
             print("img size w:\(img.size.width) h:\(img.size.height)")
             async let blurhash = calculate_blurhash(img: img)
@@ -317,6 +304,11 @@ struct PostView: View {
             }
         }
         .padding(.horizontal)
+    }
+    
+    func fill_target_content(target: PostTarget) {
+        self.post = initialString()
+        self.tagModel.diff = post.string.count
     }
     
     var body: some View {
@@ -388,7 +380,7 @@ struct PostView: View {
                 }
             }
             .onAppear() {
-                load_draft()
+                let loaded_draft = load_draft()
                 
                 switch action {
                 case .replying_to(let replying_to):
@@ -397,8 +389,10 @@ struct PostView: View {
                 case .quoting(let quoting):
                     references = gather_quote_ids(our_pubkey: damus_state.pubkey, from: quoting)
                     originalReferences = references
-                case .posting:
-                    break
+                case .posting(let target):
+                    guard !loaded_draft else { break }
+                    
+                    fill_target_content(target: target)
                 }
                 
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -406,7 +400,7 @@ struct PostView: View {
                 }
             }
             .onDisappear {
-                if isEmpty {
+                if isEmpty() {
                     clear_draft()
                 }
             }
@@ -446,7 +440,7 @@ func get_searching_string(_ word: String?) -> String? {
 
 struct PostView_Previews: PreviewProvider {
     static var previews: some View {
-        PostView(action: .posting, damus_state: test_damus_state())
+        PostView(action: .posting(.none), damus_state: test_damus_state())
     }
 }
 
@@ -534,6 +528,17 @@ struct UploadedMedia: Equatable {
 }
 
 
+func set_draft_for_post(drafts: Drafts, action: PostAction, artifacts: DraftArtifacts) {
+    switch action {
+    case .replying_to(let ev):
+        drafts.replies[ev] = artifacts
+    case .quoting(let ev):
+        drafts.quotes[ev] = artifacts
+    case .posting:
+        drafts.post = artifacts
+    }
+}
+
 func load_draft_for_post(drafts: Drafts, action: PostAction) -> DraftArtifacts? {
     switch action {
     case .replying_to(let ev):
@@ -543,4 +548,47 @@ func load_draft_for_post(drafts: Drafts, action: PostAction) -> DraftArtifacts? 
     case .posting:
         return drafts.post
     }
+}
+
+
+func build_post(post: NSMutableAttributedString, action: PostAction, uploadedMedias: [UploadedMedia], references: [ReferencedId]) -> NostrPost {
+    var kind: NostrKind = .text
+
+    if case .replying_to(let ev) = action, ev.known_kind == .chat {
+        kind = .chat
+    }
+
+    post.enumerateAttributes(in: NSRange(location: 0, length: post.length), options: []) { attributes, range, stop in
+        if let link = attributes[.link] as? String {
+            let normalized_link: String
+            if link.hasPrefix("damus:nostr:") {
+                // Replace damus:nostr: URI prefix with nostr: since the former is for internal navigation and not meant to be posted.
+                normalized_link = String(link.dropFirst(6))
+            } else {
+                normalized_link = link
+            }
+
+            // Add zero-width space in case text preceding the mention is not a whitespace.
+            // In the case where the character preceding the mention is a whitespace, the added zero-width space will be stripped out.
+            post.replaceCharacters(in: range, with: "\(normalized_link)")
+        }
+    }
+
+
+    var content = post.string
+        .trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+
+    let imagesString = uploadedMedias.map { $0.uploadedURL.absoluteString }.joined(separator: " ")
+
+    let img_meta_tags = uploadedMedias.compactMap { $0.metadata?.to_tag() }
+
+    if !imagesString.isEmpty {
+        content.append(" " + imagesString + " ")
+    }
+
+    if case .quoting(let ev) = action, let id = bech32_note_id(ev.id) {
+        content.append(" nostr:" + id)
+    }
+
+    return NostrPost(content: content, references: references, kind: kind, tags: img_meta_tags)
 }

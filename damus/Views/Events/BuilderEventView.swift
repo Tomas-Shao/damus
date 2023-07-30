@@ -59,24 +59,20 @@ struct BuilderEventView: View {
     
     func load() {
         subscribe(filters: [
-            NostrFilter(ids: [self.event_id], limit: 1),
-            NostrFilter(
-                kinds: [.zap],
-                referenced_ids: [self.event_id]
-            )
+            NostrFilter(ids: [self.event_id], limit: 1)
         ])
     }
     
     var body: some View {
         VStack {
             if let event {
-                let ev = event.get_inner_event(cache: damus.events) ?? event
-                let thread = ThreadModel(event: ev, damus_state: damus)
-                let dest = ThreadView(state: damus, thread: thread)
-                NavigationLink(destination: dest) {
-                    EventView(damus: damus, event: event, options: .embedded)
-                        .padding([.top, .bottom], 8)
-                }.buttonStyle(.plain)
+                EventView(damus: damus, event: event, options: .embedded)
+                    .padding([.top, .bottom], 8)
+                    .onTapGesture {
+                        let ev = event.get_inner_event(cache: damus.events) ?? event
+                        let thread = ThreadModel(event: ev, damus_state: damus)
+                        damus.nav.push(route: .Thread(thread: thread))
+                    }
             } else {
                 ProgressView().padding()
             }

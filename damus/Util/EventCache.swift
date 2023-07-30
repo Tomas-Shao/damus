@@ -62,7 +62,7 @@ class ZapsDataModel: ObservableObject {
     }
     
     func confirm_nwc(reqid: String) {
-        guard let zap = zaps.first(where: { z in z.request.id == reqid }),
+        guard let zap = zaps.first(where: { z in z.request.ev.id == reqid }),
               case .pending(let pzap) = zap
         else {
             return
@@ -83,16 +83,16 @@ class ZapsDataModel: ObservableObject {
     }
    
     func from(_ pubkey: String) -> [Zapping] {
-        return self.zaps.filter { z in z.request.pubkey == pubkey }
+        return self.zaps.filter { z in z.request.ev.pubkey == pubkey }
     }
     
     @discardableResult
     func remove(reqid: String) -> Bool {
-        guard zaps.first(where: { z in z.request.id == reqid }) != nil else {
+        guard zaps.first(where: { z in z.request.ev.id == reqid }) != nil else {
             return false
         }
         
-        self.zaps = zaps.filter { z in z.request.id != reqid }
+        self.zaps = zaps.filter { z in z.request.ev.id != reqid }
         return true
     }
 }
@@ -175,6 +175,9 @@ public class EventCache {
     @discardableResult
     func store_zap(zap: Zapping) -> Bool {
         let data = get_cache_data(zap.target.id).zaps_model
+        if let ev = zap.event {
+            insert(ev)
+        }
         return insert_uniq_sorted_zap_by_amount(zaps: &data.zaps, new_zap: zap)
     }
     
@@ -182,7 +185,7 @@ public class EventCache {
         switch zap.target {
         case .note(let note_target):
             let zaps = get_cache_data(note_target.note_id).zaps_model
-            zaps.remove(reqid: zap.request.id)
+            zaps.remove(reqid: zap.request.ev.id)
         case .profile:
             // these aren't stored anywhere yet
             break
@@ -201,6 +204,7 @@ public class EventCache {
         return image_metadata[url.absoluteString.lowercased()]
     }
     
+    @MainActor
     func lookup_media_size(url: URL) -> CGSize? {
         if let img_meta = lookup_img_metadata(url: url) {
             return img_meta.meta.dim?.size
@@ -213,6 +217,7 @@ public class EventCache {
         video_meta[url.absoluteString] = meta
     }
     
+    @MainActor
     func get_video_player_model(url: URL) -> VideoPlayerModel {
         if let model = video_meta[url.absoluteString] {
             return model
@@ -339,7 +344,7 @@ struct PreloadPlan {
     let load_preview: Bool
 }
 
-func load_preview(artifacts: NoteArtifacts) async -> Preview? {
+func load_preview(artifacts: NoteArtifactsSeparated) async -> Preview? {
     guard let link = artifacts.links.first else {
         return nil
     }
@@ -395,7 +400,7 @@ func preload_image(url: URL) {
     
     print("Preloading image \(url.absoluteString)")
     
-    KingfisherManager.shared.retrieveImage(with: ImageResource(downloadURL: url)) { val in
+    KingfisherManager.shared.retrieveImage(with: Kingfisher.ImageResource(downloadURL: url)) { val in
         print("Preloaded image \(url.absoluteString)")
     }
 }
@@ -437,14 +442,18 @@ func preload_event(plan: PreloadPlan, state: DamusState) async {
         }
     }
     
-    if plan.load_preview {
+    if plan.load_preview, note_artifact_is_separated(kind: plan.event.known_kind) {
         let arts = artifacts ?? render_note_content(ev: plan.event, profiles: profiles, privkey: our_keypair.privkey)
-        let preview = await load_preview(artifacts: arts)
-        DispatchQueue.main.async {
-            if let preview {
-                plan.data.preview_model.state = .loaded(preview)
-            } else {
-                plan.data.preview_model.state = .loaded(.failed)
+        
+        // only separated artifacts have previews
+        if case .separated(let sep) = arts {
+            let preview = await load_preview(artifacts: sep)
+            DispatchQueue.main.async {
+                if let preview {
+                    plan.data.preview_model.state = .loaded(preview)
+                } else {
+                    plan.data.preview_model.state = .loaded(.failed)
+                }
             }
         }
     }
@@ -485,7 +494,7 @@ func preload_events(state: DamusState, events: [NostrEvent]) {
         return
     }
     
-    Task.init {
+    Task {
         for plan in plans {
             await preload_event(plan: plan, state: state)
         }

@@ -7,15 +7,14 @@
 
 import Foundation
 
-
 public class CreateAccountModel: ObservableObject {
-    @Published public var real_name: String = ""
-    @Published public var nick_name: String = ""
-    @Published public var about: String = ""
-    @Published public var pubkey: String = ""
-    @Published public var privkey: String = ""
-    @Published public var profile_image: String? = nil
-    
+    @Published var real_name: String = ""
+    @Published var nick_name: String = ""
+    @Published var about: String = ""
+    @Published var pubkey: String = ""
+    @Published var privkey: String = ""
+    @Published var profile_image: URL? = nil
+
     public var pubkey_bech32: String {
         return bech32_pubkey(self.pubkey) ?? ""
     }
@@ -35,13 +34,7 @@ public class CreateAccountModel: ObservableObject {
         return Keypair(pubkey: self.pubkey, privkey: self.privkey)
     }
     
-    public init() {
-        let keypair = generate_new_keypair()
-        self.pubkey = keypair.pubkey
-        self.privkey = keypair.privkey!
-    }
-    
-    public init(real: String, nick: String, about: String) {
+    public init(real: String = "", nick: String = "", about: String = "") {
         let keypair = generate_new_keypair()
         self.pubkey = keypair.pubkey
         self.privkey = keypair.privkey!
