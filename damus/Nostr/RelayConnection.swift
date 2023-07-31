@@ -37,9 +37,10 @@ public struct RelayURL: Hashable {
     }
 }
 
-final class RelayConnection {
-    private(set) var isConnected = false
-    private(set) var isConnecting = false
+final class RelayConnection: ObservableObject {
+    @Published private(set) var isConnected = false
+    @Published private(set) var isConnecting = false
+    private var isDisabled = false
     
     private(set) var last_connection_attempt: TimeInterval = 0
     private(set) var last_pong: Date? = nil
@@ -49,6 +50,7 @@ final class RelayConnection {
     
     private var handleEvent: (NostrConnectionEvent) -> ()
     private let url: RelayURL
+    var log: RelayLog?
 
     init(url: RelayURL, handleEvent: @escaping (NostrConnectionEvent) -> ()) {
         self.url = url
@@ -56,14 +58,20 @@ final class RelayConnection {
     }
     
     func ping() {
-        socket.ping { err in
+        socket.ping { [weak self] err in
+            guard let self else {
+                return
+            }
+            
             if err == nil {
                 self.last_pong = .now
+                self.log?.add("Successful ping")
             } else {
                 print("pong failed, reconnecting \(self.url.id)")
                 self.isConnected = false
                 self.isConnecting = false
                 self.reconnect_with_backoff()
+                self.log?.add("Ping failed")
             }
         }
     }
@@ -99,13 +107,27 @@ final class RelayConnection {
         isConnected = false
         isConnecting = false
     }
-
-    func send(_ req: NostrRequest) {
-        guard let req = make_nostr_req(req) else {
-            print("failed to encode nostr req: \(req)")
-            return
-        }
+    
+    func disablePermanently() {
+        isDisabled = true
+    }
+    
+    func send_raw(_ req: String) {
         socket.send(.string(req))
+    }
+    
+    func send(_ req: NostrRequestType) {
+        switch req {
+        case .typical(let req):
+            guard let req = make_nostr_req(req) else {
+                print("failed to encode nostr req: \(req)")
+                return
+            }
+            send_raw(req)
+            
+        case .custom(let req):
+            send_raw(req)
+        }
     }
     
     private func receive(event: WebSocketEvent) {
@@ -129,6 +151,11 @@ final class RelayConnection {
             }
         case .error(let error):
             print("⚠️ Warning: RelayConnection (\(self.url)) error: \(error)")
+            let nserr = error as NSError
+            if nserr.domain == NSPOSIXErrorDomain && nserr.code == 57 {
+                // ignore socket not connected?
+                return
+            }
             DispatchQueue.main.async {
                 self.isConnected = false
                 self.isConnecting = false
@@ -138,6 +165,10 @@ final class RelayConnection {
         DispatchQueue.main.async {
             self.handleEvent(.ws_event(event))
         }
+        
+        if let description = event.description {
+            log?.add(description)
+        }
     }
     
     func reconnect_with_backoff() {
@@ -146,11 +177,12 @@ final class RelayConnection {
     }
     
     func reconnect() {
-        guard !isConnecting else {
-            return  // we're already trying to connect
+        guard !isConnecting && !isDisabled else {
+            return  // we're already trying to connect or we're disabled
         }
         disconnect()
         connect()
+        log?.add("Reconnecting...")
     }
     
     func reconnect_in(after: TimeInterval) {

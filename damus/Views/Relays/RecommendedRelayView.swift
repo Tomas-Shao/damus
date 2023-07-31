@@ -14,14 +14,7 @@ struct RecommendedRelayView: View {
     
     @Binding var showActionButtons: Bool
     
-    init(damus: DamusState, relay: String, showActionButtons: Binding<Bool>) {
-        self.damus = damus
-        self.relay = relay
-        self.add_button = true
-        self._showActionButtons = showActionButtons
-    }
-    
-    init(damus: DamusState, relay: String, add_button: Bool, showActionButtons: Binding<Bool>) {
+    init(damus: DamusState, relay: String, add_button: Bool = true, showActionButtons: Binding<Bool>) {
         self.damus = damus
         self.relay = relay
         self.add_button = add_button
@@ -31,20 +24,18 @@ struct RecommendedRelayView: View {
     var body: some View {
         ZStack {
             HStack {
-                if let privkey = damus.keypair.privkey {
+                if let keypair = damus.keypair.to_full() {
                     if showActionButtons && add_button {
-                        AddButton(privkey: privkey, showText: false)
+                        AddButton(keypair: keypair, showText: false)
                     }
                 }
                 
-                RelayType(is_paid: damus.relay_metadata.lookup(relay_id: relay)?.is_paid ?? false)
+                RelayType(is_paid: damus.relay_model_cache.model(with_relay_id: relay)?.metadata.is_paid ?? false)
                 
                 Text(relay).layoutPriority(1)
 
-                if let meta = damus.relay_metadata.lookup(relay_id: relay) {
-                    NavigationLink ( destination:
-                        RelayDetailView(state: damus, relay: relay, nip11: meta)
-                    ){
+                if let meta = damus.relay_model_cache.model(with_relay_id: relay)?.metadata {
+                    NavigationLink(value: Route.RelayDetail(relay: relay, metadata: meta)){
                         EmptyView()
                     }
                     .opacity(0.0)
@@ -68,8 +59,8 @@ struct RecommendedRelayView: View {
         }
         .swipeActions {
             if add_button {
-                if let privkey = damus.keypair.privkey {
-                    AddButton(privkey: privkey, showText: false)
+                if let keypair = damus.keypair.to_full() {
+                    AddButton(keypair: keypair, showText: false)
                         .tint(.accentColor)
                 }
             }
@@ -77,8 +68,8 @@ struct RecommendedRelayView: View {
         .contextMenu {
             CopyAction(relay: relay)
             
-            if let privkey = damus.keypair.privkey {
-                AddButton(privkey: privkey, showText: true)
+            if let keypair = damus.keypair.to_full() {
+                AddButton(keypair: keypair, showText: true)
             }
         }
     }
@@ -91,9 +82,9 @@ struct RecommendedRelayView: View {
         }
     }
     
-    func AddButton(privkey: String, showText: Bool) -> some View {
+    func AddButton(keypair: FullKeypair, showText: Bool) -> some View {
         Button(action: {
-            add_action(privkey: privkey)
+            add_action(keypair: keypair)
         }) {
             if showText {
                 Text(NSLocalizedString("Connect", comment: "Button to connect to recommended relay server."))
@@ -106,11 +97,11 @@ struct RecommendedRelayView: View {
         }
     }
     
-    func add_action(privkey: String) {
+    func add_action(keypair: FullKeypair) {
         guard let ev_before_add = damus.contacts.event else {
             return
         }
-        guard let ev_after_add = add_relay(ev: ev_before_add, privkey: privkey, current_relays: damus.pool.our_descriptors, relay: relay, info: .rw) else {
+        guard let ev_after_add = add_relay(ev: ev_before_add, keypair: keypair, current_relays: damus.pool.our_descriptors, relay: relay, info: .rw) else {
             return
         }
         process_contact_event(state: damus, ev: ev_after_add)

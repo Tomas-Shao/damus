@@ -21,7 +21,7 @@ struct DamusState {
     let lnurls: LNUrls
     let settings: UserSettingsStore
     let relay_filters: RelayFilters
-    let relay_metadata: RelayMetadatas
+    let relay_model_cache: RelayModelCache
     let drafts: Drafts
     let events: EventCache
     let bookmarks: BookmarksManager
@@ -30,13 +30,24 @@ struct DamusState {
     let replies: ReplyCounter
     let muted_threads: MutedThreadsManager
     let wallet: WalletModel
+    let nav: NavigationCoordinator
+    let user_search_cache: UserSearchCache
     
     @discardableResult
     func add_zap(zap: Zapping) -> Bool {
         // store generic zap mapping
         self.zaps.add_zap(zap: zap)
+        let stored = self.events.store_zap(zap: zap)
+        
+        // thread zaps
+        if let ev = zap.event, !settings.nozaps, zap.is_in_thread {
+            // [nozaps]: thread zaps are only available outside of the app store
+            replies.count_replies(ev)
+            events.add_replies(ev: ev)
+        }
+
         // associate with events as well
-        return self.events.store_zap(zap: zap)
+        return stored
     }
     
     var pubkey: String {
@@ -48,5 +59,6 @@ struct DamusState {
     }
     
     static var empty: DamusState {
-        return DamusState.init(pool: RelayPool(), keypair: Keypair(pubkey: "", privkey: ""), likes: EventCounter(our_pubkey: ""), boosts: EventCounter(our_pubkey: ""), contacts: Contacts(our_pubkey: ""), profiles: Profiles(), dms: DirectMessagesModel(our_pubkey: ""), previews: PreviewCache(), zaps: Zaps(our_pubkey: ""), lnurls: LNUrls(), settings: UserSettingsStore(), relay_filters: RelayFilters(our_pubkey: ""), relay_metadata: RelayMetadatas(), drafts: Drafts(), events: EventCache(), bookmarks: BookmarksManager(pubkey: ""), postbox: PostBox(pool: RelayPool()), bootstrap_relays: [], replies: ReplyCounter(our_pubkey: ""), muted_threads: MutedThreadsManager(keypair: Keypair(pubkey: "", privkey: nil)), wallet: WalletModel(settings: UserSettingsStore())) }
+        let user_search_cache = UserSearchCache()
+        return DamusState.init(pool: RelayPool(), keypair: Keypair(pubkey: "", privkey: ""), likes: EventCounter(our_pubkey: ""), boosts: EventCounter(our_pubkey: ""), contacts: Contacts(our_pubkey: ""), profiles: Profiles(user_search_cache: user_search_cache), dms: DirectMessagesModel(our_pubkey: ""), previews: PreviewCache(), zaps: Zaps(our_pubkey: ""), lnurls: LNUrls(), settings: UserSettingsStore(), relay_filters: RelayFilters(our_pubkey: ""), relay_model_cache: RelayModelCache(), drafts: Drafts(), events: EventCache(), bookmarks: BookmarksManager(pubkey: ""), postbox: PostBox(pool: RelayPool()), bootstrap_relays: [], replies: ReplyCounter(our_pubkey: ""), muted_threads: MutedThreadsManager(keypair: Keypair(pubkey: "", privkey: nil)), wallet: WalletModel(settings: UserSettingsStore()), nav: NavigationCoordinator(), user_search_cache: user_search_cache) }
 }

@@ -12,6 +12,7 @@ enum EventViewKind {
     case small
     case normal
     case selected
+    case title
     case subheadline
 }
 
@@ -38,10 +39,12 @@ struct EventView: View {
                 }
             } else if event.known_kind == .zap {
                 if let zap = damus.zaps.zaps[event.id] {
-                    ZapEvent(damus: damus, zap: zap)
+                    ZapEvent(damus: damus, zap: zap, is_top_zap: options.contains(.top_zap))
                 } else {
                     EmptyView()
                 }
+            } else if event.known_kind == .longform {
+                LongformPreview(state: damus, ev: event, options: options)
             } else {
                 TextEvent(damus: damus, event: event, pubkey: pubkey, options: options)
                     //.padding([.top], 6)
@@ -80,12 +83,12 @@ extension View {
     }
 }
 
-func format_relative_time(_ created_at: Int64) -> String
+func format_relative_time(_ created_at: UInt32) -> String
 {
     return time_ago_since(Date(timeIntervalSince1970: Double(created_at)))
 }
 
-func format_date(_ created_at: Int64) -> String {
+func format_date(_ created_at: UInt32) -> String {
     let date = Date(timeIntervalSince1970: TimeInterval(created_at))
     let dateFormatter = DateFormatter()
     dateFormatter.timeStyle = .short
@@ -107,6 +110,8 @@ func eventviewsize_to_font(_ size: EventViewKind) -> Font {
         return .body
     case .selected:
         return .custom("selected", size: 21.0)
+    case .title:
+        return .title
     case .subheadline:
         return .subheadline
     }
@@ -122,6 +127,8 @@ func eventviewsize_to_uifont(_ size: EventViewKind) -> UIFont {
         return .preferredFont(forTextStyle: .title2)
     case .subheadline:
         return .preferredFont(forTextStyle: .subheadline)
+    case .title:
+        return .preferredFont(forTextStyle: .title1)
     }
 }
 
@@ -135,15 +142,12 @@ struct EventView_Previews: PreviewProvider {
             EventView(damus: test_damus_state(), event: NostrEvent(content: "hello there https://jb55.com/s/Oct12-150217.png https://jb55.com/red-me.jb55 cool", pubkey: "pk"), show_friend_icon: true, size: .big)
             
              */
+
             EventView( damus: test_damus_state(), event: test_event )
+
+            EventView( damus: test_damus_state(), event: test_longform_event.event, options: [.wide] )
         }
         .padding()
     }
 }
 
-let test_event =
-        NostrEvent(
-            content: "hello there https://jb55.com/s/Oct12-150217.png https://jb55.com/red-me.jpg cool",
-            pubkey: "pk",
-            createdAt: Int64(Date().timeIntervalSince1970 - 100)
-        )

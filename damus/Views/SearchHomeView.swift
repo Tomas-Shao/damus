@@ -44,7 +44,7 @@ struct SearchHomeView: View {
     }
     
     var GlobalContent: some View {
-        return TimelineView(
+        return TimelineView<AnyView>(
             events: model.events,
             loading: $model.loading,
             damus: damus_state,
@@ -126,9 +126,6 @@ struct SearchHomeView: View {
 struct SearchHomeView_Previews: PreviewProvider {
     static var previews: some View {
         let state = test_damus_state()
-        SearchHomeView(
-            damus_state: state,
-            model: SearchHomeModel(damus_state: state)
-        )
+        SearchHomeView(damus_state: state, model: SearchHomeModel(damus_state: state))
     }
 }

@@ -30,11 +30,11 @@ struct SearchingEventView: View {
     var search_name: String {
         switch search_type {
         case .nip05:
-            return "nip05"
+            return "Nostr Address"
         case .profile:
-            return "profile"
+            return "Profile"
         case .event:
-            return "note"
+            return "Note"
         }
     }
     
@@ -48,7 +48,7 @@ struct SearchingEventView: View {
                     self.search_state = .found_profile(pk)
                 }
             } else {
-                Task.init {
+                Task {
                     guard let nip05 = NIP05.parse(evid) else {
                         self.search_state = .not_found
                         return
@@ -72,24 +72,20 @@ struct SearchingEventView: View {
             }
             
         case .event:
-            if let ev = state.events.lookup(evid) {
-                self.search_state = .found(ev)
-                return
-            }
-            find_event(state: state, evid: evid, search_type: search_type, find_from: nil) { ev in
-                if let ev {
-                    self.search_state = .found(ev)
-                } else {
+            find_event(state: state, query: .event(evid: evid)) { res in
+                guard case .event(let ev) = res else {
                     self.search_state = .not_found
+                    return
                 }
+                self.search_state = .found(ev)
             }
         case .profile:
-            find_event(state: state, evid: evid, search_type: search_type, find_from: nil) { ev in
-                if state.profiles.lookup(id: evid) != nil {
-                    self.search_state = .found_profile(evid)
-                } else {
+            find_event(state: state, query: .profile(pubkey: evid)) { res in
+                guard case .profile(_, let ev) = res else {
                     self.search_state = .not_found
+                    return
                 }
+                self.search_state = .found_profile(ev.pubkey)
             }
         }
     }
@@ -104,19 +100,17 @@ struct SearchingEventView: View {
                         .progressViewStyle(.circular)
                 }
             case .found(let ev):
-                NavigationLink(destination: ThreadView(state: state, thread: ThreadModel(event: ev, damus_state: state))) {
-                    
+                NavigationLink(value: Route.Thread(thread: ThreadModel(event: ev, damus_state: state))) {
                     EventView(damus: state, event: ev)
                 }
                 .buttonStyle(PlainButtonStyle())
             case .found_profile(let pk):
-                NavigationLink(destination: ProfileView(damus_state: state, pubkey: pk)) {
-                    
+                NavigationLink(value: Route.ProfileByKey(pubkey: pk)) {
                     FollowUserView(target: .pubkey(pk), damus_state: state)
                 }
                 .buttonStyle(PlainButtonStyle())
             case .not_found:
-                Text("\(search_name.capitalized) not found", comment: "When a note or profile is not found when searching for it via its note id")
+                Text("\(search_name) not found", comment: "When a note or profile is not found when searching for it via its note id")
             }
         }
         .onChange(of: evid, debounceTime: 0.5) { evid in

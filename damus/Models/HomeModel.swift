@@ -23,7 +23,41 @@ struct NewEventsBits: OptionSet {
     static let notifications: NewEventsBits = [.zaps, .likes, .reposts, .mentions]
 }
 
-class HomeModel: ObservableObject {
+enum Resubscribe {
+    case following
+    case unfollowing(ReferencedId)
+}
+
+enum HomeResubFilter {
+    case pubkey(String)
+    case hashtag(String)
+
+    init?(from: ReferencedId) {
+        if from.key == "p" {
+            self = .pubkey(from.ref_id)
+            return
+        } else if from.key == "t" {
+            self = .hashtag(from.ref_id)
+            return
+        }
+
+        return nil
+    }
+
+    func filter(contacts: Contacts, ev: NostrEvent) -> Bool {
+        switch self {
+        case .pubkey(let pk):
+            return ev.pubkey == pk
+        case .hashtag(let ht):
+            if contacts.is_friend(ev.pubkey) {
+                return false
+            }
+            return ev.references(id: ht, key: "t")
+        }
+    }
+}
+
+class HomeModel {
     // Don't trigger a user notification for events older than a certain age
     static let event_max_age_for_notification: TimeInterval = 12 * 60 * 60
     
@@ -32,10 +66,11 @@ class HomeModel: ObservableObject {
     var has_event: [String: Set<String>] = [:]
     var deleted_events: Set<String> = Set()
     var channels: [String: NostrEvent] = [:]
-    var last_event_of_kind: [String: [Int: NostrEvent]] = [:]
+    var last_event_of_kind: [String: [UInt32: NostrEvent]] = [:]
     var done_init: Bool = false
     var incoming_dms: [NostrEvent] = []
     let dm_debouncer = Debouncer(interval: 0.5)
+    let resub_debouncer = Debouncer(interval: 3.0)
     var should_debounce_dms = true
 
     let home_subid = UUID().description
@@ -49,9 +84,10 @@ class HomeModel: ObservableObject {
 
     var signal = SignalModel()
     
-    @Published var new_events: NewEventsBits = NewEventsBits()
-    @Published var notifications = NotificationsModel()
-    @Published var events: EventHolder = EventHolder()
+    var notifications = NotificationsModel()
+    var notification_status = NotificationStatusModel()
+    var events: EventHolder = EventHolder()
+    var zap_button: ZapButtonModel = ZapButtonModel()
     
     init() {
         self.damus_state = DamusState.empty
@@ -89,6 +125,31 @@ class HomeModel: ObservableObject {
         }
     }
 
+    func resubscribe(_ resubbing: Resubscribe) {
+        if self.should_debounce_dms {
+            // don't resub on initial load
+            return
+        }
+
+        print("hit resub debouncer")
+
+        resub_debouncer.debounce {
+            print("resub")
+            self.unsubscribe_to_home_filters()
+
+            switch resubbing {
+            case .following:
+                break
+            case .unfollowing(let r):
+                if let filter = HomeResubFilter(from: r) {
+                    self.events.filter { ev in !filter.filter(contacts: self.damus_state.contacts, ev: ev) }
+                }
+            }
+
+            self.subscribe_to_home_filters()
+        }
+    }
+
     func process_event(sub_id: String, relay_id: String, ev: NostrEvent) {
         if has_sub_id_event(sub_id: sub_id, ev_id: ev.id) {
             return
@@ -104,8 +165,7 @@ class HomeModel: ObservableObject {
         }
 
         switch kind {
-        case .chat: fallthrough
-        case .text:
+        case .chat, .longform, .text:
             handle_text_event(sub_id: sub_id, ev)
         case .contacts:
             handle_contact_event(sub_id: sub_id, relay_id: relay_id, ev: ev)
@@ -153,76 +213,49 @@ class HomeModel: ObservableObject {
                 print("nwc: \(resp.req_id) not found in the postbox, nothing to remove [\(relay)]")
             }
             
-            guard let err = resp.response.error else {
-                print("nwc success: \(resp.response.result.debugDescription) [\(relay)]")
-                nwc_success(state: self.damus_state, resp: resp)
+            guard resp.response.error == nil else {
+                print("nwc error: \(resp.response)")
+                nwc_error(zapcache: self.damus_state.zaps, evcache: self.damus_state.events, resp: resp)
                 return
             }
             
-            print("nwc error: \(resp.response)")
-            nwc_error(zapcache: self.damus_state.zaps, evcache: self.damus_state.events, resp: resp)
+            print("nwc success: \(resp.response.result.debugDescription) [\(relay)]")
+            nwc_success(state: self.damus_state, resp: resp)
         }
     }
     
-    func handle_zap_event_with_zapper(profiles: Profiles, ev: NostrEvent, our_keypair: Keypair, zapper: String) {
-        
-        guard let zap = Zap.from_zap_event(zap_ev: ev, zapper: zapper, our_privkey: our_keypair.privkey) else {
-            return
-        }
-        
-        damus_state.add_zap(zap: .zap(zap))
-        
-        guard zap.target.pubkey == our_keypair.pubkey else {
-            return
-        }
-        
-        if !notifications.insert_zap(.zap(zap)) {
-            return
-        }
-
-        if handle_last_event(ev: ev, timeline: .notifications) {
-            if damus_state.settings.zap_vibration {
-                // Generate zap vibration
-                zap_vibrate(zap_amount: zap.invoice.amount)
-            }
-            if damus_state.settings.zap_notification {
-                // Create in-app local notification for zap received.
-                create_in_app_zap_notification(profiles: profiles, zap: zap, evId: ev.referenced_ids.first?.id ?? "")
-            }
-        }
-
-        return
-    }
-
     func handle_zap_event(_ ev: NostrEvent) {
-        // These are zap notifications
-        guard let ptag = event_tag(ev, name: "p") else {
-            return
-        }
+        process_zap_event(damus_state: damus_state, ev: ev) { zapres in
+            guard case .done(let zap) = zapres else { return }
+            
+            guard zap.target.pubkey == self.damus_state.keypair.pubkey else {
+                return
+            }
         
-        let our_keypair = damus_state.keypair
-        if let local_zapper = damus_state.profiles.lookup_zapper(pubkey: ptag) {
-            handle_zap_event_with_zapper(profiles: self.damus_state.profiles, ev: ev, our_keypair: our_keypair, zapper: local_zapper)
-            return
-        }
-        
-        guard let profile = damus_state.profiles.lookup(id: ptag) else {
-            return
-        }
-        
-        guard let lnurl = profile.lnurl else {
-            return
-        }
-        
-        Task {
-            guard let zapper = await fetch_zapper_from_lnurl(lnurl) else {
+            if !self.notifications.insert_zap(.zap(zap)) {
+                return
+            }
+
+            guard let new_bits = handle_last_events(new_events: self.notification_status.new_events, ev: ev, timeline: .notifications, shouldNotify: true) else {
                 return
             }
             
-            DispatchQueue.main.async {
-                self.damus_state.profiles.zappers[ptag] = zapper
-                self.handle_zap_event_with_zapper(profiles: self.damus_state.profiles, ev: ev, our_keypair: our_keypair, zapper: zapper)
+            if self.damus_state.settings.zap_vibration {
+                // Generate zap vibration
+                zap_vibrate(zap_amount: zap.invoice.amount)
             }
+            
+            if self.damus_state.settings.zap_notification {
+                // Create in-app local notification for zap received.
+                switch zap.target {
+                case .profile(let profile_id):
+                    create_in_app_profile_zap_notification(profiles: self.damus_state.profiles, zap: zap, profile_id: profile_id)
+                case .note(let note_target):
+                    create_in_app_event_zap_notification(profiles: self.damus_state.profiles, zap: zap, evId: note_target.note_id)
+                }
+            }
+            
+            self.notification_status.new_events = new_bits
         }
         
     }
@@ -272,7 +305,7 @@ class HomeModel: ObservableObject {
             boost_ev_id = inner_ev.id
             
             
-            Task.init {
+            Task {
                 guard validate_event(ev: inner_ev) == .ok else {
                     return
                 }
@@ -397,22 +430,21 @@ class HomeModel: ObservableObject {
 
     /// Send the initial filters, just our contact list mostly
     func send_initial_filters(relay_id: String) {
-        var filter = NostrFilter(kinds: [.contacts],
-                                 limit: 1,
-                                 authors: [damus_state.pubkey])
-        pool.send(.subscribe(.init(filters: [filter], sub_id: init_subid)), to: [relay_id])
+        let filter = NostrFilter(kinds: [.contacts], limit: 1, authors: [damus_state.pubkey])
+        let subscription = NostrSubscribe(filters: [filter], sub_id: init_subid)
+        pool.send(.subscribe(subscription), to: [relay_id])
     }
 
+    /// After initial connection or reconnect, send subscription filters for the home timeline, DMs, and notifications
     func send_home_filters(relay_id: String?) {
         // TODO: since times should be based on events from a specific relay
         // perhaps we could mark this in the relay pool somehow
 
-        var friends = damus_state.contacts.get_friend_list()
-        friends.append(damus_state.pubkey)
+        let friends = get_friends()
 
         var contacts_filter = NostrFilter(kinds: [.metadata])
         contacts_filter.authors = friends
-        
+
         var our_contacts_filter = NostrFilter(kinds: [.contacts, .metadata])
         our_contacts_filter.authors = [damus_state.pubkey]
         
@@ -430,19 +462,6 @@ class HomeModel: ObservableObject {
         dms_filter.pubkeys = [ damus_state.pubkey ]
         our_dms_filter.authors = [ damus_state.pubkey ]
 
-        // TODO: separate likes?
-        var home_filter_kinds: [NostrKind] = [
-            .text,
-            .boost
-        ]
-        if !damus_state.settings.onlyzaps_mode {
-            home_filter_kinds.append(.like)
-        }
-        var home_filter = NostrFilter(kinds: home_filter_kinds)
-        // include our pubkey as well even if we're not technically a friend
-        home_filter.authors = friends
-        home_filter.limit = 500
-
         var notifications_filter_kinds: [NostrKind] = [
             .text,
             .boost,
@@ -455,33 +474,71 @@ class HomeModel: ObservableObject {
         notifications_filter.pubkeys = [damus_state.pubkey]
         notifications_filter.limit = 500
 
-        var home_filters = [home_filter]
         var notifications_filters = [notifications_filter]
         var contacts_filters = [contacts_filter, our_contacts_filter, our_blocklist_filter]
         var dms_filters = [dms_filter, our_dms_filter]
+        let last_of_kind = get_last_of_kind(relay_id: relay_id)
 
-        let last_of_kind = relay_id.flatMap { last_event_of_kind[$0] } ?? [:]
-
-        home_filters = update_filters_with_since(last_of_kind: last_of_kind, filters: home_filters)
         contacts_filters = update_filters_with_since(last_of_kind: last_of_kind, filters: contacts_filters)
         notifications_filters = update_filters_with_since(last_of_kind: last_of_kind, filters: notifications_filters)
         dms_filters = update_filters_with_since(last_of_kind: last_of_kind, filters: dms_filters)
 
-        print_filters(relay_id: relay_id, filters: [home_filters, contacts_filters, notifications_filters, dms_filters])
+        //print_filters(relay_id: relay_id, filters: [home_filters, contacts_filters, notifications_filters, dms_filters])
 
-        if let relay_id {
-            pool.send(.subscribe(.init(filters: home_filters, sub_id: home_subid)), to: [relay_id])
-            pool.send(.subscribe(.init(filters: contacts_filters, sub_id: contacts_subid)), to: [relay_id])
-            pool.send(.subscribe(.init(filters: notifications_filters, sub_id: notifications_subid)), to: [relay_id])
-            pool.send(.subscribe(.init(filters: dms_filters, sub_id: dms_subid)), to: [relay_id])
-        } else {
-            pool.send(.subscribe(.init(filters: home_filters, sub_id: home_subid)))
-            pool.send(.subscribe(.init(filters: contacts_filters, sub_id: contacts_subid)))
-            pool.send(.subscribe(.init(filters: notifications_filters, sub_id: notifications_subid)))
-            pool.send(.subscribe(.init(filters: dms_filters, sub_id: dms_subid)))
-        }
+        subscribe_to_home_filters(relay_id: relay_id)
+
+        let relay_ids = relay_id.map { [$0] }
+
+        pool.send(.subscribe(.init(filters: contacts_filters, sub_id: contacts_subid)), to: relay_ids)
+        pool.send(.subscribe(.init(filters: notifications_filters, sub_id: notifications_subid)), to: relay_ids)
+        pool.send(.subscribe(.init(filters: dms_filters, sub_id: dms_subid)), to: relay_ids)
     }
-    
+
+    func get_last_of_kind(relay_id: String?) -> [UInt32: NostrEvent] {
+        return relay_id.flatMap { last_event_of_kind[$0] } ?? [:]
+    }
+
+    func unsubscribe_to_home_filters() {
+        pool.send(.unsubscribe(home_subid))
+    }
+
+    func get_friends() -> [String] {
+        var friends = damus_state.contacts.get_friend_list()
+        friends.insert(damus_state.pubkey)
+        return Array(friends)
+    }
+
+    func subscribe_to_home_filters(friends fs: [String]? = nil, relay_id: String? = nil) {
+        // TODO: separate likes?
+        var home_filter_kinds: [NostrKind] = [
+            .text, .longform, .boost
+        ]
+        if !damus_state.settings.onlyzaps_mode {
+            home_filter_kinds.append(.like)
+        }
+
+        let friends = fs ?? get_friends()
+        var home_filter = NostrFilter(kinds: home_filter_kinds)
+        // include our pubkey as well even if we're not technically a friend
+        home_filter.authors = friends
+        home_filter.limit = 500
+
+        var home_filters = [home_filter]
+
+        let followed_hashtags = Array(damus_state.contacts.get_followed_hashtags())
+        if followed_hashtags.count != 0 {
+            var hashtag_filter = NostrFilter.filter_hashtag(followed_hashtags)
+            hashtag_filter.limit = 100
+            home_filters.append(hashtag_filter)
+        }
+
+        let relay_ids = relay_id.map { [$0] }
+        home_filters = update_filters_with_since(last_of_kind: get_last_of_kind(relay_id: relay_id), filters: home_filters)
+        let sub = NostrSubscribe(filters: home_filters, sub_id: home_subid)
+
+        pool.send(.subscribe(sub), to: relay_ids)
+    }
+
     func handle_list_event(_ ev: NostrEvent) {
         // we only care about our lists
         guard ev.pubkey == damus_state.pubkey else {
@@ -509,7 +566,7 @@ class HomeModel: ObservableObject {
         process_metadata_event(events: damus_state.events, our_pubkey: damus_state.pubkey, profiles: damus_state.profiles, ev: ev)
     }
 
-    func get_last_event_of_kind(relay_id: String, kind: Int) -> NostrEvent? {
+    func get_last_event_of_kind(relay_id: String, kind: UInt32) -> NostrEvent? {
         guard let m = last_event_of_kind[relay_id] else {
             last_event_of_kind[relay_id] = [:]
             return nil
@@ -550,8 +607,8 @@ class HomeModel: ObservableObject {
 
     @discardableResult
     func handle_last_event(ev: NostrEvent, timeline: Timeline, shouldNotify: Bool = true) -> Bool {
-        if let new_bits = handle_last_events(new_events: self.new_events, ev: ev, timeline: timeline, shouldNotify: shouldNotify) {
-            new_events = new_bits
+        if let new_bits = handle_last_events(new_events: self.notification_status.new_events, ev: ev, timeline: timeline, shouldNotify: shouldNotify) {
+            self.notification_status.new_events = new_bits
             return true
         } else {
             return false
@@ -583,7 +640,7 @@ class HomeModel: ObservableObject {
     }
     
     func got_new_dm(notifs: NewEventsBits, ev: NostrEvent) {
-        self.new_events = notifs
+        notification_status.new_events = notifs
         
         if damus_state.settings.dm_notification && ev.age < HomeModel.event_max_age_for_notification {
             let convo = ev.decrypted(privkey: self.damus_state.keypair.privkey) ?? NSLocalizedString("New encrypted direct message", comment: "Notification that the user has received a new direct message")
@@ -601,7 +658,7 @@ class HomeModel: ObservableObject {
         
         if !should_debounce_dms {
             self.incoming_dms.append(ev)
-            if let notifs = handle_incoming_dms(prev_events: self.new_events, dms: self.dms, our_pubkey: self.damus_state.pubkey, evs: self.incoming_dms) {
+            if let notifs = handle_incoming_dms(prev_events: notification_status.new_events, dms: self.dms, our_pubkey: self.damus_state.pubkey, evs: self.incoming_dms) {
                 got_new_dm(notifs: notifs, ev: ev)
             }
             self.incoming_dms = []
@@ -611,7 +668,7 @@ class HomeModel: ObservableObject {
         incoming_dms.append(ev)
         
         dm_debouncer.debounce { [self] in
-            if let notifs = handle_incoming_dms(prev_events: self.new_events, dms: self.dms, our_pubkey: self.damus_state.pubkey, evs: self.incoming_dms) {
+            if let notifs = handle_incoming_dms(prev_events: notification_status.new_events, dms: self.dms, our_pubkey: self.damus_state.pubkey, evs: self.incoming_dms) {
                 got_new_dm(notifs: notifs, ev: ev)
             }
             self.incoming_dms = []
@@ -638,35 +695,40 @@ func add_contact_if_friend(contacts: Contacts, ev: NostrEvent) {
     contacts.add_friend_contact(ev)
 }
 
-func load_our_contacts(contacts: Contacts, m_old_ev: NostrEvent?, ev: NostrEvent) {
-    var new_pks = Set<String>()
+func load_our_contacts(state: DamusState, m_old_ev: NostrEvent?, ev: NostrEvent) {
+    let contacts = state.contacts
+    var new_refs = Set<ReferencedId>()
     // our contacts
     for tag in ev.tags {
-        if tag.count >= 2 && tag[0] == "p" {
-            new_pks.insert(tag[1])
-        }
+        guard let ref = tag_to_refid(tag) else { continue }
+        new_refs.insert(ref)
     }
     
-    var old_pks = Set<String>()
+    var old_refs = Set<ReferencedId>()
     // find removed contacts
     if let old_ev = m_old_ev {
         for tag in old_ev.tags {
-            if tag.count >= 2 && tag[0] == "p" {
-                old_pks.insert(tag[1])
-            }
+            guard let ref = tag_to_refid(tag) else { continue }
+            old_refs.insert(ref)
         }
     }
     
-    let diff = new_pks.symmetricDifference(old_pks)
-    for pk in diff {
-        if new_pks.contains(pk) {
-            notify(.followed, pk)
-            contacts.add_friend_pubkey(pk)
+    let diff = new_refs.symmetricDifference(old_refs)
+    for ref in diff {
+        if new_refs.contains(ref) {
+            notify(.followed, ref)
+            if ref.key == "p" {
+                contacts.add_friend_pubkey(ref.ref_id)
+            }
         } else {
-            notify(.unfollowed, pk)
-            contacts.remove_friend(pk)
+            notify(.unfollowed, ref)
+            if ref.key == "p" {
+                contacts.remove_friend(ref.ref_id)
+            }
         }
     }
+
+    state.user_search_cache.updateOwnContactsPetnames(id: contacts.our_pubkey, oldEvent: m_old_ev, newEvent: ev)
 }
 
 
@@ -721,13 +783,10 @@ func print_filters(relay_id: String?, filters groups: [[NostrFilter]]) {
 }
 
 func process_metadata_profile(our_pubkey: String, profiles: Profiles, profile: Profile, ev: NostrEvent) {
-    if our_pubkey == ev.pubkey && (profile.deleted ?? false) {
-        notify(.deleted_account, ())
-        return
-    }
-
     var old_nip05: String? = nil
-    if let mprof = profiles.lookup_with_timestamp(id: ev.pubkey) {
+    let mprof = profiles.lookup_with_timestamp(id: ev.pubkey)
+
+    if let mprof {
         old_nip05 = mprof.profile.nip05
         if mprof.event.created_at > ev.created_at {
             // skip if we already have an newer profile
@@ -735,25 +794,14 @@ func process_metadata_profile(our_pubkey: String, profiles: Profiles, profile: P
         }
     }
 
+    if old_nip05 != profile.nip05 {
+        // if it's been validated before, invalidate it now
+        profiles.invalidate_nip05(ev.pubkey)
+    }
+
     let tprof = TimestampedProfile(profile: profile, timestamp: ev.created_at, event: ev)
     profiles.add(id: ev.pubkey, profile: tprof)
-    
-    if let nip05 = profile.nip05, old_nip05 != profile.nip05 {
-        
-        Task.detached(priority: .background) {
-            let validated = await validate_nip05(pubkey: ev.pubkey, nip05_str: nip05)
-            if validated != nil {
-                print("validated nip05 for '\(nip05)'")
-            }
-            
-            Task { @MainActor in
-                profiles.validated[ev.pubkey] = validated
-                profiles.nip05_pubkey[nip05] = ev.pubkey
-                notify(.profile_updated, ProfileUpdate(pubkey: ev.pubkey, profile: profile))
-            }
-        }
-    }
-    
+
     // load pfps asap
     
     var changed = false
@@ -773,12 +821,13 @@ func process_metadata_profile(our_pubkey: String, profiles: Profiles, profile: P
     }
 }
 
+// TODO: remove this, let nostrdb handle all validation
 func guard_valid_event(events: EventCache, ev: NostrEvent, callback: @escaping () -> Void) {
     let validated = events.is_event_valid(ev.id)
     
     switch validated {
     case .unknown:
-        Task {
+        Task.detached(priority: .medium) {
             let result = validate_event(ev: ev)
             
             DispatchQueue.main.async {
@@ -793,17 +842,16 @@ func guard_valid_event(events: EventCache, ev: NostrEvent, callback: @escaping (
     case .ok:
         callback()
         
-    case .bad_id: fallthrough
-    case .bad_sig:
+    case .bad_id, .bad_sig:
         break
     }
 }
 
-func process_metadata_event(events: EventCache, our_pubkey: String, profiles: Profiles, ev: NostrEvent, completion: (() -> Void)? = nil) {
+func process_metadata_event(events: EventCache, our_pubkey: String, profiles: Profiles, ev: NostrEvent, completion: ((Profile?) -> Void)? = nil) {
     guard_valid_event(events: events, ev: ev) {
         DispatchQueue.global(qos: .background).async {
             guard let profile: Profile = decode_data(Data(ev.content.utf8)) else {
-                completion?()
+                completion?(nil)
                 return
             }
             
@@ -811,7 +859,7 @@ func process_metadata_event(events: EventCache, our_pubkey: String, profiles: Pr
             
             DispatchQueue.main.async {
                 process_metadata_profile(our_pubkey: our_pubkey, profiles: profiles, profile: profile, ev: ev)
-                completion?()
+                completion?(profile)
             }
         }
     }
@@ -836,7 +884,7 @@ func load_our_stuff(state: DamusState, ev: NostrEvent) {
     let m_old_ev = state.contacts.event
     state.contacts.event = ev
 
-    load_our_contacts(contacts: state.contacts, m_old_ev: m_old_ev, ev: ev)
+    load_our_contacts(state: state, m_old_ev: m_old_ev, ev: ev)
     load_our_relays(state: state, m_old_ev: m_old_ev, ev: ev)
 }
 
@@ -875,7 +923,7 @@ func load_our_relays(state: DamusState, m_old_ev: NostrEvent?, ev: NostrEvent) {
         if new.contains(d) {
             if let url = RelayURL(d) {
                 let descriptor = RelayDescriptor(url: url, info: decoded[d] ?? .rw)
-                add_new_relay(relay_filters: state.relay_filters, metadatas: state.relay_metadata, pool: state.pool, descriptor: descriptor, new_relay_filters: new_relay_filters)
+                add_new_relay(model_cache: state.relay_model_cache, relay_filters: state.relay_filters, pool: state.pool, descriptor: descriptor, new_relay_filters: new_relay_filters, logging_enabled: state.settings.developer_mode)
             }
         } else {
             state.pool.remove_relay(d)
@@ -884,16 +932,17 @@ func load_our_relays(state: DamusState, m_old_ev: NostrEvent?, ev: NostrEvent) {
     
     if changed {
         save_bootstrap_relays(pubkey: state.pubkey, relays: Array(new))
+        state.pool.connect()
         notify(.relays_changed, ())
     }
 }
 
-func add_new_relay(relay_filters: RelayFilters, metadatas: RelayMetadatas, pool: RelayPool, descriptor: RelayDescriptor, new_relay_filters: Bool) {
+func add_new_relay(model_cache: RelayModelCache, relay_filters: RelayFilters, pool: RelayPool, descriptor: RelayDescriptor, new_relay_filters: Bool, logging_enabled: Bool) {
     try? pool.add_relay(descriptor)
     let url = descriptor.url
     
     let relay_id = url.id
-    guard metadatas.lookup(relay_id: relay_id) == nil else {
+    guard model_cache.model(withURL: url) == nil else {
         return
     }
     
@@ -902,8 +951,13 @@ func add_new_relay(relay_filters: RelayFilters, metadatas: RelayMetadatas, pool:
             return
         }
         
-        DispatchQueue.main.async {
-            metadatas.insert(relay_id: relay_id, metadata: meta)
+        await MainActor.run {
+            let model = RelayModel(url, metadata: meta)
+            model_cache.insert(model: model)
+            
+            if logging_enabled {
+                pool.setLog(model.log, for: relay_id)
+            }
             
             // if this is the first time adding filters, we should filter non-paid relays
             if new_relay_filters && !meta.is_paid {
@@ -1101,13 +1155,12 @@ func zap_notification_title(_ zap: Zap) -> String {
 }
 
 func zap_notification_body(profiles: Profiles, zap: Zap, locale: Locale = Locale.current) -> String {
-    let src = zap.private_request ?? zap.request.ev
-    let anon = event_is_anonymous(ev: src)
-    let pk = anon ? "anon" : src.pubkey
+    let src = zap.request.ev
+    let pk = zap.is_anon ? ANON_PUBKEY : src.pubkey
     let profile = profiles.lookup(id: pk)
     let sats = NSNumber(value: (Double(zap.invoice.amount) / 1000.0))
     let formattedSats = format_msats_abbrev(zap.invoice.amount)
-    let name = Profile.displayName(profile: profile, pubkey: pk).display_name
+    let name = Profile.displayName(profile: profile, pubkey: pk).display_name.truncate(maxLength: 50)
 
     if src.content.isEmpty {
         let format = localizedStringFormat(key: "zap_notification_no_message", locale: locale)
@@ -1118,7 +1171,28 @@ func zap_notification_body(profiles: Profiles, zap: Zap, locale: Locale = Locale
     }
 }
 
-func create_in_app_zap_notification(profiles: Profiles, zap: Zap, locale: Locale = Locale.current, evId: String) {
+func create_in_app_profile_zap_notification(profiles: Profiles, zap: Zap, locale: Locale = Locale.current, profile_id: String) {
+    let content = UNMutableNotificationContent()
+
+    content.title = zap_notification_title(zap)
+    content.body = zap_notification_body(profiles: profiles, zap: zap, locale: locale)
+    content.sound = UNNotificationSound.default
+    content.userInfo = LossyLocalNotification(type: .profile_zap, event_id: profile_id).to_user_info()
+
+    let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+
+    let request = UNNotificationRequest(identifier: "myZapNotification", content: content, trigger: trigger)
+
+    UNUserNotificationCenter.current().add(request) { error in
+        if let error = error {
+            print("Error: \(error)")
+        } else {
+            print("Local notification scheduled")
+        }
+    }
+}
+
+func create_in_app_event_zap_notification(profiles: Profiles, zap: Zap, locale: Locale = Locale.current, evId: String) {
     let content = UNMutableNotificationContent()
 
     content.title = zap_notification_title(zap)
@@ -1139,6 +1213,27 @@ func create_in_app_zap_notification(profiles: Profiles, zap: Zap, locale: Locale
     }
 }
 
+func render_notification_content_preview(cache: EventCache, ev: NostrEvent, profiles: Profiles, privkey: String?) -> String {
+    
+    let prefix_len = 50
+    let artifacts = cache.get_cache_data(ev.id).artifacts.artifacts ?? render_note_content(ev: ev, profiles: profiles, privkey: privkey)
+    
+    // special case for longform events
+    if ev.known_kind == .longform {
+        let longform = LongformEvent(event: ev)
+        return longform.title ?? longform.summary ?? "Longform Event"
+    }
+    
+    switch artifacts {
+    case .longform:
+        // we should never hit this until we have more note types built out of parts
+        // since we handle this case above in known_kind == .longform
+        return String(ev.content.prefix(prefix_len))
+        
+    case .separated(let artifacts):
+        return String(NSAttributedString(artifacts.content.attributed).string.prefix(prefix_len))
+    }
+}
     
 func process_local_notification(damus_state: DamusState, event ev: NostrEvent) {
     guard let type = ev.known_kind else {
@@ -1162,21 +1257,22 @@ func process_local_notification(damus_state: DamusState, event ev: NostrEvent) {
     }
 
     if type == .text && damus_state.settings.mention_notification {
-        let blocks = ev.blocks(damus_state.keypair.privkey)
+        let blocks = ev.blocks(damus_state.keypair.privkey).blocks
         for case .mention(let mention) in blocks where mention.ref.ref_id == damus_state.keypair.pubkey {
-            let content = NSAttributedString(render_note_content(ev: ev, profiles: damus_state.profiles, privkey: damus_state.keypair.privkey).content.attributed).string
-            
-            let notify = LocalNotification(type: .mention, event: ev, target: ev, content: content)
+            let content_preview = render_notification_content_preview(cache: damus_state.events, ev: ev, profiles: damus_state.profiles, privkey: damus_state.keypair.privkey)
+            let notify = LocalNotification(type: .mention, event: ev, target: ev, content: content_preview)
             create_local_notification(profiles: damus_state.profiles, notify: notify )
         }
     } else if type == .boost && damus_state.settings.repost_notification, let inner_ev = ev.get_inner_event(cache: damus_state.events) {
-        let notify = LocalNotification(type: .repost, event: ev, target: inner_ev, content: inner_ev.content)
+        let content_preview = render_notification_content_preview(cache: damus_state.events, ev: inner_ev, profiles: damus_state.profiles, privkey: damus_state.keypair.privkey)
+        let notify = LocalNotification(type: .repost, event: ev, target: inner_ev, content: content_preview)
         create_local_notification(profiles: damus_state.profiles, notify: notify)
     } else if type == .like && damus_state.settings.like_notification,
               let evid = ev.referenced_ids.last?.ref_id,
               let liked_event = damus_state.events.lookup(evid)
     {
-        let notify = LocalNotification(type: .like, event: ev, target: liked_event, content: liked_event.content)
+        let content_preview = render_notification_content_preview(cache: damus_state.events, ev: liked_event, profiles: damus_state.profiles, privkey: damus_state.keypair.privkey)
+        let notify = LocalNotification(type: .like, event: ev, target: liked_event, content: content_preview)
         create_local_notification(profiles: damus_state.profiles, notify: notify)
     }
 
@@ -1202,7 +1298,7 @@ func create_local_notification(profiles: Profiles, notify: LocalNotification) {
     case .dm:
         title = displayName
         identifier = "myDMNotification"
-    case .zap:
+    case .zap, .profile_zap:
         // not handled here
         break
     }
@@ -1222,5 +1318,106 @@ func create_local_notification(profiles: Profiles, notify: LocalNotification) {
             print("Local notification scheduled")
         }
     }
+}
+
+
+enum ProcessZapResult {
+    case already_processed(Zap)
+    case done(Zap)
+    case failed
+}
+
+// securely get the zap target's pubkey. this can be faked so we need to be
+// careful
+func get_zap_target_pubkey(ev: NostrEvent, events: EventCache) -> String? {
+    let etags = ev.referenced_ids
+
+    guard let etag = etags.first else {
+        // no etags, ptag-only case
+
+        let ptags = ev.referenced_pubkeys
+
+        // ensure that there is only 1 ptag to stop fake profile zap attacks
+        guard ptags.count == 1 else {
+            return nil
+        }
+
+        return ptags.first?.id
+    }
+
+    // we have an e-tag
+
+    // ensure that there is only 1 etag to stop fake note zap attacks
+    guard etags.count == 1 else {
+        return nil
+    }
+
+    // we can't trust the p tag on note zaps because they can be faked
+    return events.lookup(etag.id)?.pubkey
+}
+
+func process_zap_event(damus_state: DamusState, ev: NostrEvent, completion: @escaping (ProcessZapResult) -> Void) {
+    // These are zap notifications
+    guard let ptag = get_zap_target_pubkey(ev: ev, events: damus_state.events) else {
+        completion(.failed)
+        return
+    }
+
+    // just return the zap if we already have it
+    if let zap = damus_state.zaps.zaps[ev.id], case .zap(let z) = zap {
+        completion(.already_processed(z))
+        return
+    }
+    
+    if let local_zapper = damus_state.profiles.lookup_zapper(pubkey: ptag) {
+        guard let zap = process_zap_event_with_zapper(damus_state: damus_state, ev: ev, zapper: local_zapper) else {
+            completion(.failed)
+            return
+        }
+        damus_state.add_zap(zap: .zap(zap))
+        completion(.done(zap))
+        return
+    }
+    
+    guard let profile = damus_state.profiles.lookup(id: ptag) else {
+        completion(.failed)
+        return
+    }
+    
+    guard let lnurl = profile.lnurl else {
+        completion(.failed)
+        return
+    }
+
+    Task {
+        guard let zapper = await fetch_zapper_from_lnurl(lnurls: damus_state.lnurls, pubkey: ptag, lnurl: lnurl) else {
+            completion(.failed)
+            return
+        }
+        
+        DispatchQueue.main.async {
+            damus_state.profiles.zappers[ptag] = zapper
+            guard let zap = process_zap_event_with_zapper(damus_state: damus_state, ev: ev, zapper: zapper) else {
+                completion(.failed)
+                return
+            }
+            damus_state.add_zap(zap: .zap(zap))
+            completion(.done(zap))
+        }
+    }
+    
+       
+}
+
+fileprivate func process_zap_event_with_zapper(damus_state: DamusState, ev: NostrEvent, zapper: String) -> Zap? {
+    let our_keypair = damus_state.keypair
+    
+    guard let zap = Zap.from_zap_event(zap_ev: ev, zapper: zapper, our_privkey: our_keypair.privkey) else {
+        return nil
+    }
+    
+    damus_state.add_zap(zap: .zap(zap))
+    
+    return zap
 }
 

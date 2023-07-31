@@ -15,6 +15,8 @@ func eventview_pfp_size(_ size: EventViewKind) -> CGFloat {
         return PFP_SIZE
     case .selected:
         return PFP_SIZE
+    case .title:
+        return PFP_SIZE
     case .subheadline:
         return PFP_SIZE * 0.5
     }
@@ -37,7 +39,7 @@ struct EventProfile: View {
     var body: some View {
         HStack(alignment: .center) {
             VStack {
-                NavigationLink(destination: ProfileView(damus_state: damus_state, pubkey: pubkey)) {
+                NavigationLink(value: Route.ProfileByKey(pubkey: pubkey)) {
                     ProfilePicView(pubkey: pubkey, size: pfp_size, highlight: .none, profiles: damus_state.profiles, disable_animation: disable_animation)
                 }
             }

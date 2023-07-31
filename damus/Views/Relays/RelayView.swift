@@ -10,8 +10,16 @@ import SwiftUI
 struct RelayView: View {
     let state: DamusState
     let relay: String
+    @ObservedObject private var model_cache: RelayModelCache
     
     @Binding var showActionButtons: Bool
+    
+    init(state: DamusState, relay: String, showActionButtons: Binding<Bool>) {
+        self.state = state
+        self.relay = relay
+        self.model_cache = state.relay_model_cache
+        _showActionButtons = showActionButtons
+    }
     
     var body: some View {
         Group {
@@ -20,18 +28,19 @@ struct RelayView: View {
                     if showActionButtons {
                         RemoveButton(privkey: privkey, showText: false)
                     }
-                    else {
-                        RelayStatus(pool: state.pool, relay: relay)
+                    else if let relay_connection {
+                        RelayStatusView(connection: relay_connection)
                     }
                 }
                 
-                RelayType(is_paid: state.relay_metadata.lookup(relay_id: relay)?.is_paid ?? false)
+                RelayType(is_paid: state.relay_model_cache.model(with_relay_id: relay)?.metadata.is_paid ?? false)
                 
-                if let meta = state.relay_metadata.lookup(relay_id: relay) {
+                if let meta = model_cache.model(with_relay_id: relay)?.metadata {
                     Text(relay)
                         .background(
-                            NavigationLink("", destination: RelayDetailView(state: state, relay: relay, nip11: meta)).opacity(0.0)
-                                .disabled(showActionButtons)
+                            NavigationLink(value: Route.RelayDetail(relay: relay, metadata: meta), label: {
+                                EmptyView()
+                            }).opacity(0.0).disabled(showActionButtons)
                         )
                     
                     Spacer()
@@ -42,6 +51,11 @@ struct RelayView: View {
                         .foregroundColor(Color.accentColor)
                 } else {
                     Text(relay)
+                        .background(
+                            NavigationLink(value: Route.RelayDetail(relay: relay, metadata: nil), label: {
+                                EmptyView()
+                            }).opacity(0.0).disabled(showActionButtons)
+                        )
                     
                     Spacer()
                     
@@ -67,6 +81,10 @@ struct RelayView: View {
         }
     }
     
+    private var relay_connection: RelayConnection? {
+        state.pool.get_relay(relay)?.connection
+    }
+    
     func CopyAction(relay: String) -> some View {
         Button {
             UIPasteboard.general.setValue(relay, forPasteboardType: "public.plain-text")
@@ -82,7 +100,8 @@ struct RelayView: View {
             }
             
             let descriptors = state.pool.our_descriptors
-            guard let new_ev = remove_relay( ev: ev, current_relays: descriptors, privkey: privkey, relay: relay) else {
+            guard let keypair = state.keypair.to_full(),
+                  let new_ev = remove_relay(ev: ev, current_relays: descriptors, keypair: keypair, relay: relay) else {
                 return
             }
             

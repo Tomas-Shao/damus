@@ -20,9 +20,11 @@ struct WalletView: View {
     
     func MainWalletView(nwc: WalletConnectURL) -> some View {
         VStack {
-            SupportDamus
-            
-            Spacer()
+            if !damus_state.settings.nozaps {
+                SupportDamus
+                
+                Spacer()
+            }
             
             Text(verbatim: nwc.relay.id)
             
@@ -153,13 +155,13 @@ struct WalletView: View {
     var body: some View {
         switch model.connect_state {
         case .new:
-            ConnectWalletView(model: model)
+            ConnectWalletView(model: model, nav: damus_state.nav)
         case .none:
-            ConnectWalletView(model: model)
+            ConnectWalletView(model: model, nav: damus_state.nav)
         case .existing(let nwc):
             MainWalletView(nwc: nwc)
                 .onAppear() {
-                    model.inital_percent = settings.donation_percent
+                    model.initial_percent = settings.donation_percent
                 }
                 .onChange(of: settings.donation_percent) { p in
                     guard let profile = damus_state.profiles.lookup(id: damus_state.pubkey) else {
@@ -173,13 +175,15 @@ struct WalletView: View {
                 .onDisappear {
                     guard let keypair = damus_state.keypair.to_full(),
                           let profile = damus_state.profiles.lookup(id: damus_state.pubkey),
-                          model.inital_percent != profile.damus_donation
+                          model.initial_percent != profile.damus_donation
                     else {
                         return
                     }
                     
                     profile.damus_donation = settings.donation_percent
-                    let meta = make_metadata_event(keypair: keypair, metadata: profile)
+                    guard let meta = make_metadata_event(keypair: keypair, metadata: profile) else {
+                        return
+                    }
                     let tsprofile = TimestampedProfile(profile: profile, timestamp: meta.created_at, event: meta)
                     damus_state.profiles.add(id: damus_state.pubkey, profile: tsprofile)
                     damus_state.postbox.send(meta)

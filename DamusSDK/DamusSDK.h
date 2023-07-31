@@ -8,6 +8,10 @@
 #include "damus.h"
 #include "bolt11.h"
 #include "amount.h"
+#include "nostr_bech32.h"
+#include "wasm.h"
+#include "nostrscript.h"
+#include "nostrdb.h"
 
 //! Project version number for DamusSDK.
 //FOUNDATION_EXPORT double DamusSDKVersionNumber;
@@ -17,6 +21,3 @@
 
 // In this header, you should import all the public headers of your framework using statements like #import <DamusSDK/PublicHeader.h>
 //#import "damus-Bridging-Header.h"
-
-
-

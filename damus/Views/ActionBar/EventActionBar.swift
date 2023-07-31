@@ -56,13 +56,9 @@ struct EventActionBar: View {
             HStack(spacing: 4) {
                 
                 EventActionButton(img: "repost", col: bar.boosted ? Color.green : nil) {
-                    if bar.boosted {
-                        notify(.delete, bar.our_boost)
-                    } else {
-                        self.show_repost_action = true
-                    }
+                    self.show_repost_action = true
                 }
-                .accessibilityLabel(NSLocalizedString("Boosts", comment: "Accessibility label for boosts button"))
+                .accessibilityLabel(NSLocalizedString("Reposts", comment: "Accessibility label for boosts button"))
                 Text(verbatim: "\(bar.boosts > 0 ? "\(bar.boosts)" : "")")
                     .font(.footnote.weight(.medium))
                     .foregroundColor(bar.boosted ? Color.green : Color.gray)
@@ -72,11 +68,11 @@ struct EventActionBar: View {
                 Spacer()
 
                 HStack(spacing: 4) {
-                    LikeButton(liked: bar.liked) {
+                    LikeButton(damus_state: damus_state, liked: bar.liked, liked_emoji: bar.our_like != nil ? to_reaction_emoji(ev: bar.our_like!) : nil) { emoji in
                         if bar.liked {
                             notify(.delete, bar.our_like)
                         } else {
-                            send_like()
+                            send_like(emoji: emoji)
                         }
                     }
 
@@ -88,14 +84,14 @@ struct EventActionBar: View {
 
             if let lnurl = self.lnurl {
                 Spacer()
-                ZapButton(damus_state: damus_state, event: event, lnurl: lnurl, zaps: self.damus_state.events.get_cache_data(self.event.id).zaps_model)
+                ZapButton(damus_state: damus_state, target: ZapTarget.note(id: event.id, author: event.pubkey), lnurl: lnurl, zaps: self.damus_state.events.get_cache_data(self.event.id).zaps_model)
             }
 
             Spacer()
             EventActionButton(img: "upload", col: Color.gray) {
                 show_share_action = true
             }
-            .accessibilityLabel(NSLocalizedString("Share", comment: "Button to share a post"))
+            .accessibilityLabel(NSLocalizedString("Share", comment: "Button to share a note"))
         }
         .onAppear {
             self.bar.update(damus: damus_state, evid: self.event.id)
@@ -143,13 +139,12 @@ struct EventActionBar: View {
         }
     }
     
-    func send_like() {
-        guard let privkey = damus_state.keypair.privkey else {
+    func send_like(emoji: String) {
+        guard let keypair = damus_state.keypair.to_full(),
+              let like_ev = make_like_event(keypair: keypair, liked: event, content: emoji) else {
             return
         }
-        
-        let like_ev = make_like_event(pubkey: damus_state.pubkey, privkey: privkey, liked: event)
-        
+
         self.bar.our_like = like_ev
 
         generator.impactOccurred()
@@ -171,65 +166,189 @@ func EventActionButton(img: String, col: Color?, action: @escaping () -> ()) -> 
 }
 
 struct LikeButton: View {
+    let damus_state: DamusState
     let liked: Bool
-    let action: () -> ()
+    let liked_emoji: String?
+    let action: (_ emoji: String) -> Void
+
+    // For reactions background
+    @State private var showReactionsBG = 0
+    @State private var showEmojis: [Int] = []
+    @State private var rotateThumb = -45
+
+    @State private var isReactionsVisible = false
 
     // Following four are Shaka animation properties
     let timer = Timer.publish(every: 0.10, on: .main, in: .common).autoconnect()
     @State private var shouldAnimate = false
     @State private var rotationAngle = 0.0
     @State private var amountOfAngleIncrease: Double = 0.0
-    
-    var body: some View {
 
+    var emojis: [String] {
+        damus_state.settings.emoji_reactions
+    }
+    
+    @ViewBuilder
+    func buildMaskView(for emoji: String) -> some View {
+        if emoji == "🤙" {
+            LINEAR_GRADIENT
+                .mask(
+                    Image("shaka.fill")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                )
+        } else {
+            Text(emoji)
+        }
+    }
+
+    var body: some View {
+        ZStack {
+            likeButton()
+                .accessibilityLabel(NSLocalizedString("Like", comment: "Accessibility Label for Like button"))
+                .rotationEffect(Angle(degrees: shouldAnimate ? rotationAngle : 0))
+                .onReceive(self.timer) { _ in
+                    shakaAnimationLogic()
+                }
+                .simultaneousGesture(longPressGesture())
+                .overlay(reactionsOverlay())
+        }
+    }
+
+    func likeButton() -> some View {
         Button(action: {
+            guard !isReactionsVisible else { return }
             withAnimation(Animation.easeOut(duration: 0.15)) {
-                self.action()
+                self.action(damus_state.settings.default_emoji_reaction)
                 shouldAnimate = true
                 amountOfAngleIncrease = 20.0
             }
         }) {
-            if liked {
-                LINEAR_GRADIENT
-                    .mask(Image("shaka.fill", bundle: Bundle(for: DamusColors.self))
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                    )
+            if let liked_emoji {
+                buildMaskView(for: liked_emoji)
                     .frame(width: 20, height: 20)
             } else {
-                Image("shaka", bundle: Bundle(for: DamusColors.self))
+                Image("shaka")
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 20, height: 20)
                     .foregroundColor(.gray)
             }
         }
-        .accessibilityLabel(NSLocalizedString("Like", comment: "Accessibility Label for Like button"))
-        .rotationEffect(Angle(degrees: shouldAnimate ? rotationAngle : 0))
-        .onReceive(self.timer) { _ in
-            // Shaka animation logic
-            rotationAngle = amountOfAngleIncrease
-            if amountOfAngleIncrease == 0 {
-                timer.upstream.connect().cancel()
-                return
-            }
-            amountOfAngleIncrease = -amountOfAngleIncrease
-            if amountOfAngleIncrease < 0 {
-                amountOfAngleIncrease += 2.5
+    }
+
+    func shakaAnimationLogic() {
+        rotationAngle = amountOfAngleIncrease
+        if amountOfAngleIncrease == 0 {
+            timer.upstream.connect().cancel()
+            return
+        }
+        amountOfAngleIncrease = -amountOfAngleIncrease
+        if amountOfAngleIncrease < 0 {
+            amountOfAngleIncrease += 2.5
+        } else {
+            amountOfAngleIncrease -= 2.5
+        }
+    }
+
+    func longPressGesture() -> some Gesture {
+        LongPressGesture(minimumDuration: 0.5).onEnded { _ in
+            reactionLongPressed()
+        }
+    }
+
+    func reactionsOverlay() -> some View {
+        Group {
+            if isReactionsVisible {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10)
+                        .frame(width: 250, height: 50)
+                        .foregroundColor(DamusColors.black)
+                        .scaleEffect(Double(showReactionsBG), anchor: .topTrailing)
+                        .animation(
+                            .interpolatingSpring(stiffness: 170, damping: 15).delay(0.05),
+                            value: showReactionsBG
+                        )
+                        .overlay(
+                            Rectangle()
+                                .foregroundColor(Color.white.opacity(0.2))
+                                .frame(width: 250, height: 50)
+                                .clipShape(
+                                    RoundedRectangle(cornerRadius: 10)
+                                )
+                        )
+                        .overlay(reactions())
+                }
+                .offset(y: -40)
+                .onTapGesture {
+                    withAnimation(.easeOut(duration: 0.2)) {
+                        isReactionsVisible = false
+                        showReactionsBG = 0
+                    }
+                    showEmojis = []
+                }
             } else {
-                amountOfAngleIncrease -= 2.5
+                EmptyView()
             }
         }
+    }
+
+    func reactions() -> some View {
+        HStack {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 20) {
+                    ForEach(emojis, id: \.self) { emoji in
+                        if let index = emojis.firstIndex(of: emoji) {
+                            let scale = showEmojis.count >= index + 1 ? showEmojis[index] : 0
+                            Text(emoji)
+                                .scaleEffect(Double(scale))
+                                .onTapGesture {
+                                    emojiTapped(emoji)
+                                }
+                        }
+                    }
+                }
+                .padding(.horizontal, 20)
+            }
+        }
+    }
+
+    // When reaction button is long pressed, it displays the multiple emojis overlay and displays the user's selected emojis with an animation
+    private func reactionLongPressed() {
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        showEmojis = Array(repeating: 0, count: emojis.count) // Initialize the showEmojis array
+        
+        for (index, _) in emojis.enumerated() {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1 * Double(index)) {
+                withAnimation(.interpolatingSpring(stiffness: 170, damping: 8)) {
+                    showEmojis[index] = 1
+                }
+            }
+        }
+        
+        isReactionsVisible = true
+        showReactionsBG = 1
+    }
+    
+    private func emojiTapped(_ emoji: String) {
+        print("Tapped emoji: \(emoji)")
+        
+        self.action(emoji)
+
+        withAnimation(.easeOut(duration: 0.2)) {
+            isReactionsVisible = false
+            showReactionsBG = 0
+        }
+        showEmojis = []
     }
 }
 
 
 struct EventActionBar_Previews: PreviewProvider {
     static var previews: some View {
-        let pk = "pubkey"
         let ds = test_damus_state()
-        let ev = NostrEvent(content: "hi", pubkey: pk)
-        
+        let ev = NostrEvent(content: "hi", keypair: test_keypair)!
+
         let bar = ActionBarModel.empty()
         let likedbar = ActionBarModel(likes: 10, boosts: 0, zaps: 0, zap_total: 0, replies: 0, our_like: nil, our_boost: nil, our_zap: nil, our_reply: nil)
         let likedbar_ours = ActionBarModel(likes: 10, boosts: 0, zaps: 0, zap_total: 0, replies: 0, our_like: test_event, our_boost: nil, our_zap: nil, our_reply: nil)

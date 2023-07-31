@@ -35,21 +35,20 @@ struct SelectedEventView: View {
                     
                     Spacer()
                     
-                    EventMenuContext(event: event, keypair: damus.keypair, target_pubkey: event.pubkey, bookmarks: damus.bookmarks, muted_threads: damus.muted_threads)
+                    EventMenuContext(damus: damus, event: event)
                         .padding([.bottom], 4)
-
                 }
                 .padding(.horizontal)
                 .minimumScaleFactor(0.75)
                 .lineLimit(1)
                 
-                if event_is_reply(event, privkey: damus.keypair.privkey) {
+                if event_is_reply(event.event_refs(damus.keypair.privkey)) {
                     ReplyDescription(event: event, profiles: damus.profiles)
                         .padding(.horizontal)
                 }
                 
-                EventBody(damus_state: damus, event: event, size: size, options: [.pad_content])
-                
+                EventBody(damus_state: damus, event: event, size: size, options: [.wide])
+
                 if let mention = first_eref_mention(ev: event, privkey: damus.keypair.privkey) {
                     BuilderEventView(damus: damus, event_id: mention.ref.id)
                         .padding(.horizontal)
@@ -89,6 +88,5 @@ struct SelectedEventView: View {
 struct SelectedEventView_Previews: PreviewProvider {
     static var previews: some View {
         SelectedEventView(damus: test_damus_state(), event: test_event, size: .selected)
-            .padding()
     }
 }

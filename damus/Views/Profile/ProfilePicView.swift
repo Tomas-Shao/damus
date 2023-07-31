@@ -28,59 +28,6 @@ func pfp_line_width(_ h: Highlight) -> CGFloat {
     }
 }
 
-struct EditProfilePictureView: View {
-    
-    @Binding var url: URL?
-    
-    let pubkey: String
-    let size: CGFloat
-    let highlight: Highlight
-    
-    var damus_state: DamusState?
-
-    var Placeholder: some View {
-        Circle()
-            .frame(width: size, height: size)
-            .overlay(Circle().stroke(highlight_color(highlight), lineWidth: pfp_line_width(highlight)))
-            .padding(2)
-    }
-    
-    var disable_animation: Bool {
-        damus_state?.settings.disable_animation ?? false
-    }
-
-    var body: some View {
-        ZStack {
-            Color(uiColor: .systemBackground)
-    
-            KFAnimatedImage(get_profile_url())
-                .imageContext(.pfp, disable_animation: disable_animation)
-                .cancelOnDisappear(true)
-                .configure { view in
-                    view.framePreloadCount = 3
-                }
-                .placeholder { _ in
-                    Placeholder
-                }
-                .scaledToFill()
-                .opacity(0.5)
-        }
-        .frame(width: size, height: size)
-        .clipShape(Circle())
-        .overlay(Circle().stroke(highlight_color(highlight), lineWidth: pfp_line_width(highlight)))
-    }
-    
-    private func get_profile_url() -> URL? {
-        if let url {
-            return url
-        } else if let state = damus_state, let picture = state.profiles.lookup(id: pubkey)?.picture {
-            return URL(string: picture)
-        } else {
-            return url ?? URL(string: robohash(pubkey))
-        }
-    }
-}
-
 struct InnerProfilePicView: View {
     let url: URL?
     let fallbackUrl: URL?
@@ -92,6 +39,7 @@ struct InnerProfilePicView: View {
     var Placeholder: some View {
         Circle()
             .frame(width: size, height: size)
+            .foregroundColor(DamusColors.mediumGrey)
             .overlay(Circle().stroke(highlight_color(highlight), lineWidth: pfp_line_width(highlight)))
             .padding(2)
     }
@@ -127,7 +75,7 @@ struct ProfilePicView: View {
     
     @State var picture: String?
     
-    init (pubkey: String, size: CGFloat, highlight: Highlight, profiles: Profiles, disable_animation: Bool, picture: String? = nil) {
+    init(pubkey: String, size: CGFloat, highlight: Highlight, profiles: Profiles, disable_animation: Bool, picture: String? = nil) {
         self.pubkey = pubkey
         self.profiles = profiles
         self.size = size
@@ -161,7 +109,8 @@ func get_profile_url(picture: String?, pubkey: String, profiles: Profiles) -> UR
 }
 
 func make_preview_profiles(_ pubkey: String) -> Profiles {
-    let profiles = Profiles()
+    let user_search_cache = UserSearchCache()
+    let profiles = Profiles(user_search_cache: user_search_cache)
     let picture = "http://cdn.jb55.com/img/red-me.jpg"
     let profile = Profile(name: "jb55", display_name: "William Casarin", about: "It's me", picture: picture, banner: "", website: "https://jb55.com", lud06: nil, lud16: nil, nip05: "jb55.com", damus_donation: nil)
     let ts_profile = TimestampedProfile(profile: profile, timestamp: 0, event: test_event)

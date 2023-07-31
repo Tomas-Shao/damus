@@ -39,6 +39,7 @@ enum VideoHandler {
     case onStateChanged((VideoState) -> Void)
 }
     
+@MainActor
 public class VideoPlayerModel: ObservableObject {
     @Published var autoReplay: Bool = true
     @Published var muted: Bool = true
@@ -47,7 +48,8 @@ public class VideoPlayerModel: ObservableObject {
     @Published var has_audio: Bool? = nil
     @Published var contentMode: UIView.ContentMode = .scaleAspectFill
     
-    var time: CMTime = CMTime()
+    fileprivate var time: CMTime?
+    
     var handlers: [VideoHandler] = []
     
     init() {
@@ -164,15 +166,11 @@ public extension VideoPlayer {
     }
 }
 
-@available(iOS 13, *)
-public extension VideoPlayer {
-    
-    
-}
-
-func get_video_size(player: AVPlayer) -> CGSize? {
-    // TODO: make this async?
-    return player.currentImage?.size
+func get_video_size(player: AVPlayer) async -> CGSize? {
+    let res = Task.detached(priority: .background) {
+        return player.currentImage?.size
+    }
+    return await res.value
 }
 
 func video_has_audio(player: AVPlayer) async -> Bool {
@@ -220,7 +218,7 @@ extension VideoPlayer: UIViewRepresentable {
                 if let player = uiView.player {
                     Task {
                         let has_audio = await video_has_audio(player: player)
-                        let size = get_video_size(player: player)
+                        let size = await get_video_size(player: player)
                         Task { @MainActor in
                             if let size {
                                 self.model.size = size
@@ -265,8 +263,9 @@ extension VideoPlayer: UIViewRepresentable {
         uiView.isMuted = model.muted
         uiView.isAutoReplay = model.autoReplay
         
-        if let observerTime = context.coordinator.observerTime, model.time != observerTime {
-            uiView.seek(to: model.time, toleranceBefore: model.time, toleranceAfter: model.time, completion: { _ in })
+        if let observerTime = context.coordinator.observerTime, let modelTime = model.time,
+           modelTime != observerTime && modelTime.isValid && modelTime.isNumeric {
+            uiView.seek(to: modelTime, completion: { _ in })
         }
     }
     
@@ -285,13 +284,16 @@ extension VideoPlayer: UIViewRepresentable {
             self.videoPlayer = videoPlayer
         }
         
+        @MainActor
         func startObserver(uiView: VideoPlayerView) {
             guard observer == nil else { return }
             
             observer = uiView.addPeriodicTimeObserver(forInterval: .init(seconds: 0.25, preferredTimescale: 60)) { [weak self, unowned uiView] time in
                 guard let `self` = self else { return }
                 
-                self.videoPlayer.model.time = time
+                Task { @MainActor in
+                    self.videoPlayer.model.time = time
+                }
                 self.observerTime = time
                 
                 self.updateBuffer(uiView: uiView)
@@ -313,6 +315,7 @@ extension VideoPlayer: UIViewRepresentable {
             self.observerBuffer = nil
         }
         
+        @MainActor
         func updateBuffer(uiView: VideoPlayerView) {
             let bufferProgress = uiView.bufferProgress
             guard bufferProgress != observerBuffer else { return }
