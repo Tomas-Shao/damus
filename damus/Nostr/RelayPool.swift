@@ -204,7 +204,7 @@ public class RelayPool {
         request_queue.append(QueuedRequest(req: r, relay: relay, skip_ephemeral: skip_ephemeral))
     }
     
-    public func send_raw(_ req: NostrRequestType, to: [String]? = nil, skip_ephemeral: Bool = true) {
+    func send_raw(_ req: NostrRequestType, to: [String]? = nil, skip_ephemeral: Bool = true) {
         let relays = to.map{ get_relays($0) } ?? self.relays
 
         for relay in relays {

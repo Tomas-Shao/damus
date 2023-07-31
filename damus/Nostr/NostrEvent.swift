@@ -23,11 +23,11 @@ enum ValidationResult: Decodable {
 //typealias NostrEvent = NdbNote
 //typealias Tags = TagsSequence
 typealias Tags = [[String]]
-typealias NostrEvent = NostrEventOld
+public typealias NostrEvent = NostrEventOld
 
 let MAX_NOTE_SIZE: Int = 2 << 18
 
-class NostrEventOld: Codable, Identifiable, CustomStringConvertible, Equatable, Hashable, Comparable {
+public class NostrEventOld: Codable, Identifiable, CustomStringConvertible, Equatable, Hashable, Comparable {
     // TODO: memory mapped db events
     /*
     private var note_data: UnsafeMutablePointer<ndb_note>
@@ -53,9 +53,9 @@ class NostrEventOld: Codable, Identifiable, CustomStringConvertible, Equatable, 
     var tags: TagIterator
      */
 
-    let id: String
-    let content: String
-    let sig: String
+    public let id: String
+    public let content: String
+    public let sig: String
     let tags: Tags
 
     //var boosted_by: String?
@@ -66,9 +66,9 @@ class NostrEventOld: Codable, Identifiable, CustomStringConvertible, Equatable, 
     // custom flags for internal use
     //var flags: Int = 0
 
-    let pubkey: String
-    let created_at: UInt32
-    let kind: UInt32
+    public let pubkey: String
+    public let created_at: UInt32
+    public let kind: UInt32
 
     // cached stuff
     private var _event_refs: [EventRef]? = nil
@@ -78,15 +78,15 @@ class NostrEventOld: Codable, Identifiable, CustomStringConvertible, Equatable, 
         return event_from_json(dat: self.content)
     }()
 
-    static func == (lhs: NostrEventOld, rhs: NostrEventOld) -> Bool {
+    static public func == (lhs: NostrEventOld, rhs: NostrEventOld) -> Bool {
         return lhs.id == rhs.id
     }
 
-    static func < (lhs: NostrEventOld, rhs: NostrEventOld) -> Bool {
+    static public func < (lhs: NostrEventOld, rhs: NostrEventOld) -> Bool {
         return lhs.created_at < rhs.created_at
     }
 
-    func hash(into hasher: inout Hasher) {
+    public func hash(into hasher: inout Hasher) {
         hasher.combine(id)
     }
 
@@ -102,7 +102,7 @@ class NostrEventOld: Codable, Identifiable, CustomStringConvertible, Equatable, 
         return ev
     }
 
-    init?(content: String, keypair: Keypair, kind: UInt32 = 1, tags: [[String]] = [], createdAt: UInt32 = UInt32(Date().timeIntervalSince1970)) {
+    public init?(content: String, keypair: Keypair, kind: UInt32 = 1, tags: [[String]] = [], createdAt: UInt32 = UInt32(Date().timeIntervalSince1970)) {
 
         self.content = content
         self.pubkey = keypair.pubkey
@@ -206,7 +206,7 @@ extension NostrEventOld {
         return content
     }
 
-    var description: String {
+    public var description: String {
         return "NostrEvent { id: \(id) pubkey \(pubkey) kind \(kind) tags \(tags) content '\(content)' }"
     }
 
@@ -219,10 +219,15 @@ extension NostrEventOld {
     }
 
     private func get_referenced_ids(key: String) -> [ReferencedId] {
+        #if DamusSDK
+        return DamusSDK.get_referenced_ids(tags: self.tags, key: key)
+        #else
         return damus.get_referenced_ids(tags: self.tags, key: key)
+        #endif
+
     }
 
-    public func direct_replies(_ privkey: String?) -> [ReferencedId] {
+    func direct_replies(_ privkey: String?) -> [ReferencedId] {
         return event_refs(privkey).reduce(into: []) { acc, evref in
             if let direct_reply = evref.is_direct_reply {
                 acc.append(direct_reply)
@@ -240,7 +245,7 @@ extension NostrEventOld {
         return self.id
     }
 
-    public func last_refid() -> ReferencedId? {
+    func last_refid() -> ReferencedId? {
         var mlast: Int? = nil
         var i: Int = 0
         for tag in tags {
@@ -257,7 +262,7 @@ extension NostrEventOld {
         return tag_to_refid(tags[last])
     }
 
-    public func references(id: String, key: AsciiCharacter) -> Bool {
+    func references(id: String, key: AsciiCharacter) -> Bool {
         for tag in tags {
             if tag.count >= 2 && tag[0].matches_char(key) {
                 if tag[1] == id {
@@ -292,15 +297,15 @@ extension NostrEventOld {
         return localeToLanguage(locale)
     }
 
-    public var referenced_ids: [ReferencedId] {
+    var referenced_ids: [ReferencedId] {
         return get_referenced_ids(key: "e")
     }
 
-    public var referenced_pubkeys: [ReferencedId] {
+    var referenced_pubkeys: [ReferencedId] {
         return get_referenced_ids(key: "p")
     }
 
-    public var referenced_hashtags: [ReferencedId] {
+    var referenced_hashtags: [ReferencedId] {
         return get_referenced_ids(key: "t")
     }
 

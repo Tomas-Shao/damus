@@ -2,8 +2,8 @@
 #ifndef JB55_CURSOR_H
 #define JB55_CURSOR_H
 
-#include "typedefs.h"
-#include "varint.h"
+#include <typedefs.h>
+#include <varint.h>
 
 #include <stdio.h>
 #include <ctype.h>

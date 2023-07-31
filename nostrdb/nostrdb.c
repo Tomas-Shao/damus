@@ -7,6 +7,7 @@
 #include "sha256.h"
 #include <stdlib.h>
 #include <limits.h>
+#include <inttypes.h>
 
 #include "secp256k1.h"
 #include "secp256k1_ecdh.h"

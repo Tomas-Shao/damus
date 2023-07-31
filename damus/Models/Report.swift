@@ -14,7 +14,7 @@ public enum ReportType: String, CustomStringConvertible, CaseIterable {
     case illegal
     case impersonation
 
-    var description: String {
+    public var description: String {
         switch self {
         case .spam:
             return NSLocalizedString("Spam", comment: "Description of report type for spam.")

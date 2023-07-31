@@ -19,7 +19,7 @@ func hex_col(r: UInt8, g: UInt8, b: UInt8) -> Color {
 public struct SetupView: View {
     @StateObject var navigationCoordinator: NavigationCoordinator = NavigationCoordinator()
     
-    var body: some View {
+    public var body: some View {
         NavigationStack(path: $navigationCoordinator.path) {
             ZStack {
                 VStack(alignment: .center) {

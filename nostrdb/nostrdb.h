@@ -1,7 +1,7 @@
 #ifndef NOSTRDB_H
 #define NOSTRDB_H
 
-#include <inttypes.h>
+//#include <inttypes.h>
 #include "cursor.h"
 
 struct ndb_str {
