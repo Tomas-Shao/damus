@@ -119,10 +119,15 @@ public struct ContentView: View {
                 TabView(selection: $filter_state) {
                     // This is needed or else there is a bug when switching from the 3rd or 2nd tab to first. no idea why.
                     mystery
-                    
+                    #if DamusSDK
+                    HashtagSearch("Beagle")
+                        .tag(FilterState.posts)
+                        .id(FilterState.posts)
+                    #else
                     contentTimelineView(filter: FilterState.posts.filter)
                         .tag(FilterState.posts)
                         .id(FilterState.posts)
+                    #endif
                     contentTimelineView(filter: FilterState.posts_and_replies.filter)
                         .tag(FilterState.posts_and_replies)
                         .id(FilterState.posts_and_replies)
@@ -152,7 +157,11 @@ public struct ContentView: View {
         .safeAreaInset(edge: .top, spacing: 0) {
             VStack(spacing: 0) {
                 CustomPicker(selection: $filter_state, content: {
+                    #if DamusSDK
+                    Text("#Beagle", comment: "Label for filter for seeing only posts (instead of posts and replies).").tag(FilterState.posts)
+                    #else
                     Text("Posts", comment: "Label for filter for seeing only posts (instead of posts and replies).").tag(FilterState.posts)
+                    #endif
                     Text("Posts & Replies", comment: "Label for filter for seeing posts and replies (instead of only posts).").tag(FilterState.posts_and_replies)
                     #if DamusSDK
                     Text("Universe 🛸", comment: "Toolbar label for the universal view where posts from all connected relay servers appear.").tag(FilterState.universe)
@@ -163,6 +172,11 @@ public struct ContentView: View {
             }
             .background(colorScheme == .dark ? Color.black : Color.white)
         }
+    }
+
+    func HashtagSearch(_ ht: String) -> some View {
+        let search_model = SearchModel(state: damus_state!, search: .filter_hashtag([ht]))
+        return SearchView(appstate: damus_state!, search: search_model)
     }
     
     func contentTimelineView(filter: (@escaping (NostrEvent) -> Bool)) -> some View {
@@ -677,7 +691,7 @@ public struct ContentView: View {
                                       wallet: WalletModel(settings: settings)
         )
         home.damus_state = self.damus_state!
-        
+
         pool.connect()
     }
 

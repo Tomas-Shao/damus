@@ -293,7 +293,6 @@
 		7C95CAEE299DCEF1009DCB67 /* KFOptionSetter+.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C95CAED299DCEF1009DCB67 /* KFOptionSetter+.swift */; };
 		7CFF6317299FEFE5005D382A /* SelectableText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CFF6316299FEFE5005D382A /* SelectableText.swift */; };
 		8003225229F9477A00C969FB /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4CE6DEEA27F7A08200C66700 /* Assets.xcassets */; };
-		8003225329F947BE00C969FB /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4CE6DEEA27F7A08200C66700 /* Assets.xcassets */; };
 		8003225429F94CC000C969FB /* WebSocket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50088DA029E8271A008A1FDF /* WebSocket.swift */; };
 		8003225529F94CD100C969FB /* StringCodable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CA5588229F33F5B00DC6A45 /* StringCodable.swift */; };
 		8003225629F94CDD00C969FB /* BigButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CE1399329F0669900AC6A0B /* BigButton.swift */; };
@@ -598,11 +597,6 @@
 		80736F9F29EEE4D300901A2F /* nostr_bech32.c in Sources */ = {isa = PBXBuildFile; fileRef = 4C8D00CE29E38B950036AF10 /* nostr_bech32.c */; };
 		80736FA029EEE4D300901A2F /* list.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C3EA65028FF5A5500C48A62 /* list.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		80736FA129EEE4D300901A2F /* block.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C8D00D129E397AD0036AF10 /* block.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		80736FA929EEF42700901A2F /* DemoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80736FA829EEF42700901A2F /* DemoApp.swift */; };
-		80736FAD29EEF42900901A2F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 80736FAC29EEF42900901A2F /* Assets.xcassets */; };
-		80736FB029EEF42900901A2F /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 80736FAF29EEF42900901A2F /* Preview Assets.xcassets */; };
-		80736FB929EEF74E00901A2F /* secp256k1 in Frameworks */ = {isa = PBXBuildFile; productRef = 80736FB829EEF74E00901A2F /* secp256k1 */; };
-		80736FBB29EEF74E00901A2F /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 80736FBA29EEF74E00901A2F /* Kingfisher */; };
 		80D3E6692A08CA91004A4A8F /* KeychainStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 501F8C7F2A0220E1001AFC1D /* KeychainStorage.swift */; };
 		80D3E66B2A08CAAE004A4A8F /* KeyboardVisible.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C7D09582A05BEAD00943473 /* KeyboardVisible.swift */; };
 		80D3E66D2A08CABF004A4A8F /* (null) in Sources */ = {isa = PBXBuildFile; };
@@ -610,8 +604,6 @@
 		80D3E6712A08CAD4004A4A8F /* BlurHashDecode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C198DEE29F88C6B004C165C /* BlurHashDecode.swift */; };
 		80D3E6732A08CADF004A4A8F /* BlurHashEncode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C198DEB29F88C6B004C165C /* BlurHashEncode.swift */; };
 		80D3E6752A08CBA3004A4A8F /* CredentialHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50B5685229F97CB400A23243 /* CredentialHandler.swift */; };
-		80DBC9B329F95B12001D03AF /* DamusSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 80736E4029EEE0D500901A2F /* DamusSDK.framework */; };
-		80DBC9B429F95B12001D03AF /* DamusSDK.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 80736E4029EEE0D500901A2F /* DamusSDK.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		80DBC9B829F95D94001D03AF /* DamusSDK.h in Headers */ = {isa = PBXBuildFile; fileRef = 80736E4229EEE0D500901A2F /* DamusSDK.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		80DF51212A2ACDD9002DDCB3 /* DamusLogoGradient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C0707D02A1ECB38004E7B51 /* DamusLogoGradient.swift */; };
 		80DF51222A2ACDE7002DDCB3 /* GradientButtonStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C6E1DAC2A193EC2008FC15A /* GradientButtonStyle.swift */; };
@@ -657,13 +649,6 @@
 			remoteGlobalIDString = 4CE6DEE227F7A08100C66700;
 			remoteInfo = damus;
 		};
-		80D3E67A2A08CC10004A4A8F /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 4CE6DEDB27F7A08100C66700 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 80736E3F29EEE0D500901A2F;
-			remoteInfo = DamusSDK;
-		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -673,17 +658,6 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-			);
-			name = "Embed Frameworks";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		80DBC9B729F95B12001D03AF /* Embed Frameworks */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 10;
-			files = (
-				80DBC9B429F95B12001D03AF /* DamusSDK.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1097,10 +1071,6 @@
 		7CFF6316299FEFE5005D382A /* SelectableText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectableText.swift; sourceTree = "<group>"; };
 		80736E4029EEE0D500901A2F /* DamusSDK.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = DamusSDK.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		80736E4229EEE0D500901A2F /* DamusSDK.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DamusSDK.h; sourceTree = "<group>"; };
-		80736FA629EEF42700901A2F /* Demo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Demo.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		80736FA829EEF42700901A2F /* DemoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoApp.swift; sourceTree = "<group>"; };
-		80736FAC29EEF42900901A2F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		80736FAF29EEF42900901A2F /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		9609F057296E220800069BF3 /* BannerImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BannerImageView.swift; sourceTree = "<group>"; };
 		9C83F89229A937B900136C08 /* TextViewWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextViewWrapper.swift; sourceTree = "<group>"; };
 		9CA876E129A00CE90003B9A3 /* AttachMediaUtility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttachMediaUtility.swift; sourceTree = "<group>"; };
@@ -1153,16 +1123,6 @@
 				80736F4629EEE29D00901A2F /* Kingfisher in Frameworks */,
 				80DF51282A2ACE4F002DDCB3 /* GSPlayer in Frameworks */,
 				80736F4429EEE29D00901A2F /* secp256k1 in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		80736FA329EEF42700901A2F /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				80736FBB29EEF74E00901A2F /* Kingfisher in Frameworks */,
-				80DBC9B329F95B12001D03AF /* DamusSDK.framework in Frameworks */,
-				80736FB929EEF74E00901A2F /* secp256k1 in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1664,7 +1624,6 @@
 				4CE6DEF627F7A08200C66700 /* damusTests */,
 				4CE6DF0027F7A08200C66700 /* damusUITests */,
 				80736E4129EEE0D500901A2F /* DamusSDK */,
-				80736FA729EEF42700901A2F /* Demo */,
 				4CE6DEE427F7A08100C66700 /* Products */,
 				4CEE2AE62804F57B00AB5EEF /* Frameworks */,
 			);
@@ -1677,7 +1636,6 @@
 				4CE6DEF327F7A08200C66700 /* damusTests.xctest */,
 				4CE6DEFD27F7A08200C66700 /* damusUITests.xctest */,
 				80736E4029EEE0D500901A2F /* DamusSDK.framework */,
-				80736FA629EEF42700901A2F /* Demo.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -1849,24 +1807,6 @@
 			path = DamusSDK;
 			sourceTree = "<group>";
 		};
-		80736FA729EEF42700901A2F /* Demo */ = {
-			isa = PBXGroup;
-			children = (
-				80736FA829EEF42700901A2F /* DemoApp.swift */,
-				80736FAC29EEF42900901A2F /* Assets.xcassets */,
-				80736FAE29EEF42900901A2F /* Preview Content */,
-			);
-			path = Demo;
-			sourceTree = "<group>";
-		};
-		80736FAE29EEF42900901A2F /* Preview Content */ = {
-			isa = PBXGroup;
-			children = (
-				80736FAF29EEF42900901A2F /* Preview Assets.xcassets */,
-			);
-			path = "Preview Content";
-			sourceTree = "<group>";
-		};
 		F7F0BA23297892AE009531F3 /* Modifiers */ = {
 			isa = PBXGroup;
 			children = (
@@ -2014,29 +1954,6 @@
 			productReference = 80736E4029EEE0D500901A2F /* DamusSDK.framework */;
 			productType = "com.apple.product-type.framework";
 		};
-		80736FA529EEF42700901A2F /* Demo */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 80736FB129EEF42900901A2F /* Build configuration list for PBXNativeTarget "Demo" */;
-			buildPhases = (
-				80736FA229EEF42700901A2F /* Sources */,
-				80736FA329EEF42700901A2F /* Frameworks */,
-				80736FA429EEF42700901A2F /* Resources */,
-				80DBC9B729F95B12001D03AF /* Embed Frameworks */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				80D3E67B2A08CC10004A4A8F /* PBXTargetDependency */,
-			);
-			name = Demo;
-			packageProductDependencies = (
-				80736FB829EEF74E00901A2F /* secp256k1 */,
-				80736FBA29EEF74E00901A2F /* Kingfisher */,
-			);
-			productName = Demo;
-			productReference = 80736FA629EEF42700901A2F /* Demo.app */;
-			productType = "com.apple.product-type.application";
-		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -2060,9 +1977,6 @@
 						TestTargetID = 4CE6DEE227F7A08100C66700;
 					};
 					80736E3F29EEE0D500901A2F = {
-						CreatedOnToolsVersion = 14.2;
-					};
-					80736FA529EEF42700901A2F = {
 						CreatedOnToolsVersion = 14.2;
 					};
 				};
@@ -2116,7 +2030,6 @@
 				4CE6DEF227F7A08200C66700 /* damusTests */,
 				4CE6DEFC27F7A08200C66700 /* damusUITests */,
 				80736E3F29EEE0D500901A2F /* DamusSDK */,
-				80736FA529EEF42700901A2F /* Demo */,
 			);
 		};
 /* End PBXProject section */
@@ -2158,16 +2071,6 @@
 				80736ED629EEE20B00901A2F /* Localizable.strings in Resources */,
 				8003225229F9477A00C969FB /* Assets.xcassets in Resources */,
 				80736ED729EEE21000901A2F /* InfoPlist.strings in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		80736FA429EEF42700901A2F /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				80736FB029EEF42900901A2F /* Preview Assets.xcassets in Resources */,
-				8003225329F947BE00C969FB /* Assets.xcassets in Resources */,
-				80736FAD29EEF42900901A2F /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2774,14 +2677,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		80736FA229EEF42700901A2F /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				80736FA929EEF42700901A2F /* DemoApp.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -2794,11 +2689,6 @@
 			isa = PBXTargetDependency;
 			target = 4CE6DEE227F7A08100C66700 /* damus */;
 			targetProxy = 4CE6DEFE27F7A08200C66700 /* PBXContainerItemProxy */;
-		};
-		80D3E67B2A08CC10004A4A8F /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 80736E3F29EEE0D500901A2F /* DamusSDK */;
-			targetProxy = 80D3E67A2A08CC10004A4A8F /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -3275,66 +3165,6 @@
 			};
 			name = Release;
 		};
-		80736FB229EEF42900901A2F /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"Demo/Preview Content\"";
-				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.allcom.Demo;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Debug;
-		};
-		80736FB329EEF42900901A2F /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"Demo/Preview Content\"";
-				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.allcom.Demo;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -3379,15 +3209,6 @@
 			buildConfigurations = (
 				80736E4929EEE0D500901A2F /* Debug */,
 				80736E4A29EEE0D500901A2F /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		80736FB129EEF42900901A2F /* Build configuration list for PBXNativeTarget "Demo" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				80736FB229EEF42900901A2F /* Debug */,
-				80736FB329EEF42900901A2F /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -3443,16 +3264,6 @@
 			productName = secp256k1;
 		};
 		80736F4529EEE29D00901A2F /* Kingfisher */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 4C06670228FC7EC500038D2A /* XCRemoteSwiftPackageReference "Kingfisher" */;
-			productName = Kingfisher;
-		};
-		80736FB829EEF74E00901A2F /* secp256k1 */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 4C64987F286E0EE300EAE2B3 /* XCRemoteSwiftPackageReference "secp256k1" */;
-			productName = secp256k1;
-		};
-		80736FBA29EEF74E00901A2F /* Kingfisher */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 4C06670228FC7EC500038D2A /* XCRemoteSwiftPackageReference "Kingfisher" */;
 			productName = Kingfisher;
