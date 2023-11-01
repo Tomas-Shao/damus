@@ -403,6 +403,7 @@
 		8003225929F94CF900C969FB /* ZapTypePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CA3FA0F29F593D000FDB3C3 /* ZapTypePicker.swift */; };
 		8003225A29F9502B00C969FB /* ShareActionButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CE1399129F0666100AC6A0B /* ShareActionButton.swift */; };
 		8003225B29F9504100C969FB /* RepostAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CE1398F29F0661A00AC6A0B /* RepostAction.swift */; };
+		8037F7FB2AF2A0290038758A /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 8037F7FA2AF2A0290038758A /* Kingfisher */; };
 		8039FC6B2A24DEAF001F13A3 /* DamusGradient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C7D09712A0AEF5E00943473 /* DamusGradient.swift */; };
 		8039FC6C2A24DEC3001F13A3 /* WalletModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C7D09772A0B0CC900943473 /* WalletModel.swift */; };
 		8039FC6D2A24DED1001F13A3 /* WalletConnect.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C7D09612A098D0E00943473 /* WalletConnect.swift */; };
@@ -629,7 +630,6 @@
 		80736F3F29EEE26000901A2F /* ReplyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CACA9D4280C31E100D9BBE8 /* ReplyView.swift */; };
 		80736F4029EEE26400901A2F /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CE6DEE827F7A08100C66700 /* ContentView.swift */; };
 		80736F4429EEE29D00901A2F /* secp256k1 in Frameworks */ = {isa = PBXBuildFile; productRef = 80736F4329EEE29D00901A2F /* secp256k1 */; };
-		80736F4629EEE29D00901A2F /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 80736F4529EEE29D00901A2F /* Kingfisher */; };
 		8093ADA12AF2800F00427702 /* bolt11.c in Sources */ = {isa = PBXBuildFile; fileRef = 8093AD662AF2800C00427702 /* bolt11.c */; };
 		8093ADA22AF2800F00427702 /* tal.c in Sources */ = {isa = PBXBuildFile; fileRef = 8093AD692AF2800C00427702 /* tal.c */; };
 		8093ADA32AF2800F00427702 /* bech32.c in Sources */ = {isa = PBXBuildFile; fileRef = 8093AD6B2AF2800C00427702 /* bech32.c */; };
@@ -1737,8 +1737,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8037F7FB2AF2A0290038758A /* Kingfisher in Frameworks */,
 				8093ADC62AF280EA00427702 /* MarkdownUI in Frameworks */,
-				80736F4629EEE29D00901A2F /* Kingfisher in Frameworks */,
 				80736F4429EEE29D00901A2F /* secp256k1 in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -3114,8 +3114,8 @@
 			name = DamusSDK;
 			packageProductDependencies = (
 				80736F4329EEE29D00901A2F /* secp256k1 */,
-				80736F4529EEE29D00901A2F /* Kingfisher */,
 				8093ADC52AF280EA00427702 /* MarkdownUI */,
+				8037F7FA2AF2A0290038758A /* Kingfisher */,
 			);
 			productName = DamusSDK;
 			productReference = 80736E4029EEE0D500901A2F /* DamusSDK.framework */;
@@ -4763,15 +4763,15 @@
 			package = 4C64987F286E0EE300EAE2B3 /* XCRemoteSwiftPackageReference "secp256k1" */;
 			productName = secp256k1;
 		};
+		8037F7FA2AF2A0290038758A /* Kingfisher */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4C06670228FC7EC500038D2A /* XCRemoteSwiftPackageReference "Kingfisher" */;
+			productName = Kingfisher;
+		};
 		80736F4329EEE29D00901A2F /* secp256k1 */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 4C64987F286E0EE300EAE2B3 /* XCRemoteSwiftPackageReference "secp256k1" */;
 			productName = secp256k1;
-		};
-		80736F4529EEE29D00901A2F /* Kingfisher */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 4C06670228FC7EC500038D2A /* XCRemoteSwiftPackageReference "Kingfisher" */;
-			productName = Kingfisher;
 		};
 		8093ADC52AF280EA00427702 /* MarkdownUI */ = {
 			isa = XCSwiftPackageProductDependency;

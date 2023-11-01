@@ -7,7 +7,7 @@
 
 import Foundation
 
-class Ndb {
+public class Ndb {
     let ndb: ndb_t
 
     static var db_path: String {
@@ -19,7 +19,7 @@ class Ndb {
         Ndb(ndb: ndb_t(ndb: nil))
     }
 
-    init?(path: String? = nil) {
+    public init?(path: String? = nil) {
         //try? FileManager.default.removeItem(atPath: Ndb.db_path + "/lock.mdb")
         //try? FileManager.default.removeItem(atPath: Ndb.db_path + "/data.mdb")
 

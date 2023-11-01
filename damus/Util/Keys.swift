@@ -18,11 +18,11 @@ let ANON_PUBKEY = Pubkey(Data([
     0x50, 0x42, 0xdc, 0x42, 0xac, 0xe1, 0x7f, 0x12
 ]))
 
-struct FullKeypair: Equatable {
-    let pubkey: Pubkey
-    let privkey: Privkey
+public struct FullKeypair: Equatable {
+    public let pubkey: Pubkey
+    public let privkey: Privkey
 
-    func to_keypair() -> Keypair {
+    public func to_keypair() -> Keypair {
         return Keypair(pubkey: pubkey, privkey: privkey)
     }
 }
@@ -37,7 +37,7 @@ public struct Keypair {
         Keypair(pubkey: .empty, privkey: nil)
     }
 
-    func to_full() -> FullKeypair? {
+    public func to_full() -> FullKeypair? {
         guard let privkey = self.privkey else {
             return nil
         }
@@ -105,7 +105,7 @@ func bech32_note_id(_ evid: NoteId) -> String {
     return bech32_encode(hrp: "note", evid.bytes)
 }
 
-func generate_new_keypair() -> FullKeypair {
+public func generate_new_keypair() -> FullKeypair {
     let key = try! secp256k1.Signing.PrivateKey()
     let privkey = Privkey(key.rawRepresentation)
     let pubkey = Pubkey(Data(key.publicKey.xonly.bytes))
@@ -149,12 +149,12 @@ func save_keypair(pubkey: Pubkey, privkey: Privkey) throws {
     try save_privkey(privkey: privkey)
 }
 
-func clear_keypair() throws {
+public func clear_keypair() throws {
     try clear_saved_privkey()
     clear_saved_pubkey()
 }
 
-func get_saved_keypair() -> Keypair? {
+public func get_saved_keypair() -> Keypair? {
     do {
         try removePrivateKeyFromUserDefaults()
 

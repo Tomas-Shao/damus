@@ -36,7 +36,7 @@ public class RelayPool {
     private let network_monitor_queue = DispatchQueue(label: "io.damus.network_monitor")
     private var last_network_status: NWPath.Status = .unsatisfied
 
-    init(ndb: Ndb) {
+    public init(ndb: Ndb) {
         self.ndb = ndb
 
         network_monitor.pathUpdateHandler = { [weak self] path in
@@ -80,7 +80,7 @@ public class RelayPool {
         }
     }
     
-    func register_handler(sub_id: String, handler: @escaping (String, NostrConnectionEvent) -> ()) {
+    public func register_handler(sub_id: String, handler: @escaping (String, NostrConnectionEvent) -> ()) {
         for handler in handlers {
             // don't add duplicate handlers
             if handler.sub_id == sub_id {
@@ -160,7 +160,7 @@ public class RelayPool {
         }
     }
 
-    func connect(to: [String]? = nil) {
+    public func connect(to: [String]? = nil) {
         let relays = to.map{ get_relays($0) } ?? self.relays
         for relay in relays {
             relay.connection.connect()
@@ -248,7 +248,7 @@ public class RelayPool {
         }
     }
     
-    func send(_ req: NostrRequest, to: [String]? = nil, skip_ephemeral: Bool = true) {
+    public func send(_ req: NostrRequest, to: [String]? = nil, skip_ephemeral: Bool = true) {
         send_raw(.typical(req), to: to, skip_ephemeral: skip_ephemeral)
     }
     
@@ -305,7 +305,7 @@ public class RelayPool {
     }
 }
 
-func add_rw_relay(_ pool: RelayPool, _ url: String) {
+public func add_rw_relay(_ pool: RelayPool, _ url: String) {
     guard let url = RelayURL(url) else {
         return
     }

@@ -450,7 +450,7 @@ func random_bytes(count: Int) -> Data {
     return Data(bytes: bytes, count: count)
 }
 
-func make_first_contact_event(keypair: Keypair) -> NostrEvent? {
+public func make_first_contact_event(keypair: Keypair) -> NostrEvent? {
     let bootstrap_relays = load_bootstrap_relays(pubkey: keypair.pubkey)
     let rw_relay_info = RelayInfo(read: true, write: true)
     var relays: [String: RelayInfo] = [:]
@@ -488,7 +488,7 @@ public func make_first_post_event(name: String, addressId: String) {
     //TODO: TOMAS
 }
 
-func make_metadata_event(keypair: FullKeypair, metadata: Profile) -> NostrEvent? {
+public func make_metadata_event(keypair: FullKeypair, metadata: Profile) -> NostrEvent? {
     guard let metadata_json = encode_json(metadata) else {
         return nil
     }

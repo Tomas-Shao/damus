@@ -7,18 +7,18 @@
 
 import Foundation
 
-struct LoginNotify: Notify {
-    typealias Payload = Keypair
-    var payload: Keypair
+public struct LoginNotify: Notify {
+    public typealias Payload = Keypair
+    public var payload: Keypair
 }
 
-extension NotifyHandler {
+public extension NotifyHandler {
     static var login: NotifyHandler<LoginNotify> {
         .init()
     }
 }
 
-extension Notifications {
+public extension Notifications {
     static func login(_ keypair: Keypair) -> Notifications<LoginNotify> {
         .init(.init(payload: keypair))
     }

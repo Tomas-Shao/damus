@@ -7,9 +7,9 @@
 
 import Foundation
 
-struct NostrSubscribe {
-    let filters: [NostrFilter]
-    let sub_id: String
+public struct NostrSubscribe {
+    public let filters: [NostrFilter]
+    public let sub_id: String
 }
 
 
@@ -34,7 +34,7 @@ enum NostrRequestType {
     }
 }
 
-enum NostrRequest {
+public enum NostrRequest {
     case subscribe(NostrSubscribe)
     case unsubscribe(String)
     case event(NostrEvent)

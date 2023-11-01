@@ -59,7 +59,7 @@ enum Sheets: Identifiable {
     }
 }
 
-struct ContentView: View {
+public struct ContentView: View {
     let keypair: Keypair
     
     var pubkey: Pubkey {
@@ -277,7 +277,7 @@ struct ContentView: View {
         navigationCoordinator.push(route: Route.Search(search: search))
     }
     
-    var body: some View {
+    public var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             if let damus = self.damus_state {
                 NavigationStack(path: $navigationCoordinator.path) {

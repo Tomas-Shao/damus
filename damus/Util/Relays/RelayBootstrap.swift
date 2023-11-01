@@ -32,7 +32,7 @@ func save_bootstrap_relays(pubkey: Pubkey, relays: [String])  {
     UserDefaults.standard.set(relays, forKey: key)
 }
 
-func load_bootstrap_relays(pubkey: Pubkey) -> [String] {
+public func load_bootstrap_relays(pubkey: Pubkey) -> [String] {
     let key = bootstrap_relays_setting_key(pubkey: pubkey)
     
     guard let relays = UserDefaults.standard.stringArray(forKey: key) else {

@@ -7,7 +7,7 @@
 
 import Foundation
 
-typealias Profile = NdbProfile
+public typealias Profile = NdbProfile
 typealias ProfileKey = UInt64
 //typealias ProfileRecord = NdbProfileRecord
 
