@@ -8,13 +8,13 @@
 import Foundation
 
 
-public class Relayer {
-    public let relay: String
-    public var attempts: Int
-    public var retry_after: Double
-    public var last_attempt: Int64?
+class Relayer {
+    let relay: String
+    var attempts: Int
+    var retry_after: Double
+    var last_attempt: Int64?
     
-    public init(relay: String, attempts: Int, retry_after: Double) {
+    init(relay: String, attempts: Int, retry_after: Double) {
         self.relay = relay
         self.attempts = attempts
         self.retry_after = retry_after
@@ -55,16 +55,16 @@ enum CancelSendErr {
 
 class PostBox {
     let pool: RelayPool
-    var events: [String: PostedEvent]
-    
-    public init(pool: RelayPool) {
+    var events: [NoteId: PostedEvent]
+
+    init(pool: RelayPool) {
         self.pool = pool
         self.events = [:]
         pool.register_handler(sub_id: "postbox", handler: handle_event)
     }
     
     // only works reliably on delay-sent events
-    func cancel_send(evid: String) -> CancelSendErr? {
+    func cancel_send(evid: NoteId) -> CancelSendErr? {
         guard let ev = events[evid] else {
             return .nothing_to_cancel
         }
@@ -114,7 +114,7 @@ class PostBox {
     }
     
     @discardableResult
-    func remove_relayer(relay_id: String, event_id: String) -> Bool {
+    func remove_relayer(relay_id: String, event_id: NoteId) -> Bool {
         guard let ev = self.events[event_id] else {
             return false
         }
@@ -150,7 +150,7 @@ class PostBox {
             relayer.attempts += 1
             relayer.last_attempt = Int64(Date().timeIntervalSince1970)
             relayer.retry_after *= 1.5
-            if let relay = pool.get_relay(relayer.relay) {
+            if pool.get_relay(relayer.relay) != nil {
                 print("flushing event \(event.event.id) to \(relayer.relay)")
             } else {
                 print("could not find relay when flushing: \(relayer.relay)")
@@ -176,3 +176,5 @@ class PostBox {
         }
     }
 }
+
+

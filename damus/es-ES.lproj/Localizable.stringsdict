@@ -2,22 +2,22 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>collapsed_event_view_other_notes</key>
+	<key>followed_by_three_and_others</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>
-		<string>%#@NOTES@</string>
-		<key>NOTES</key>
+		<string>%#@OTHERS@</string>
+		<key>OTHERS</key>
 		<dict>
 			<key>NSStringFormatSpecTypeKey</key>
 			<string>NSStringPluralRuleType</string>
 			<key>NSStringFormatValueTypeKey</key>
 			<string>d</string>
 			<key>one</key>
-			<string>... %d otra nota ...</string>
+			<string>Seguido por %2$@, %3$@, %4$@ y %1$d más</string>
 			<key>many</key>
-			<string>... %d otras notas ...</string>
+			<string>Seguido por %2$@, %3$@, %4$@ y %1$d más</string>
 			<key>other</key>
-			<string>... %d otras notas ...</string>
+			<string>Seguido por %2$@, %3$@, %4$@ y %1$d más</string>
 		</dict>
 	</dict>
 	<key>followers_count</key>
@@ -56,6 +56,24 @@
 			<string>Siguiendo</string>
 		</dict>
 	</dict>
+	<key>imports_count</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@IMPORTS@</string>
+		<key>IMPORTS</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>Importación</string>
+			<key>many</key>
+			<string>Importaciones</string>
+			<key>other</key>
+			<string>Importaciones</string>
+		</dict>
+	</dict>
 	<key>reacted_tagged_in_3</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>
@@ -67,14 +85,14 @@
 			<key>NSStringFormatValueTypeKey</key>
 			<string>d</string>
 			<key>one</key>
-			<string>%2$@ y %1$d más han reaccionado a un post en el que te etiquetaron</string>
+			<string>%2$@ y %1$d más han reaccionado a una nota en la que te etiquetaron</string>
 			<key>many</key>
-			<string>%2$@ y %1$d más han reaccionado a un post en el que te etiquetaron</string>
+			<string>%2$@ y %1$d más han reaccionado a una nota en la que te etiquetaron</string>
 			<key>other</key>
-			<string>%2$@ y %1$d más han reaccionado a un post en el que te etiquetaron</string>
+			<string>%2$@ y %1$d más han reaccionado a una nota en la que te etiquetaron</string>
 		</dict>
 	</dict>
-	<key>reacted_your_post_3</key>
+	<key>reacted_your_note_3</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>
 		<string>%#@REACTED@</string>
@@ -85,11 +103,11 @@
 			<key>NSStringFormatValueTypeKey</key>
 			<string>d</string>
 			<key>one</key>
-			<string>%2$@ y %1$d más han reaccionado a tu post</string>
+			<string>%2$@ y %1$d más han reaccionado a tu nota</string>
 			<key>many</key>
-			<string>%2$@ y %1$d más han reaccionado a tu post</string>
+			<string>%2$@ y %1$d más han reaccionado a tu nota</string>
 			<key>other</key>
-			<string>%2$@ y %1$d más han reaccionado a tu post</string>
+			<string>%2$@ y %1$d más han reaccionado a tu nota</string>
 		</dict>
 	</dict>
 	<key>reacted_your_profile_3</key>
@@ -157,11 +175,11 @@
 			<key>NSStringFormatValueTypeKey</key>
 			<string>d</string>
 			<key>one</key>
-			<string>Respondiendo a %2$@, %3$@ &amp; %1$d más</string>
+			<string>Respondiendo a %2$@, %3$@ y %1$d más</string>
 			<key>many</key>
-			<string>Respondiendo a %2$@, %3$@ &amp; %1$d más</string>
+			<string>Respondiendo a %2$@, %3$@ y %1$d más</string>
 			<key>other</key>
-			<string>Respondiendo a %2$@, %3$@ &amp; %1$d más</string>
+			<string>Respondiendo a %2$@, %3$@ y %1$d más</string>
 		</dict>
 	</dict>
 	<key>reposted_tagged_in_3</key>
@@ -175,14 +193,14 @@
 			<key>NSStringFormatValueTypeKey</key>
 			<string>d</string>
 			<key>one</key>
-			<string>%2$@ y %1$d más han republicado un post en el que te etiquetaron</string>
+			<string>%2$@ y %1$d más han republicado una nota en la que te etiquetaron</string>
 			<key>many</key>
-			<string>%2$@ y %1$d más han republicado un post en el que te etiquetaron</string>
+			<string>%2$@ y %1$d más han republicado una nota en la que te etiquetaron</string>
 			<key>other</key>
-			<string>%2$@ y %1$d más han republicado un post en el que te etiquetaron</string>
+			<string>%2$@ y %1$d más han republicado una nota en la que te etiquetaron</string>
 		</dict>
 	</dict>
-	<key>reposted_your_post_3</key>
+	<key>reposted_your_note_3</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>
 		<string>%#@REPOSTED@</string>
@@ -193,11 +211,11 @@
 			<key>NSStringFormatValueTypeKey</key>
 			<string>d</string>
 			<key>one</key>
-			<string>%2$@ y %1$d más han republicado tu post</string>
+			<string>%2$@ y %1$d más han republicado tu nota</string>
 			<key>many</key>
-			<string>%2$@ y %1$d más han republicado tu post</string>
+			<string>%2$@ y %1$d más han republicado tu nota</string>
 			<key>other</key>
-			<string>%2$@ y %1$d más han republicado tu post</string>
+			<string>%2$@ y %1$d más han republicado tu nota</string>
 		</dict>
 	</dict>
 	<key>reposted_your_profile_3</key>
@@ -272,6 +290,24 @@
 			<string>%2$@ sats</string>
 		</dict>
 	</dict>
+	<key>word_count</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@WORDS@</string>
+		<key>WORDS</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>%d Palabra</string>
+			<key>many</key>
+			<string>%d Palabras</string>
+			<key>other</key>
+			<string>%d Palabras</string>
+		</dict>
+	</dict>
 	<key>zap_notification_no_message</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>
@@ -319,14 +355,14 @@
 			<key>NSStringFormatValueTypeKey</key>
 			<string>d</string>
 			<key>one</key>
-			<string>%2$@ y %1$d más han zapeado un post en el que te etiquetaron</string>
+			<string>%2$@ y %1$d más han zapeado una nota en la que te etiquetaron</string>
 			<key>many</key>
-			<string>%2$@ y %1$d más han zapeado un post en el que te etiquetaron</string>
+			<string>%2$@ y %1$d más han zapeado una nota en la que te etiquetaron</string>
 			<key>other</key>
-			<string>%2$@ y %1$d más han zapeado un post en el que te etiquetaron</string>
+			<string>%2$@ y %1$d más han zapeado una nota en la que te etiquetaron</string>
 		</dict>
 	</dict>
-	<key>zapped_your_post_3</key>
+	<key>zapped_your_note_3</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>
 		<string>%#@ZAPPED@</string>
@@ -337,11 +373,11 @@
 			<key>NSStringFormatValueTypeKey</key>
 			<string>d</string>
 			<key>one</key>
-			<string>%2$@ y %1$d más han zapeado tu post</string>
+			<string>%2$@ y %1$d más han zapeado tu nota</string>
 			<key>many</key>
-			<string>%2$@ y %1$d más han zapeado tu post</string>
+			<string>%2$@ y %1$d más han zapeado tu nota</string>
 			<key>other</key>
-			<string>%2$@ y %1$d más han zapeado tu post</string>
+			<string>%2$@ y %1$d más han zapeado tu nota</string>
 		</dict>
 	</dict>
 	<key>zapped_your_profile_3</key>
@@ -355,11 +391,11 @@
 			<key>NSStringFormatValueTypeKey</key>
 			<string>d</string>
 			<key>one</key>
-			<string>%2$@ y %1$d más han zapeado tu perfil</string>
+			<string>%2$@ y %1$d más te han enviado un zap</string>
 			<key>many</key>
-			<string>%2$@ y %1$d más han zapeado tu perfil</string>
+			<string>%2$@ y %1$d más te han enviado un zap</string>
 			<key>other</key>
-			<string>%2$@ y %1$d más han zapeado tu perfil</string>
+			<string>%2$@ y %1$d más te han enviado un zap</string>
 		</dict>
 	</dict>
 	<key>zaps_count</key>

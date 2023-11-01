@@ -10,13 +10,19 @@ import Foundation
 /// manages the lifetime of a thread
 class ThreadModel: ObservableObject {
     @Published var event: NostrEvent
+    let original_event: NostrEvent
     var event_map: Set<NostrEvent>
     
     init(event: NostrEvent, damus_state: DamusState) {
         self.damus_state = damus_state
         self.event_map = Set()
         self.event = event
-        add_event(event)
+        self.original_event = event
+        add_event(event, keypair: damus_state.keypair)
+    }
+    
+    var is_original: Bool {
+        return original_event.id == event.id
     }
     
     let damus_state: DamusState
@@ -40,10 +46,10 @@ class ThreadModel: ObservableObject {
     }
     
     @discardableResult
-    func set_active_event(_ ev: NostrEvent) -> Bool {
+    func set_active_event(_ ev: NostrEvent, keypair: Keypair) -> Bool {
         self.event = ev
-        add_event(ev)
-        
+        add_event(ev, keypair: keypair)
+
         //self.objectWillChange.send()
         return false
     }
@@ -53,8 +59,8 @@ class ThreadModel: ObservableObject {
         var event_filter = NostrFilter()
         var ref_events = NostrFilter()
 
-        let thread_id = event.thread_id(privkey: nil)
-        
+        let thread_id = event.thread_id(keypair: .empty)
+
         ref_events.referenced_ids = [thread_id, event.id]
         ref_events.kinds = [.text]
         ref_events.limit = 1000
@@ -79,19 +85,20 @@ class ThreadModel: ObservableObject {
         damus_state.pool.subscribe(sub_id: meta_subid, filters: meta_filters, handler: handle_event)
     }
     
-    func add_event(_ ev: NostrEvent) {
+    func add_event(_ ev: NostrEvent, keypair: Keypair) {
         if event_map.contains(ev) {
             return
         }
         
         let the_ev = damus_state.events.upsert(ev)
-        damus_state.replies.count_replies(the_ev)
-        damus_state.events.add_replies(ev: the_ev)
-        
+        damus_state.replies.count_replies(ev, keypair: keypair)
+        damus_state.events.add_replies(ev: ev, keypair: keypair)
+
         event_map.insert(ev)
         objectWillChange.send()
     }
-    
+
+    @MainActor
     func handle_event(relay_id: String, ev: NostrConnectionEvent) {
         
         let (sub_id, done) = handle_subid_event(pool: damus_state.pool, relay_id: relay_id, ev: ev) { sid, ev in
@@ -99,10 +106,12 @@ class ThreadModel: ObservableObject {
                 return
             }
             
-            if ev.known_kind == .metadata {
-                process_metadata_event(events: damus_state.events, our_pubkey: damus_state.pubkey, profiles: damus_state.profiles, ev: ev)
+            if ev.known_kind == .zap {
+                process_zap_event(damus_state: damus_state, ev: ev) { zap in
+                    
+                }
             } else if ev.is_textlike {
-                self.add_event(ev)
+                self.add_event(ev, keypair: damus_state.keypair)
             }
         }
         
@@ -111,8 +120,16 @@ class ThreadModel: ObservableObject {
         }
         
         if sub_id == self.base_subid {
-            load_profiles(profiles_subid: self.profiles_subid, relay_id: relay_id, load: .from_events(Array(event_map)), damus_state: damus_state)
+            let txn = NdbTxn(ndb: damus_state.ndb)
+            load_profiles(context: "thread", profiles_subid: self.profiles_subid, relay_id: relay_id, load: .from_events(Array(event_map)), damus_state: damus_state, txn: txn)
         }
     }
 
+}
+
+
+func get_top_zap(events: EventCache, evid: NoteId) -> Zapping? {
+    return events.get_cache_data(evid).zaps_model.zaps.first(where: { zap in
+        !zap.request.marked_hidden
+    })
 }

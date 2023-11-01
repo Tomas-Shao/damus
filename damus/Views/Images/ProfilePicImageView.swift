@@ -9,11 +9,10 @@ import Kingfisher
 
 struct ProfileImageContainerView: View {
     let url: URL?
+    let settings: UserSettingsStore
     
     @State private var image: UIImage?
     @State private var showShareSheet = false
-    
-    let disable_animation: Bool
     
     private struct ImageHandler: ImageModifier {
         @Binding var handler: UIImage?
@@ -27,13 +26,13 @@ struct ProfileImageContainerView: View {
     var body: some View {
         
         KFAnimatedImage(url)
-            .imageContext(.pfp, disable_animation: disable_animation)
+            .imageContext(.pfp, disable_animation: settings.disable_animation)
             .configure { view in
                 view.framePreloadCount = 3
             }
             .imageModifier(ImageHandler(handler: $image))
             .clipShape(Circle())
-            .modifier(ImageContextMenuModifier(url: url, image: image, showShareSheet: $showShareSheet))
+            .modifier(ImageContextMenuModifier(url: url, image: image, settings: settings, showShareSheet: $showShareSheet))
             .sheet(isPresented: $showShareSheet) {
                 ShareSheet(activityItems: [url])
             }
@@ -62,9 +61,9 @@ struct NavDismissBarView: View {
 }
 
 struct ProfilePicImageView: View {
-    let pubkey: String
+    let pubkey: Pubkey
     let profiles: Profiles
-    let disable_animation: Bool
+    let settings: UserSettingsStore
     
     @Environment(\.presentationMode) var presentationMode
 
@@ -74,7 +73,7 @@ struct ProfilePicImageView: View {
                 .ignoresSafeArea()
             
             ZoomableScrollView {
-                ProfileImageContainerView(url: get_profile_url(picture: nil, pubkey: pubkey, profiles: profiles), disable_animation: disable_animation)
+                ProfileImageContainerView(url: get_profile_url(picture: nil, pubkey: pubkey, profiles: profiles), settings: settings)
                     .aspectRatio(contentMode: .fit)
                     .padding(.top, Theme.safeAreaInsets?.top)
                     .padding(.bottom, Theme.safeAreaInsets?.bottom)
@@ -90,13 +89,11 @@ struct ProfilePicImageView: View {
 }
 
 struct ProfileZoomView_Previews: PreviewProvider {
-    static let pubkey = "ca48854ac6555fed8e439ebb4fa2d928410e0eef13fa41164ec45aaaa132d846"
-    
     static var previews: some View {
         ProfilePicImageView(
-            pubkey: pubkey,
-            profiles: make_preview_profiles(pubkey),
-            disable_animation: false
+            pubkey: test_pubkey,
+            profiles: make_preview_profiles(test_pubkey),
+            settings: test_damus_state.settings
         )
     }
 }

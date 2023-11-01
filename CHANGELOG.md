@@ -1,3 +1,393 @@
+## [1.6-25] - 2023-10-31
+
+### Added
+
+- Tap to dismiss keyboard on user status view (ericholguin)
+- Add setting that allows users to optionally disable the new profile action sheet feature (Daniel D’Aquino)
+- Add follow button to profile action sheet (Daniel D’Aquino)
+- Added reaction counters to nostrdb (William Casarin)
+- Record when profile is last fetched in nostrdb (William Casarin)
+
+
+### Changed
+
+- Automatically load extra regional Japanese relays during account creation if user's region is set to Japan. (Daniel D’Aquino)
+- Updated customize zap view (ericholguin)
+- Users are now notified when you quote repost them (William Casarin)
+- Save bandwidth by only fetching new profiles after a certain amount of time (William Casarin)
+- Zap button on profile action sheet now zaps with a single click, while a long press brings custom zap view (Daniel D’Aquino)
+
+
+### Fixed
+
+- Use white font color in qrcode view (ericholguin)
+- Fixed an issue where zapping would silently fail on default settings if the user does not have a lightning wallet preinstalled on their device. (Daniel D’Aquino)
+
+
+[1.6-25]: https://github.com/damus-io/damus/releases/tag/v1.6-25
+## [1.6-24] - 2023-10-22 - AppStore Rejection Cope
+
+### Added
+
+- Improve discoverability of profile zaps with zappability badges and profile action sheets (Daniel D’Aquino)
+- Add suggested hashtags to universe view (Daniel D’Aquino)
+- Suggest first post during onboarding (Daniel D’Aquino)
+- Add expiry date for images in cache to be auto-deleted after a preset time to save space on storage (Daniel D’Aquino)
+- Add QR scan nsec logins. (Jericho Hasselbush)
+
+
+### Changed
+
+- Improved status view design (ericholguin)
+- Improve clear cache functionality (Daniel D’Aquino)
+
+
+### Fixed
+
+- Reduce size of event menu hitbox (William Casarin)
+- Do not show DMs from muted users (Daniel D’Aquino)
+- Add more spacing between display name and username, and prefix username with `@` character (Daniel D’Aquino)
+- Broadcast quoted notes when posting a note with quotes (Daniel D’Aquino)
+
+
+[1.6-24]: https://github.com/damus-io/damus/releases/tag/v1.6-24
+
+## [1.6-23] - 2023-10-06 - Appstore Release
+
+### Added
+
+- Added merch store button to sidebar menu (Daniel D’Aquino)
+
+### Changed
+
+- Damus icon now opens sidebar (Daniel D’Aquino)
+
+### Fixed
+
+- Stop tab buttons from causing the root view to scroll to the top unless user is coming from another tab or already at the root view (Daniel D’Aquino)
+- Fix profiles not updating (William Casarin)
+- Fix issue where relays with trailing slashes cannot be removed (#1531) (Daniel D’Aquino)
+
+
+[1.6-23]: https://github.com/damus-io/damus/releases/tag/v1.6-23
+
+## [1.6-20] - 2023-10-04
+
+### Changed
+
+- Improve UX around clearing cache (Daniel D’Aquino)
+- Show muted thread replies at the bottom of the thread view (#1522) (Daniel D’Aquino)
+
+### Fixed
+
+- Fix situations where the note composer cursor gets stuck in one place after tagging a user (Daniel D’Aquino)
+- Fix some note composer issues, such as when copying/pasting larger text, and make the post composer more robust. (Daniel D’Aquino)
+- Apply filters to hashtag search timeline view (Daniel D’Aquino)
+- Hide quoted or reposted notes from people whom the user has muted. (#1216) (Daniel D’Aquino)
+- Fix profile not updating (William Casarin)
+- Fix small graphical toolbar bug when scrolling profiles (Daniel D’Aquino)
+- Fix localization issues and export strings for translation (Terry Yiu)
+
+
+[1.6-20]: https://github.com/damus-io/damus/releases/tag/v1.6-20
+
+## [1.6-18] - 2023-09-21
+
+### Added
+
+- Add followed hashtags to your following list (Daniel D’Aquino)
+- Add "Do not show #nsfw tagged posts" setting (Daniel D’Aquino)
+- Hold tap to preview status URL (Jericho Hasselbush)
+- Finnish translations (etrikaj)
+
+
+### Changed
+
+- Switch to nostrdb for @'s and user search (William Casarin)
+- Use nostrdb for profiles (William Casarin)
+- Updated relay view (ericholguin)
+- Increase size of the hitbox on note ellipsis button (Daniel D’Aquino)
+- Make carousel tab dots tappable (Bryan Montz)
+- Move the "Follow you" badge into the profile header (Grimless)
+
+
+### Fixed
+
+- Fix text composer wrapping issue when mentioning npub (Daniel D’Aquino)
+- Make blurred videos viewable by allowing blur to disappear once tapped (Daniel D’Aquino)
+- Fix parsing issue with NIP-47 compliant NWC urls without double-slashes (Daniel D’Aquino)
+- Fix padding of username next to pfp on some views (William Casarin)
+- Fixes issue where username with multiple emojis would place cursor in strange position. (Jericho Hasselbush)
+- Fixed audio in video playing twice (Bryan Montz)
+- Fix crash when long pressing custom reactions (William Casarin)
+- Fix random crashom due to old profile database (William Casarin)
+
+[1.6-18]: https://github.com/damus-io/damus/releases/tag/v1.6-18
+
+## [1.6-17] - 2023-08-23
+
+### Added
+
+- Add support for status URLs (William Casarin)
+- Click music statuses to display in spotify (William Casarin)
+- Add settings for disabling user statuses (William Casarin)
+
+### Changed
+
+- clear statuses if they only contain whitespace (William Casarin)
+
+### Fixed
+
+- Fix long status lines (William Casarin)
+- Fix status events not expiring locally (William Casarin)
+
+[1.6-17]: https://github.com/damus-io/damus/releases/tag/v1.6-17
+
+## [1.6-16] - 2023-08-23
+
+### Added
+
+- Added live music statuses (William Casarin)
+- Added generic user statuses (William Casarin)
+
+### Fixed
+
+- Avoid notification for zaps from muted profiles (tappu75e@duck.com)
+- Fix text editing issues on characters added right after mention link (Daniel D’Aquino)
+- Mute hellthreads everywhere (William Casarin)
+
+
+[1.6-16]: https://github.com/damus-io/damus/releases/tag/v1.6-16
+
+## [1.6-13] - 2023-08-18
+
+### Fixed
+
+- Fix bug where it would sometimes show -1 in replies (tappu75e@duck.com)
+- Fix images and links occasionally appearing with escaped slashes (Daniel D‘Aquino)
+- Fixed nostrscript not working on smaller phones (William Casarin)
+- Fix zaps sometimes not appearing (William Casarin)
+- Fixed issue where reposts would sometimes repost the wrong thing (William Casarin)
+- Fixed issue where sometimes there would be empty entries on your profile (William Casarin)
+
+[1.6-13]: https://github.com/damus-io/damus/releases/tag/v1.6-13
+
+
+## [1.6-11]: "Bugfix Sunday" - 2023-08-07
+
+### Added
+
+- Add close button to custom reactions (Suhail Saqan)
+- Add ability to change order of custom reactions (Suhail Saqan)
+- Adjustable font size (William Casarin)
+
+
+### Changed
+
+- Show renotes in Notes timeline (William Casarin)
+
+### Fixed
+
+- Ensure the person you're replying to is the first entry in the reply description (William Casarin)
+- Don't cutoff text in notifications (William Casarin)
+- Fix wikipedia url detection with parenthesis (William Casarin)
+- Fixed old notifications always appearing on first start (William Casarin)
+- Fix issue with slashes on relay urls causing relay connection problems (William Casarin)
+- Fix rare crash triggered by local notifications (William Casarin)
+- Fix crash when long-pressing reactions (William Casarin)
+- Fixed nostr reporting decoding (William Casarin)
+- Dismiss qr screen on scan (Suhail Saqan)
+- Show QRCameraView regardless of same user (Suhail Saqan)
+- Fix wiggle when long press reactions (Suhail Saqan)
+- Fix reaction button breaking scrolling (Suhail Saqan)
+- Fix crash when muting threads (Bryan Montz)
+
+
+[1.6-11]: https://github.com/damus-io/damus/releases/tag/v1.6-11
+
+## [1.6-8]: "nostrdb prep" 2023-08-03
+
+### Added
+
+- Suggested Users to Follow (Joel Klabo)
+- Add support for multiple reactions (Suhail Saqan)
+
+
+### Changed
+
+- Improved memory usage and performance when processing events (William Casarin)
+
+
+### Fixed
+
+- Fixed disappearing text on iOS17 (cr0bar)
+- Fix UTF support for hashtags (Daniel D‘Aquino)
+- Fix compilation error on test target in UserSearchCacheTests (Daniel D‘Aquino)
+- Fix nav crashing and buggyness (William Casarin)
+- Allow relay logs to be opened in dev mode even if relay (Daniel D'Aquino)
+- endless connection attempt loop after user removes relay (Bryan Montz)
+
+
+[1.6-8]: https://github.com/damus-io/damus/releases/tag/v1.6-8
+
+## 1.6 (7): "Less bad" - 2023-07-16
+
+### Added
+
+- Show nostr address username and support abbreviated _ usernames (William Casarin)
+- Re-add nip05 badges to profiles (William Casarin)
+- Add space when tagging users in posts if needed (William Casarin)
+- Added padding under word count on longform account (William Casarin)
+
+
+### Fixed
+
+- Don't spam lnurls when validating zaps (William Casarin)
+- Eliminate nostr address validation bandwidth on startup (William Casarin)
+- Allow user to login to deleted profile (William Casarin)
+- Fix issue where typing cc@bob would produce brokenb ccnostr:bob mention (William Casarin)
+
+
+
+[1.6-7]: https://github.com/damus-io/damus/releases/tag/v1.6-7
+
+## [1.6-6] - 2023-07-16
+
+### Added
+
+- New markdown renderer (William Casarin)
+- Added feedback when user adds a relay that is already on the list (Daniel D'Aquino)
+
+### Changed
+
+- Hide nsec when logging in (cr0bar)
+- Remove nip05 on events (William Casarin)
+- Rename NIP05 to "nostr address" (William Casarin)
+
+### Fixed
+
+- Fixed issue where hashtags were leaking in DMs (William Casarin)
+- Fix issue with emojis next to hashtags and urls (William Casarin)
+- relay detail view is not immediately available after adding new relay (Bryan Montz)
+- Fix nostr:nostr:... bugs (William Casarin)
+
+
+[1.6-6]: https://github.com/damus-io/damus/releases/tag/v1.6-6
+
+## [1.6-4] - 2023-07-13
+
+### Added
+
+- Add the ability to follow hashtags (William Casarin)
+
+### Changed
+
+- Remove note size restriction for longform events (William Casarin)
+
+### Fixed
+
+- Hide users and hashtags from home timeline when you unfollow (William Casarin)
+- Fixed a bug where following a user might not work due to poor connectivity (William Casarin)
+- Icon color for developer mode setting is incorrect in low-light mode (Bryan Montz)
+- Fixed nav bar color on login, eula, and account creation (ericholguin)
+
+
+### Removed
+
+- Remove following Damus Will by default (William Casarin)
+
+[1.6-4]: https://github.com/damus-io/damus/releases/tag/v1.6-4
+
+## [1.6-3] - 2023-07-11
+
+### Changed
+
+- Start at top when reading longform events (William Casarin)
+- Allow reposting and quote reposting multiple times (William Casarin)
+
+
+### Fixed
+
+- Show longform previews in notifications instead of the entire post (William Casarin)
+- Fix padding on longform events (William Casarin)
+- Fix action bar appearing on quoted longform previews (William Casarin)
+
+
+[1.6-3]: https://github.com/damus-io/damus/releases/tag/v1.6-3
+## [1.6-2] - 2023-07-11
+
+### Added
+
+- Add support for multilingual hashtags (cr0bar)
+- Add r tag when mentioning a url (William Casarin)
+- Add initial longform note support (William Casarin)
+- Enable banner image editing (Joel Klabo)
+- Add relay log in developer mode (Bryan Montz)
+
+
+### Fixed
+
+- Fix lag when creating large posts (William Casarin)
+- Fix npub mentions failing to parse in some cases (William Casarin)
+- Fix PostView initial string to skip mentioning self when on own profile (Terry Yiu)
+- Fix freezing bug when tapping Developer settings menu (Terry Yiu)
+- Fix potential fake profile zap attacks (William Casarin)
+- Fix issue where malicious zappers can send fake zaps to another user's posts (William Casarin)
+- Fix profile post button mentions (cr0bar)
+- Fix icons on settings view (cr0bar)
+- Fix Invalid Zap bug in reposts (William Casarin)
+
+
+### Removed
+
+- Remove old @ and & hex key mentions (William Casarin)
+
+
+[1.6-2]: https://github.com/damus-io/damus/releases/tag/v1.6-2
+## [1.6] - 2023-07-04
+
+### Added
+
+- Speed up user search (Terry Yiu)
+- Add post button to profile pages (William Casarin)
+- Add post button when logged in with private key and on own profile view (Terry Yiu)
+
+### Changed
+
+- Drop iOS15 support (Scott Penrose)
+
+### Fixed
+
+- Load more content on profile view (William Casarin)
+- Fix reports to conform to NIP-56 (Terry Yiu)
+- Fix profile navigation bugs from muted users list and relay list views (Terry Yiu)
+- Fix navigation to translation settings view (Terry Yiu)
+- Fixed all navigation issues (Scott Penrose)
+- Disable post button when media upload in progress (Terry Yiu)
+- Fix taps on mentions in note drafts to not redirect to other Nostr clients (Terry Yiu)
+- Fix missing profile zap notification text (Terry Yiu)
+
+
+[1.6]: https://github.com/damus-io/damus/releases/tag/v1.6
+
+## [1.5-5] - 2023-06-24
+
+### Fixed
+
+- Remove note zaps to fit apples appstore guidelines
+- Fix zap sheet popping (William Casarin)
+- Fix CustomizeZapView from randomly disappearing (William Casarin)
+- Fix "zapped your profile" strings to say "zapped you" (Terry Yiu)
+- Fix reconnect loop issues on iOS17 (William Casarin)
+- Fix some more thread jankiness (William Casarin)
+- Fix spelling of Nostr to use Titlecase instead of lowercase (Terry Yiu)
+- Rename all usages of the term Post as a noun to Note to conform to the Nostr spec (Terry Yiu)
+- Fix text cutoff on login with npub (gladiusKatana)
+- Fix hangs due to video player (William Casarin)
+
+
+[1.5-5]: https://github.com/damus-io/damus/releases/tag/v1.5-5
+
 ## [1.5-2] - 2023-05-30
 
 ### Added

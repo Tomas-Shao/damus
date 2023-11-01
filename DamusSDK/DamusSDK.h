@@ -8,6 +8,12 @@
 #include "damus.h"
 #include "bolt11.h"
 #include "amount.h"
+#include "nostrdb.h"
+#include "nostr_bech32.h"
+#include "wasm.h"
+#include "nostrscript.h"
+#include "lmdb.h"
+#include "stdint.h"
 
 //! Project version number for DamusSDK.
 //FOUNDATION_EXPORT double DamusSDKVersionNumber;

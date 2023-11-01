@@ -28,6 +28,18 @@ extension KFOptionSetter {
         options.scaleFactor = UIScreen.main.scale
         options.onlyLoadFirstFrame = disable_animation
         
+        switch imageContext {
+            case .pfp:
+                options.diskCacheExpiration = .never
+                break
+            case .banner:
+                options.diskCacheExpiration = .days(14)
+                break
+            case .note:
+                options.diskCacheExpiration = .days(7)
+                break
+        }
+        
         return self
     }
     
@@ -86,7 +98,7 @@ struct CustomImageProcessor: ImageProcessor {
     func process(item: ImageProcessItem, options: KingfisherParsedOptionsInfo) -> KFCrossPlatformImage? {
         
         switch item {
-        case .image(_):
+        case .image:
             // This case will never run
             return DefaultImageProcessor.default.process(item: item, options: options)
         case .data(let data):

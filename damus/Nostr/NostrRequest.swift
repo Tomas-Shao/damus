@@ -7,12 +7,34 @@
 
 import Foundation
 
-public struct NostrSubscribe {
+struct NostrSubscribe {
     let filters: [NostrFilter]
     let sub_id: String
 }
 
-public enum NostrRequest {
+
+enum NostrRequestType {
+    case typical(NostrRequest)
+    case custom(String)
+    
+    var is_write: Bool {
+        guard case .typical(let req) = self else {
+            return true
+        }
+        
+        return req.is_write
+    }
+    
+    var is_read: Bool {
+        guard case .typical(let req) = self else {
+            return true
+        }
+        
+        return req.is_read
+    }
+}
+
+enum NostrRequest {
     case subscribe(NostrSubscribe)
     case unsubscribe(String)
     case event(NostrEvent)
@@ -31,4 +53,5 @@ public enum NostrRequest {
     var is_read: Bool {
         return !is_write
     }
+    
 }

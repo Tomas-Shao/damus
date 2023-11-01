@@ -37,7 +37,8 @@ class ZapsModel: ObservableObject {
     func unsubscribe() {
         state.pool.unsubscribe(sub_id: zaps_subid)
     }
-    
+
+    @MainActor
     func handle_event(relay_id: String, conn_ev: NostrConnectionEvent) {
         guard case .nostr_event(let resp) = conn_ev else {
             return
@@ -53,23 +54,14 @@ class ZapsModel: ObservableObject {
         case .notice:
             break
         case .eose:
-            let events = state.events.lookup_zaps(target: target).map { $0.request }
-            load_profiles(profiles_subid: profiles_subid, relay_id: relay_id, load: .from_events(events), damus_state: state)
+            let events = state.events.lookup_zaps(target: target).map { $0.request.ev }
+            let txn = NdbTxn(ndb: state.ndb)
+            load_profiles(context: "zaps_model", profiles_subid: profiles_subid, relay_id: relay_id, load: .from_events(events), damus_state: state, txn: txn)
         case .event(_, let ev):
-            guard ev.kind == 9735 else {
-                return
-            }
-            
-            if let zap = state.zaps.zaps[ev.id] {
-                state.events.store_zap(zap: zap)
-                return
-            }
-            
-            guard let zapper = state.profiles.lookup_zapper(pubkey: target.pubkey) else {
-                return
-            }
-            
-            guard let zap = Zap.from_zap_event(zap_ev: ev, zapper: zapper, our_privkey: state.keypair.privkey) else {
+            guard ev.kind == 9735,
+                  let zapper = state.profiles.lookup_zapper(pubkey: target.pubkey),
+                  let zap = Zap.from_zap_event(zap_ev: ev, zapper: zapper, our_privkey: state.keypair.privkey)
+            else {
                 return
             }
             

@@ -9,8 +9,8 @@ import SwiftUI
 
 struct SelectWalletView: View {
     let default_wallet: Wallet
-    @Binding var showingSelectWallet: Bool
-    let our_pubkey: String
+    @Binding var active_sheet: Sheets?
+    let our_pubkey: Pubkey
     let invoice: String
     @State var invoice_copied: Bool = false
     
@@ -38,7 +38,8 @@ struct SelectWalletView: View {
                 Section(NSLocalizedString("Select a Lightning wallet", comment: "Title of section for selecting a Lightning wallet to pay a Lightning invoice.")) {
                     List{
                         Button() {
-                            open_with_wallet(wallet: default_wallet.model, invoice: invoice)
+                            // TODO: Handle cases where wallet cannot be opened by the system
+                            try? open_with_wallet(wallet: default_wallet.model, invoice: invoice)
                         } label: {
                             HStack {
                                 Text("Default Wallet", comment: "Button to pay a Lightning invoice with the user's default Lightning wallet.").font(.body).foregroundColor(.blue)
@@ -47,7 +48,8 @@ struct SelectWalletView: View {
                         List($allWalletModels) { $wallet in
                             if wallet.index >= 0 {
                                 Button() {
-                                    open_with_wallet(wallet: wallet, invoice: invoice)
+                                    // TODO: Handle cases where wallet cannot be opened by the system
+                                    try? open_with_wallet(wallet: wallet, invoice: invoice)
                                 } label: {
                                     HStack {
                                         Image(wallet.image, bundle: Bundle(for: DamusColors.self)).resizable().frame(width: 32.0, height: 32.0,alignment: .center).cornerRadius(5)
@@ -59,7 +61,7 @@ struct SelectWalletView: View {
                     }.padding(.vertical, 2.5)
                 }
             }.navigationBarTitle(Text("Pay the Lightning invoice", comment: "Navigation bar title for view to pay Lightning invoice."), displayMode: .inline).navigationBarItems(trailing: Button(action: {
-                self.showingSelectWallet = false
+                self.active_sheet = nil
             }) {
                 Text("Done", comment: "Button to dismiss wallet selection view for paying Lightning invoice.").bold()
             })
@@ -68,9 +70,9 @@ struct SelectWalletView: View {
 }
 
 struct SelectWalletView_Previews: PreviewProvider {
-    @State static var show: Bool = true
+    @State static var active_sheet: Sheets? = nil
     
     static var previews: some View {
-        SelectWalletView(default_wallet: .lnlink, showingSelectWallet: $show, our_pubkey: "", invoice: "")
+        SelectWalletView(default_wallet: .lnlink, active_sheet: $active_sheet, our_pubkey: test_pubkey, invoice: "")
     }
 }
