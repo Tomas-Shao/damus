@@ -58,7 +58,11 @@ struct ThreadView: View {
                         selected: true
                     )
                     .id(self.thread.event.id)
-                    
+
+                    Button("Add to Friend") {
+                        NotificationCenter.default.post(name: NSNotification.Name("make_friend"), object: self.thread.event.content)
+                    }
+
                     ForEach(child_events, id: \.id) { child_event in
                         MutedEventView(
                             damus_state: state,
