@@ -59,8 +59,10 @@ struct ThreadView: View {
                     )
                     .id(self.thread.event.id)
 
-                    Button("Add to Friend") {
-                        NotificationCenter.default.post(name: NSNotification.Name("make_friend"), object: self.thread.event.content)
+                    if let id = findBeagleChatAddress(string: self.thread.event.content), !id.isEmpty {
+                        Button("Add to Friend") {
+                            NotificationCenter.default.post(name: NSNotification.Name("make_friend"), object: id)
+                        }
                     }
 
                     ForEach(child_events, id: \.id) { child_event in
@@ -99,5 +101,19 @@ struct ThreadView_Previews: PreviewProvider {
         let state = test_damus_state()
         let thread = ThreadModel(event: test_event, damus_state: state)
         ThreadView(state: state, thread: thread)
+    }
+}
+
+
+public func findBeagleChatAddress(string: String) -> String? {
+    let regex = try! NSRegularExpression(pattern: "(?<=My beagle chat address is )([A-Za-z0-9]+)", options: [])
+    let nsString = string as NSString
+    let matches = regex.matches(in: string, options: [], range: NSRange(location: 0, length: nsString.length))
+
+    if !matches.isEmpty {
+        let range = Range(matches[0].range, in: string)!
+        return string.substring(with: range)
+    } else {
+        return nil
     }
 }
