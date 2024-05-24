@@ -11,6 +11,8 @@
 #include <stdio.h>
 #include "str_block.h"
 #include "cursor.h"
+#include <stdbool.h>
+
 typedef unsigned char u8;
 #define MAX_RELAYS 10
 
@@ -26,6 +28,7 @@ enum nostr_bech32_type {
     NOSTR_BECH32_NEVENT = 4,
     NOSTR_BECH32_NRELAY = 5,
     NOSTR_BECH32_NADDR = 6,
+    NOSTR_BECH32_NSEC = 7,
 };
 
 struct bech32_note {
@@ -36,10 +39,16 @@ struct bech32_npub {
     const u8 *pubkey;
 };
 
+struct bech32_nsec {
+    const u8 *nsec;
+};
+
 struct bech32_nevent {
     struct relays relays;
     const u8 *event_id;
     const u8 *pubkey; // optional
+    uint32_t kind;
+    bool has_kind;
 };
 
 struct bech32_nprofile {
@@ -51,6 +60,7 @@ struct bech32_naddr {
     struct relays relays;
     struct str_block identifier;
     const u8 *pubkey;
+    uint32_t kind;
 };
 
 struct bech32_nrelay {
@@ -65,6 +75,7 @@ typedef struct nostr_bech32 {
     union {
         struct bech32_note note;
         struct bech32_npub npub;
+        struct bech32_nsec nsec;
         struct bech32_nevent nevent;
         struct bech32_nprofile nprofile;
         struct bech32_naddr naddr;

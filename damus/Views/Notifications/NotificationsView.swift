@@ -7,32 +7,6 @@
 
 import SwiftUI
 
-enum FriendFilter: String, StringCodable {
-    case all
-    case friends
-    
-    init?(from string: String) {
-        guard let ff = FriendFilter(rawValue: string) else {
-            return nil
-        }
-        
-        self = ff
-    }
-    
-    func to_string() -> String {
-        self.rawValue
-    }
-    
-    func filter(contacts: Contacts, pubkey: String) -> Bool {
-        switch self {
-        case .all:
-            return true
-        case .friends:
-            return contacts.is_friend_or_self(pubkey)
-        }
-    }
-}
-
 class NotificationFilter: ObservableObject, Equatable {
     @Published var state: NotificationFilterState
     @Published var fine_filter: FriendFilter
@@ -41,12 +15,7 @@ class NotificationFilter: ObservableObject, Equatable {
         return lhs.state == rhs.state && lhs.fine_filter == rhs.fine_filter
     }
     
-    init() {
-        self.state = .all
-        self.fine_filter = .all
-    }
-    
-    init(state: NotificationFilterState, fine_filter: FriendFilter) {
+    init(state: NotificationFilterState = .all, fine_filter: FriendFilter = .all) {
         self.state = state
         self.fine_filter = fine_filter
     }
@@ -91,8 +60,10 @@ struct NotificationsView: View {
     @Environment(\.colorScheme) var colorScheme
     
     var mystery: some View {
-        VStack(spacing: 20) {
-            Text("Wake up, \(Profile.displayName(profile: state.profiles.lookup(id: state.pubkey), pubkey: state.pubkey).display_name)", comment: "Text telling the user to wake up, where the argument is their display name.")
+        let profile_txn = state.profiles.lookup(id: state.pubkey)
+        let profile = profile_txn?.unsafeUnownedValue
+        return VStack(spacing: 20) {
+            Text("Wake up, \(Profile.displayName(profile: profile, pubkey: state.pubkey).displayName.truncate(maxLength: 50))", comment: "Text telling the user to wake up, where the argument is their display name.")
             Text("You are dreaming...", comment: "Text telling the user that they are dreaming.")
         }
         .id("what")
@@ -171,8 +142,9 @@ struct NotificationsView: View {
                     Color.white.opacity(0)
                         .id("startblock")
                         .frame(height: 5)
-                    ForEach(filter.filter(contacts: state.contacts, items: notifications.notifications), id: \.id) { item in
-                        NotificationItemView(state: state, item: item)
+                    let notifs = Array(zip(1..., filter.filter(contacts: state.contacts, items: notifications.notifications)))
+                    ForEach(notifs, id: \.0) { zip in
+                        NotificationItemView(state: state, item: zip.1)
                     }
                 }
                 .background(GeometryReader { proxy -> Color in
@@ -197,7 +169,7 @@ struct NotificationsView: View {
 
 struct NotificationsView_Previews: PreviewProvider {
     static var previews: some View {
-        NotificationsView(state: test_damus_state(), notifications: NotificationsModel(), filter: NotificationFilter())
+        NotificationsView(state: test_damus_state, notifications: NotificationsModel(), filter: NotificationFilter())
     }
 }
 

@@ -13,16 +13,23 @@ enum NostrPostResult {
     case cancel
 }
 
-let POST_PLACEHOLDER = NSLocalizedString("Type your post here...", comment: "Text box prompt to ask user to type their post.")
+let POST_PLACEHOLDER = NSLocalizedString("Type your note here...", comment: "Text box prompt to ask user to type their note.")
+let GHOST_CARET_VIEW_ID = "GhostCaret"
+let DEBUG_SHOW_GHOST_CARET_VIEW: Bool = false
 
 class TagModel: ObservableObject {
     var diff = 0
 }
 
+enum PostTarget {
+    case none
+    case user(Pubkey)
+}
+
 enum PostAction {
     case replying_to(NostrEvent)
     case quoting(NostrEvent)
-    case posting
+    case posting(PostTarget)
     
     var ev: NostrEvent? {
         switch self {
@@ -39,75 +46,99 @@ enum PostAction {
 struct PostView: View {
     @State var post: NSMutableAttributedString = NSMutableAttributedString()
     @FocusState var focus: Bool
-    @State var showPrivateKeyWarning: Bool = false
     @State var attach_media: Bool = false
     @State var attach_camera: Bool = false
     @State var error: String? = nil
     @State var uploadedMedias: [UploadedMedia] = []
     @State var image_upload_confirm: Bool = false
-    @State var originalReferences: [ReferencedId] = []
-    @State var references: [ReferencedId] = []
+    @State var references: [RefId] = []
+    @State var filtered_pubkeys: Set<Pubkey> = []
     @State var focusWordAttributes: (String?, NSRange?) = (nil, nil)
     @State var newCursorIndex: Int?
-    @State var postTextViewCanScroll: Bool = true
+    @State var textHeight: CGFloat? = nil
 
-    @State var mediaToUpload: MediaUpload? = nil
+    @State var preUploadedMedia: PreUploadedMedia? = nil
     
     @StateObject var image_upload: ImageUploadModel = ImageUploadModel()
     @StateObject var tagModel: TagModel = TagModel()
+    
+    @State private var current_placeholder_index = 0
 
     let action: PostAction
     let damus_state: DamusState
-
-    @Environment(\.presentationMode) var presentationMode
-
-    func cancel() {
-        NotificationCenter.default.post(name: .post, object: NostrPostResult.cancel)
-        dismiss()
+    let prompt_view: (() -> AnyView)?
+    let placeholder_messages: [String]
+    let initial_text_suffix: String?
+    
+    init(
+        action: PostAction,
+        damus_state: DamusState,
+        prompt_view: (() -> AnyView)? = nil,
+        placeholder_messages: [String]? = nil,
+        initial_text_suffix: String? = nil
+    ) {
+        self.action = action
+        self.damus_state = damus_state
+        self.prompt_view = prompt_view
+        self.placeholder_messages = placeholder_messages ?? [POST_PLACEHOLDER]
+        self.initial_text_suffix = initial_text_suffix
     }
 
-    func dismiss() {
-        self.presentationMode.wrappedValue.dismiss()
+    @Environment(\.dismiss) var dismiss
+
+    func cancel() {
+        notify(.post(.cancel))
+        dismiss()
     }
     
     func send_post() {
-        var kind: NostrKind = .text
+        // don't add duplicate pubkeys but retain order
+        var pkset = Set<Pubkey>()
 
-        if case .replying_to(let ev) = action, ev.known_kind == .chat {
-            kind = .chat
-        }
-
-        post.enumerateAttributes(in: NSRange(location: 0, length: post.length), options: []) { attributes, range, stop in
-            if let link = attributes[.link] as? String {
-                post.replaceCharacters(in: range, with: link)
+        // we only want pubkeys really
+        let pks = references.reduce(into: Array<Pubkey>()) { acc, ref in
+            guard case .pubkey(let pk) = ref else {
+                return
             }
+            
+            if pkset.contains(pk) || filtered_pubkeys.contains(pk) {
+                return
+            }
+
+            pkset.insert(pk)
+            acc.append(pk)
         }
 
-        var content = self.post.string.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+        let new_post = build_post(state: damus_state, post: self.post, action: action, uploadedMedias: uploadedMedias, pubkeys: pks)
 
-        let imagesString = uploadedMedias.map { $0.uploadedURL.absoluteString }.joined(separator: " ")
-        
-        let img_meta_tags = uploadedMedias.compactMap { $0.metadata?.to_tag() }
-        
-        if !imagesString.isEmpty {
-            content.append(" " + imagesString + " ")
-        }
+        notify(.post(.post(new_post)))
 
-        if case .quoting(let ev) = action, let id = bech32_note_id(ev.id) {
-            content.append(" nostr:" + id)
-        }
-        
-        let new_post = NostrPost(content: content, references: references, kind: kind, tags: img_meta_tags)
-
-        NotificationCenter.default.post(name: .post, object: NostrPostResult.post(new_post))
-        
         clear_draft()
 
         dismiss()
+
     }
 
     var is_post_empty: Bool {
         return post.string.allSatisfy { $0.isWhitespace } && uploadedMedias.isEmpty
+    }
+
+    var uploading_disabled: Bool {
+        return image_upload.progress != nil
+    }
+
+    var posting_disabled: Bool {
+        return is_post_empty || uploading_disabled
+    }
+    
+    // Returns a valid height for the text box, even when textHeight is not a number
+    func get_valid_text_height() -> CGFloat {
+        if let textHeight, textHeight.isFinite, textHeight > 0 {
+            return textHeight
+        }
+        else {
+            return 10
+        }
     }
     
     var ImageButton: some View {
@@ -129,33 +160,40 @@ struct PostView: View {
     }
     
     var AttachmentBar: some View {
-        HStack(alignment: .center) {
+        HStack(alignment: .center, spacing: 15) {
             ImageButton
             CameraButton
         }
-        .disabled(image_upload.progress != nil)
+        .disabled(uploading_disabled)
     }
     
     var PostButton: some View {
         Button(NSLocalizedString("Post", comment: "Button to post a note.")) {
-            showPrivateKeyWarning = contentContainsPrivateKey(self.post.string)
-
-            if !showPrivateKeyWarning {
-                self.send_post()
-            }
+            self.send_post()
         }
-        .disabled(is_post_empty)
-        .font(.system(size: 14, weight: .bold))
-        .frame(width: 80, height: 30)
-        .foregroundColor(.white)
-        .background(LINEAR_GRADIENT)
-        .opacity(is_post_empty ? 0.5 : 1.0)
-        .clipShape(Capsule())
+        .disabled(posting_disabled)
+        .opacity(posting_disabled ? 0.5 : 1.0)
+        .bold()
+        .buttonStyle(GradientButtonStyle(padding: 10))
+        
     }
     
-    var isEmpty: Bool {
-        self.uploadedMedias.count == 0 &&
-        self.post.mutableString.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    func isEmpty() -> Bool {
+        return self.uploadedMedias.count == 0 &&
+            self.post.mutableString.trimmingCharacters(in: .whitespacesAndNewlines) ==
+                initialString().mutableString.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    
+    func initialString() -> NSMutableAttributedString {
+        guard case .posting(let target) = action,
+              case .user(let pubkey) = target,
+              damus_state.pubkey != pubkey else {
+            return .init(string: "")
+        }
+        
+        let profile_txn = damus_state.profiles.lookup(id: pubkey)
+        let profile = profile_txn?.unsafeUnownedValue
+        return user_tag_attr_string(profile: profile, pubkey: pubkey)
     }
     
     func clear_draft() {
@@ -170,62 +208,67 @@ struct PostView: View {
 
     }
     
-    func load_draft() {
+    func load_draft() -> Bool {
         guard let draft = load_draft_for_post(drafts: self.damus_state.drafts, action: self.action) else {
             self.post = NSMutableAttributedString("")
             self.uploadedMedias = []
-            return
+            
+            return false
         }
         
         self.uploadedMedias = draft.media
         self.post = draft.content
+        return true
     }
-    
+
     func post_changed(post: NSMutableAttributedString, media: [UploadedMedia]) {
-        switch action {
-        case .replying_to(let ev):
-            if let draft = damus_state.drafts.replies[ev] {
-                draft.content = post
-                draft.media = media
-            } else {
-                damus_state.drafts.replies[ev] = DraftArtifacts(content: post, media: media)
-            }
-        case .quoting(let ev):
-            if let draft = damus_state.drafts.quotes[ev] {
-                draft.content = post
-                draft.media = media
-            } else {
-                damus_state.drafts.quotes[ev] = DraftArtifacts(content: post, media: media)
-            }
-        case .posting:
-            if let draft = damus_state.drafts.post {
-                draft.content = post
-                draft.media = media
-            } else {
-                damus_state.drafts.post = DraftArtifacts(content: post, media: media)
-            }
+        if let draft = load_draft_for_post(drafts: damus_state.drafts, action: action) {
+            draft.content = post
+            draft.media = media
+        } else {
+            let artifacts = DraftArtifacts(content: post, media: media)
+            set_draft_for_post(drafts: damus_state.drafts, action: action, artifacts: artifacts)
         }
     }
     
     var TextEntry: some View {
         ZStack(alignment: .topLeading) {
-            TextViewWrapper(attributedText: $post, postTextViewCanScroll: $postTextViewCanScroll, cursorIndex: newCursorIndex, getFocusWordForMention: { word, range in
-                focusWordAttributes = (word, range)
-                self.newCursorIndex = nil
-            })
+            TextViewWrapper(
+                attributedText: $post,
+                textHeight: $textHeight,
+                initialTextSuffix: initial_text_suffix, 
+                cursorIndex: newCursorIndex,
+                getFocusWordForMention: { word, range in
+                    focusWordAttributes = (word, range)
+                    self.newCursorIndex = nil
+                }, 
+                updateCursorPosition: { newCursorIndex in
+                    self.newCursorIndex = newCursorIndex
+                }
+            )
                 .environmentObject(tagModel)
                 .focused($focus)
                 .textInputAutocapitalization(.sentences)
                 .onChange(of: post) { p in
                     post_changed(post: p, media: uploadedMedias)
                 }
+                // Set a height based on the text content height, if it is available and valid
+                .frame(height: get_valid_text_height())
             
             if post.string.isEmpty {
-                Text(POST_PLACEHOLDER)
+                Text(self.placeholder_messages[self.current_placeholder_index])
                     .padding(.top, 8)
                     .padding(.leading, 4)
                     .foregroundColor(Color(uiColor: .placeholderText))
                     .allowsHitTesting(false)
+            }
+        }
+        .onAppear {
+            // Schedule a timer to switch messages every 3 seconds
+            Timer.scheduledTimer(withTimeInterval: 3.0, repeats: true) { timer in
+                withAnimation {
+                    self.current_placeholder_index = (self.current_placeholder_index + 1) % self.placeholder_messages.count
+                }
             }
         }
     }
@@ -233,10 +276,13 @@ struct PostView: View {
     var TopBar: some View {
         VStack {
             HStack(spacing: 5.0) {
-                Button(NSLocalizedString("Cancel", comment: "Button to cancel out of posting a note.")) {
+                Button(action: {
                     self.cancel()
-                }
-                .foregroundColor(.primary)
+                }, label: {
+                    Text("Cancel", comment: "Button to cancel out of posting a note.")
+                        .padding(10)
+                })
+                .buttonStyle(NeutralButtonStyle())
                 
                 if let error {
                     Text(error)
@@ -252,18 +298,23 @@ struct PostView: View {
                 ProgressView(value: progress, total: 1.0)
                     .progressViewStyle(.linear)
             }
+            
+            Divider()
+                .foregroundColor(DamusColors.neutral3)
+                .padding(.top, 5)
         }
         .frame(height: 30)
         .padding()
+        .padding(.top, 15)
     }
     
     func handle_upload(media: MediaUpload) {
         let uploader = damus_state.settings.default_media_uploader
-        Task.init {
+        Task {
             let img = getImage(media: media)
             print("img size w:\(img.size.width) h:\(img.size.height)")
             async let blurhash = calculate_blurhash(img: img)
-            let res = await image_upload.start(media: media, uploader: uploader)
+            let res = await image_upload.start(media: media, uploader: uploader, keypair: damus_state.keypair)
             
             switch res {
             case .success(let url):
@@ -298,43 +349,67 @@ struct PostView: View {
     }
     
     func Editor(deviceSize: GeometryProxy) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .top) {
-                ProfilePicView(pubkey: damus_state.pubkey, size: PFP_SIZE, highlight: .none, profiles: damus_state.profiles, disable_animation: damus_state.settings.disable_animation)
-                
-                TextEntry
-            }
-            .frame(height: deviceSize.size.height * multiply_factor)
-            .id("post")
-                
-            PVImageCarouselView(media: $uploadedMedias, deviceWidth: deviceSize.size.width)
-                .onChange(of: uploadedMedias) { media in
-                    post_changed(post: post, media: media)
+        HStack(alignment: .top, spacing: 0) {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(alignment: .top) {
+                    ProfilePicView(pubkey: damus_state.pubkey, size: PFP_SIZE, highlight: .none, profiles: damus_state.profiles, disable_animation: damus_state.settings.disable_animation)
+                    
+                    VStack(alignment: .leading) {
+                        if let prompt_view {
+                            prompt_view()
+                        }
+                        TextEntry
+                    }
                 }
-            
-            if case .quoting(let ev) = action {
-                BuilderEventView(damus: damus_state, event: ev)
+                .id("post")
+                
+                PVImageCarouselView(media: $uploadedMedias, deviceWidth: deviceSize.size.width)
+                    .onChange(of: uploadedMedias) { media in
+                        post_changed(post: post, media: media)
+                    }
+                
+                if case .quoting(let ev) = action {
+                    BuilderEventView(damus: damus_state, event: ev)
+                }
             }
+            .padding(.horizontal)
         }
-        .padding(.horizontal)
     }
     
+    func fill_target_content(target: PostTarget) {
+        self.post = initialString()
+        self.tagModel.diff = post.string.count
+    }
+
+    var pubkeys: [Pubkey] {
+        self.references.reduce(into: [Pubkey]()) { pks, ref in
+            guard case .pubkey(let pk) = ref else {
+                return
+            }
+
+            pks.append(pk)
+        }
+    }
+
     var body: some View {
         GeometryReader { (deviceSize: GeometryProxy) in
             VStack(alignment: .leading, spacing: 0) {
                 let searching = get_searching_string(focusWordAttributes.0)
-                
+
                 TopBar
                 
                 ScrollViewReader { scroller in
                     ScrollView {
-                        if case .replying_to(let replying_to) = self.action {
-                            ReplyView(replying_to: replying_to, damus: damus_state, originalReferences: $originalReferences, references: $references)
+                        VStack(alignment: .leading) {
+                            if case .replying_to(let replying_to) = self.action {
+                                ReplyView(replying_to: replying_to, damus: damus_state, original_pubkeys: pubkeys, filtered_pubkeys: $filtered_pubkeys)
+                            }
+                            
+                            Editor(deviceSize: deviceSize)
+                                .padding(.top, 5)
                         }
-                        
-                        Editor(deviceSize: deviceSize)
                     }
-                    .frame(maxHeight: searching == nil ? .infinity : 70)
+                    .frame(maxHeight: searching == nil ? deviceSize.size.height : 70)
                     .onAppear {
                         scroll_to_event(scroller: scroller, id: "post", delay: 1.0, animate: true, anchor: .top)
                     }
@@ -342,7 +417,7 @@ struct PostView: View {
                 
                 // This if-block observes @ for tagging
                 if let searching {
-                    UserSearch(damus_state: damus_state, search: searching, focusWordAttributes: $focusWordAttributes, newCursorIndex: $newCursorIndex, postTextViewCanScroll: $postTextViewCanScroll, post: $post)
+                    UserSearch(damus_state: damus_state, search: searching, focusWordAttributes: $focusWordAttributes, newCursorIndex: $newCursorIndex, post: $post)
                         .frame(maxHeight: .infinity)
                         .environmentObject(tagModel)
                 } else {
@@ -354,15 +429,14 @@ struct PostView: View {
                     }
                 }
             }
+            .background(DamusColors.adaptableWhite.edgesIgnoringSafeArea(.all))
             .sheet(isPresented: $attach_media) {
-                ImagePicker(uploader: damus_state.settings.default_media_uploader, sourceType: .photoLibrary, pubkey: damus_state.pubkey, image_upload_confirm: $image_upload_confirm) { img in
-                    self.mediaToUpload = .image(img)
-                } onVideoPicked: { url in
-                    self.mediaToUpload = .video(url)
+                MediaPicker(image_upload_confirm: $image_upload_confirm){ media in
+                    self.preUploadedMedia = media
                 }
                 .alert(NSLocalizedString("Are you sure you want to upload this media?", comment: "Alert message asking if the user wants to upload media."), isPresented: $image_upload_confirm) {
                     Button(NSLocalizedString("Upload", comment: "Button to proceed with uploading."), role: .none) {
-                        if let mediaToUpload {
+                        if let mediaToUpload = generateMediaUpload(preUploadedMedia) {
                             self.handle_upload(media: mediaToUpload)
                             self.attach_media = false
                         }
@@ -371,34 +445,23 @@ struct PostView: View {
                 }
             }
             .sheet(isPresented: $attach_camera) {
-                
-                ImagePicker(uploader: damus_state.settings.default_media_uploader, sourceType: .camera, pubkey: damus_state.pubkey, image_upload_confirm: $image_upload_confirm) { img in
-                    self.mediaToUpload = .image(img)
-                } onVideoPicked: { url in
-                    self.mediaToUpload = .video(url)
-                }
-                .alert(NSLocalizedString("Are you sure you want to upload this media?", comment: "Alert message asking if the user wants to upload media."), isPresented: $image_upload_confirm) {
-                    Button(NSLocalizedString("Upload", comment: "Button to proceed with uploading."), role: .none) {
-                        if let mediaToUpload {
-                            self.handle_upload(media: mediaToUpload)
-                            self.attach_camera = false
-                        }
-                    }
-                    Button(NSLocalizedString("Cancel", comment: "Button to cancel the upload."), role: .cancel) {}
+                CameraController(uploader: damus_state.settings.default_media_uploader) {
+                    self.attach_camera = false
+                    self.attach_media = true
                 }
             }
             .onAppear() {
-                load_draft()
+                let loaded_draft = load_draft()
                 
                 switch action {
                 case .replying_to(let replying_to):
                     references = gather_reply_ids(our_pubkey: damus_state.pubkey, from: replying_to)
-                    originalReferences = references
                 case .quoting(let quoting):
                     references = gather_quote_ids(our_pubkey: damus_state.pubkey, from: quoting)
-                    originalReferences = references
-                case .posting:
-                    break
+                case .posting(let target):
+                    guard !loaded_draft else { break }
+                    
+                    fill_target_content(target: target)
                 }
                 
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -406,18 +469,10 @@ struct PostView: View {
                 }
             }
             .onDisappear {
-                if isEmpty {
+                if isEmpty() {
                     clear_draft()
                 }
             }
-            .alert(NSLocalizedString("Note contains \"nsec1\" private key. Are you sure?", comment: "Alert user that they might be attempting to paste a private key and ask them to confirm."), isPresented: $showPrivateKeyWarning, actions: {
-                Button(NSLocalizedString("No", comment: "Button to cancel out of posting a note after being alerted that it looks like they might be posting a private key."), role: .cancel) {
-                    showPrivateKeyWarning = false
-                }
-                Button(NSLocalizedString("Yes, Post with Private Key", comment: "Button to proceed with posting a note even though it looks like they might be posting a private key."), role: .destructive) {
-                    self.send_post()
-                }
-            })
         }
     }
 }
@@ -446,7 +501,7 @@ func get_searching_string(_ word: String?) -> String? {
 
 struct PostView_Previews: PreviewProvider {
     static var previews: some View {
-        PostView(action: .posting, damus_state: test_damus_state())
+        PostView(action: .posting(.none), damus_state: test_damus_state)
     }
 }
 
@@ -534,6 +589,17 @@ struct UploadedMedia: Equatable {
 }
 
 
+func set_draft_for_post(drafts: Drafts, action: PostAction, artifacts: DraftArtifacts) {
+    switch action {
+    case .replying_to(let ev):
+        drafts.replies[ev] = artifacts
+    case .quoting(let ev):
+        drafts.quotes[ev] = artifacts
+    case .posting:
+        drafts.post = artifacts
+    }
+}
+
 func load_draft_for_post(drafts: Drafts, action: PostAction) -> DraftArtifacts? {
     switch action {
     case .replying_to(let ev):
@@ -544,3 +610,87 @@ func load_draft_for_post(drafts: Drafts, action: PostAction) -> DraftArtifacts? 
         return drafts.post
     }
 }
+
+private func isAlphanumeric(_ char: Character) -> Bool {
+    return char.isLetter || char.isNumber
+}
+
+func nip10_reply_tags(replying_to: NostrEvent, keypair: Keypair) -> [[String]] {
+    guard let nip10 = replying_to.thread_reply() else {
+        // we're replying to a post that isn't in a thread,
+        // just add a single reply-to-root tag
+        return [["e", replying_to.id.hex(), "", "root"]]
+    }
+
+    // otherwise use the root tag from the parent's nip10 reply and include the note
+    // that we are replying to's note id.
+    let tags = [
+        ["e", nip10.root.note_id.hex(), nip10.root.relay ?? "", "root"],
+        ["e", replying_to.id.hex(), "", "reply"]
+    ]
+
+    return tags
+}
+
+func build_post(state: DamusState, post: NSMutableAttributedString, action: PostAction, uploadedMedias: [UploadedMedia], pubkeys: [Pubkey]) -> NostrPost {
+    post.enumerateAttributes(in: NSRange(location: 0, length: post.length), options: []) { attributes, range, stop in
+        if let link = attributes[.link] as? String {
+            let nextCharIndex = range.upperBound
+            if nextCharIndex < post.length,
+               let nextChar = post.attributedSubstring(from: NSRange(location: nextCharIndex, length: 1)).string.first,
+               isAlphanumeric(nextChar) {
+                post.insert(NSAttributedString(string: " "), at: nextCharIndex)
+            }
+
+            let normalized_link: String
+            if link.hasPrefix("damus:nostr:") {
+                // Replace damus:nostr: URI prefix with nostr: since the former is for internal navigation and not meant to be posted.
+                normalized_link = String(link.dropFirst(6))
+            } else {
+                normalized_link = link
+            }
+
+            // Add zero-width space in case text preceding the mention is not a whitespace.
+            // In the case where the character preceding the mention is a whitespace, the added zero-width space will be stripped out.
+            post.replaceCharacters(in: range, with: "\(normalized_link)")
+        }
+    }
+
+
+    var content = post.string
+        .trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+
+    let imagesString = uploadedMedias.map { $0.uploadedURL.absoluteString }.joined(separator: " ")
+
+    if !imagesString.isEmpty {
+        content.append(" " + imagesString + " ")
+    }
+
+    var tags: [[String]] = []
+
+    switch action {
+    case .replying_to(let replying_to):
+        // start off with the reply tags
+        tags = nip10_reply_tags(replying_to: replying_to, keypair: state.keypair)
+
+    case .quoting(let ev):
+        content.append(" nostr:" + bech32_note_id(ev.id))
+
+        if let quoted_ev = state.events.lookup(ev.id) {
+            tags.append(["p", quoted_ev.pubkey.hex()])
+        }
+    case .posting(let postTarget):
+        break
+    }
+    
+    // include pubkeys
+    tags += pubkeys.map { pk in
+        ["p", pk.hex()]
+    }
+
+    // append additional tags
+    tags += uploadedMedias.compactMap { $0.metadata?.to_tag() }
+
+    return NostrPost(content: content, kind: .text, tags: tags)
+}
+

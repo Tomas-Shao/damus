@@ -8,6 +8,13 @@
 import Foundation
 import UIKit
 
+enum PreUploadedMedia {
+    case uiimage(UIImage)
+    case processed_image(URL)
+    case unprocessed_image(URL)
+    case processed_video(URL)
+    case unprocessed_video(URL)
+}
 
 enum MediaUpload {
     case image(URL)
@@ -42,16 +49,53 @@ enum MediaUpload {
         
         return false
     }
+    
+    var mime_type: String {
+        switch self.file_extension {
+            case "jpg", "jpeg":
+                return "image/jpg"
+            case "png":
+                return "image/png"
+            case "gif":
+                return "image/gif"
+            case "tiff", "tif":
+                return "image/tiff"
+            case "mp4":
+                return "video/mp4"
+            case "ogg":
+                return "video/ogg"
+            case "webm":
+                return "video/webm"
+            default:
+                switch self {
+                    case .image:
+                        return "image/jpg"
+                    case .video:
+                        return "video/mp4"
+                }
+        }
+    }
 }
 
 class ImageUploadModel: NSObject, URLSessionTaskDelegate, ObservableObject {
     @Published var progress: Double? = nil
     
-    func start(media: MediaUpload, uploader: MediaUploader) async -> ImageUploadResult {
-        let res = await create_upload_request(mediaToUpload: media, mediaUploader: uploader, progress: self)
-        DispatchQueue.main.async {
-            self.progress = nil
+    func start(media: MediaUpload, uploader: MediaUploader, keypair: Keypair? = nil) async -> ImageUploadResult {
+        let res = await create_upload_request(mediaToUpload: media, mediaUploader: uploader, progress: self, keypair: keypair)
+                
+        switch res {
+        case .success(_):
+            DispatchQueue.main.async {
+                self.progress = nil
+                UINotificationFeedbackGenerator().notificationOccurred(.success)
+            }
+        case .failed(_):
+            DispatchQueue.main.async {
+                self.progress = nil
+                UINotificationFeedbackGenerator().notificationOccurred(.error)
+            }
         }
+
         return res
     }
     

@@ -27,14 +27,16 @@ class SearchModel: ObservableObject {
     }
     
     func filter_muted()  {
-        self.events.filter { should_show_event(contacts: state.contacts, ev: $0) }
+        self.events.filter {
+            should_show_event(state: state, ev: $0)
+        }
         self.objectWillChange.send()
     }
     
     func subscribe() {
         // since 1 month
         search.limit = self.limit
-        search.kinds = [.text, .like]
+        search.kinds = [.text, .like, .longform]
 
         //likes_filter.ids = ref_events.referenced_ids!
 
@@ -55,7 +57,7 @@ class SearchModel: ObservableObject {
             return
         }
         
-        guard should_show_event(contacts: state.contacts, ev: ev) else {
+        guard should_show_event(state: state, ev: ev) else {
             return
         }
         
@@ -63,15 +65,11 @@ class SearchModel: ObservableObject {
             objectWillChange.send()
         }
     }
-    
-    func handle_event(relay_id: String, ev: NostrConnectionEvent) {
+
+    func handle_event(relay_id: RelayURL, ev: NostrConnectionEvent) {
         let (sub_id, done) = handle_subid_event(pool: state.pool, relay_id: relay_id, ev: ev) { sub_id, ev in
             if ev.is_textlike && ev.should_show_event {
                 self.add_event(ev)
-            } else if ev.known_kind == .channel_create {
-                // unimplemented
-            } else if ev.known_kind == .channel_meta {
-                // unimplemented
             }
         }
         
@@ -82,23 +80,24 @@ class SearchModel: ObservableObject {
         self.loading = false
         
         if sub_id == self.sub_id {
-            load_profiles(profiles_subid: self.profiles_subid, relay_id: relay_id, load: .from_events(self.events.all_events), damus_state: state)
+            guard let txn = NdbTxn(ndb: state.ndb) else { return }
+            load_profiles(context: "search", profiles_subid: self.profiles_subid, relay_id: relay_id, load: .from_events(self.events.all_events), damus_state: state, txn: txn)
         }
     }
 }
 
 func event_matches_hashtag(_ ev: NostrEvent, hashtags: [String]) -> Bool {
     for tag in ev.tags {
-        if tag_is_hashtag(tag) && hashtags.contains(tag[1]) {
+        if tag_is_hashtag(tag) && hashtags.contains(tag[1].string()) {
             return true
         }
     }
     return false
 }
 
-func tag_is_hashtag(_ tag: [String]) -> Bool {
+func tag_is_hashtag(_ tag: Tag) -> Bool {
     // "hashtag" is deprecated, will remove in the future
-    return tag.count >= 2 && (tag[0] == "hashtag" || tag[0] == "t")
+    return tag.count >= 2 && tag[0].matches_char("t")
 }
 
 func event_matches_filter(_ ev: NostrEvent, filter: NostrFilter) -> Bool {
@@ -108,7 +107,7 @@ func event_matches_filter(_ ev: NostrEvent, filter: NostrFilter) -> Bool {
     return true
 }
 
-func handle_subid_event(pool: RelayPool, relay_id: String, ev: NostrConnectionEvent, handle: (String, NostrEvent) -> ()) -> (String?, Bool) {
+func handle_subid_event(pool: RelayPool, relay_id: RelayURL, ev: NostrConnectionEvent, handle: (String, NostrEvent) -> ()) -> (String?, Bool) {
     switch ev {
     case .ws_event:
         return (nil, false)
@@ -131,6 +130,9 @@ func handle_subid_event(pool: RelayPool, relay_id: String, ev: NostrConnectionEv
             
         case .eose(let subid):
             return (subid, true)
+
+        case .auth:
+            return (nil, false)
         }
     }
 }

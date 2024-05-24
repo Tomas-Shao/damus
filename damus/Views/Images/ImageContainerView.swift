@@ -10,13 +10,12 @@ import Kingfisher
 
     
 struct ImageContainerView: View {
-    let cache: EventCache
+    let video_controller: VideoController
     let url: MediaUrl
+    let settings: UserSettingsStore
     
     @State private var image: UIImage?
     @State private var showShareSheet = false
-    
-    let disable_animation: Bool
     
     private struct ImageHandler: ImageModifier {
         @Binding var handler: UIImage?
@@ -29,13 +28,13 @@ struct ImageContainerView: View {
     
     func Img(url: URL) -> some View {
         KFAnimatedImage(url)
-            .imageContext(.note, disable_animation: disable_animation)
+            .imageContext(.note, disable_animation: settings.disable_animation)
             .configure { view in
                 view.framePreloadCount = 3
             }
             .imageModifier(ImageHandler(handler: $image))
             .clipped()
-            .modifier(ImageContextMenuModifier(url: url, image: image, showShareSheet: $showShareSheet))
+            .modifier(ImageContextMenuModifier(url: url, image: image, settings: settings, showShareSheet: $showShareSheet))
             .sheet(isPresented: $showShareSheet) {
                 ShareSheet(activityItems: [url])
             }
@@ -44,19 +43,26 @@ struct ImageContainerView: View {
     var body: some View {
         Group {
             switch url {
-            case .image(let url):
-                Img(url: url)
-            case .video(let url):
-                DamusVideoPlayer(url: url, model: cache.get_video_player_model(url: url), video_size: .constant(nil))
+                case .image(let url):
+                    Img(url: url)
+                case .video(let url):
+                    DamusVideoPlayer(url: url, video_size: .constant(nil), controller: video_controller, style: .full, visibility_tracking_method: .generic)
             }
         }
     }
 }
 
 let test_image_url = URL(string: "https://jb55.com/red-me.jpg")!
+fileprivate let test_video_url = URL(string: "http://cdn.jb55.com/s/zaps-build.mp4")!
 
 struct ImageContainerView_Previews: PreviewProvider {
     static var previews: some View {
-        ImageContainerView(cache: test_damus_state().events, url: .image(test_image_url), disable_animation: false)
+        Group {
+            ImageContainerView(video_controller: test_damus_state.video, url: .image(test_image_url), settings: test_damus_state.settings)
+                .previewDisplayName("Image")
+            ImageContainerView(video_controller: test_damus_state.video, url: .video(test_video_url), settings: test_damus_state.settings)
+                .previewDisplayName("Video")
+        }
+        .environmentObject(OrientationTracker())
     }
 }

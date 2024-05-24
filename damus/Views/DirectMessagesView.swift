@@ -18,19 +18,16 @@ struct DirectMessagesView: View {
     @State var dm_type: DMType = .friend
     @ObservedObject var model: DirectMessagesModel
     @ObservedObject var settings: UserSettingsStore
-    
+
     func MainContent(requests: Bool) -> some View {
         ScrollView {
-            let chat = DMChatView(damus_state: damus_state, dms: model.active_model)
-            NavigationLink(destination: chat, isActive: $model.open_dm) {
-                EmptyView()
-            }
             LazyVStack(spacing: 0) {
-                if model.dms.isEmpty, !model.loading {
+                let dms = requests ? model.message_requests : model.friend_dms
+                let filtered_dms = filter_dms(dms: dms)
+                if filtered_dms.isEmpty, !model.loading {
                     EmptyTimelineView()
                 } else {
-                    let dms = requests ? model.message_requests : model.friend_dms
-                    ForEach(dms, id: \.pubkey) { dm in
+                    ForEach(filtered_dms, id: \.pubkey) { dm in
                         MaybeEvent(dm)
                             .padding(.top, 10)
                     }
@@ -40,21 +37,29 @@ struct DirectMessagesView: View {
         }
     }
     
+    func filter_dms(dms: [DirectMessageModel]) -> [DirectMessageModel] {
+        return dms.filter({ dm in
+            return damus_state.settings.friend_filter.filter(contacts: damus_state.contacts, pubkey: dm.pubkey) && !damus_state.mutelist_manager.is_muted(.user(dm.pubkey, nil))
+        })
+    }
+    
     var options: EventViewOptions {
+        /*
         if self.damus_state.settings.translate_dms {
             return [.truncate_content, .no_action_bar]
         }
-        
+         */
+
         return [.truncate_content, .no_action_bar, .no_translate]
     }
     
     func MaybeEvent(_ model: DirectMessageModel) -> some View {
         Group {
-            let ok = damus_state.settings.friend_filter.filter(contacts: damus_state.contacts, pubkey: model.pubkey)
-            if ok, let ev = model.events.last {
+            if let ev = model.events.last(where: { should_show_event(state: damus_state, ev: $0) }) {
                 EventView(damus: damus_state, event: ev, pubkey: model.pubkey, options: options)
                     .onTapGesture {
-                        self.model.open_dm_by_model(model)
+                        self.model.set_active_dm_model(model)
+                        damus_state.nav.push(route: Route.DMChat(dms: self.model.active_model))
                     }
                 
                 Divider()
@@ -110,7 +115,7 @@ func would_filter_non_friends_from_dms(contacts: Contacts, dms: [DirectMessageMo
 
 struct DirectMessagesView_Previews: PreviewProvider {
     static var previews: some View {
-        let ds = test_damus_state()
+        let ds = test_damus_state
         DirectMessagesView(damus_state: ds, model: ds.dms, settings: ds.settings)
     }
 }

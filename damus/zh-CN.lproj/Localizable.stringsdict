@@ -2,18 +2,18 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>collapsed_event_view_other_notes</key>
+	<key>followed_by_three_and_others</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>
-		<string>%#@NOTES@</string>
-		<key>NOTES</key>
+		<string>%#@OTHERS@</string>
+		<key>OTHERS</key>
 		<dict>
 			<key>NSStringFormatSpecTypeKey</key>
 			<string>NSStringPluralRuleType</string>
 			<key>NSStringFormatValueTypeKey</key>
 			<string>d</string>
 			<key>other</key>
-			<string>... %d 条更多笔记...</string>
+			<string>被 %2$@、%3$@、%4$@ 和 %1$d 个其他用户关注</string>
 		</dict>
 	</dict>
 	<key>followers_count</key>
@@ -44,6 +44,20 @@
 			<string>已关注</string>
 		</dict>
 	</dict>
+	<key>imports_count</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@IMPORTS@</string>
+		<key>IMPORTS</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>other</key>
+			<string>导入</string>
+		</dict>
+	</dict>
 	<key>reacted_tagged_in_3</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>
@@ -55,10 +69,10 @@
 			<key>NSStringFormatValueTypeKey</key>
 			<string>d</string>
 			<key>other</key>
-			<string>%2$@ 和 %1$d 个其他用户回应了提到你的帖子</string>
+			<string>%2$@ 和%1$d个其他用户回应了提到你的笔记</string>
 		</dict>
 	</dict>
-	<key>reacted_your_post_3</key>
+	<key>reacted_your_note_3</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>
 		<string>%#@REACTED@</string>
@@ -69,7 +83,7 @@
 			<key>NSStringFormatValueTypeKey</key>
 			<string>d</string>
 			<key>other</key>
-			<string>%2$@ 和 %1$d 个其他用户回应了你的帖子</string>
+			<string>%2$@ 和%1$d个其他用户回应了你的笔记</string>
 		</dict>
 	</dict>
 	<key>reacted_your_profile_3</key>
@@ -125,7 +139,7 @@
 			<key>NSStringFormatValueTypeKey</key>
 			<string>d</string>
 			<key>other</key>
-			<string>正在回复%2$@, %3$@ &amp; %1$d 个其他用户</string>
+			<string>正在回复%2$@, %3$@ 和 %1$d 个其他用户</string>
 		</dict>
 	</dict>
 	<key>reposted_tagged_in_3</key>
@@ -139,10 +153,10 @@
 			<key>NSStringFormatValueTypeKey</key>
 			<string>d</string>
 			<key>other</key>
-			<string>%2$@ 和 %1$d 个其他用户转发了提到你的帖子</string>
+			<string>%2$@ 和%1$d个其他用户转发了提到你的笔记</string>
 		</dict>
 	</dict>
-	<key>reposted_your_post_3</key>
+	<key>reposted_your_note_3</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>
 		<string>%#@REPOSTED@</string>
@@ -153,7 +167,7 @@
 			<key>NSStringFormatValueTypeKey</key>
 			<string>d</string>
 			<key>other</key>
-			<string>%2$@ 和 %1$d 个其他用户转发了你的帖子</string>
+			<string>%2$@ 和%1$d个其他用户转发了你的笔记</string>
 		</dict>
 	</dict>
 	<key>reposted_your_profile_3</key>
@@ -184,6 +198,20 @@
 			<string>转发</string>
 		</dict>
 	</dict>
+	<key>quoted_reposts_count</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@QUOTE_REPOSTS@</string>
+		<key>QUOTE_REPOSTS</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>other</key>
+			<string>引用</string>
+		</dict>
+	</dict>
 	<key>sats</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>
@@ -212,6 +240,34 @@
 			<string>%2$@ 聪</string>
 		</dict>
 	</dict>
+	<key>users_talking_about_it</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@USERS@</string>
+		<key>USERS</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>other</key>
+			<string>%d 个用户在讨论</string>
+		</dict>
+	</dict>
+	<key>word_count</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@WORDS@</string>
+		<key>WORDS</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>other</key>
+			<string>%d 单词</string>
+		</dict>
+	</dict>
 	<key>zap_notification_no_message</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>
@@ -237,7 +293,7 @@
 			<key>NSStringFormatValueTypeKey</key>
 			<string>@</string>
 			<key>other</key>
-			<string>你从 %3$@: "%4$@" 收到了 %2$@ 聪</string>
+			<string>你从%3$@收到了 %2$@聪：&quot;%4$@&quot;</string>
 		</dict>
 	</dict>
 	<key>zapped_tagged_in_3</key>
@@ -251,10 +307,10 @@
 			<key>NSStringFormatValueTypeKey</key>
 			<string>d</string>
 			<key>other</key>
-			<string>%2$@ 和 %1$d 个其他用户打闪了提到你的帖子</string>
+			<string>%2$@ 和%1$d个其他用户打闪了提到你的笔记</string>
 		</dict>
 	</dict>
-	<key>zapped_your_post_3</key>
+	<key>zapped_your_note_3</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>
 		<string>%#@ZAPPED@</string>
@@ -265,7 +321,7 @@
 			<key>NSStringFormatValueTypeKey</key>
 			<string>d</string>
 			<key>other</key>
-			<string>%2$@ 和 %1$d 个其他用户打闪了你的帖子</string>
+			<string>%2$@ 和%1$d个其他用户打闪了你的笔记</string>
 		</dict>
 	</dict>
 	<key>zapped_your_profile_3</key>
@@ -279,7 +335,7 @@
 			<key>NSStringFormatValueTypeKey</key>
 			<string>d</string>
 			<key>other</key>
-			<string>%2$@ 和 %1$d 个其他用户打闪了你的档案</string>
+			<string>%2$@ 和%1$d个其他用户打闪了你</string>
 		</dict>
 	</dict>
 	<key>zaps_count</key>

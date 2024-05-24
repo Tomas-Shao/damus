@@ -9,12 +9,12 @@ import SwiftUI
 
 struct RepostsView: View {
     let damus_state: DamusState
-    @StateObject var model: RepostsModel
+    @StateObject var model: EventsModel
 
     var body: some View {
         ScrollView {
             LazyVStack {
-                ForEach(model.events, id: \.id) { ev in
+                ForEach(model.events.events, id: \.id) { ev in
                     RepostView(damus_state: damus_state, repost: ev)
                 }
             }
@@ -32,7 +32,7 @@ struct RepostsView: View {
 
 struct RepostsView_Previews: PreviewProvider {
     static var previews: some View {
-        let state = test_damus_state()
-        RepostsView(damus_state: state, model: RepostsModel(state: state, target: "pubkey"))
+        let state = test_damus_state
+        RepostsView(damus_state: state, model: .reposts(state: state, target: test_note.id))
     }
 }

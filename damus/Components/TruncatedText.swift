@@ -9,10 +9,15 @@ import SwiftUI
 
 struct TruncatedText: View {
     let text: CompatibleText
-    let maxChars: Int = 280
+    let maxChars: Int
+    
+    init(text: CompatibleText, maxChars: Int = 280) {
+        self.text = text
+        self.maxChars = maxChars
+    }
     
     var body: some View {
-        let truncatedAttributedString: AttributedString? = getTruncatedString()
+        let truncatedAttributedString: AttributedString? = text.attributed.truncateOrNil(maxLength: maxChars)
         
         if let truncatedAttributedString {
             Text(truncatedAttributedString)
@@ -27,16 +32,6 @@ struct TruncatedText: View {
             Button(NSLocalizedString("Show more", comment: "Button to show entire note.")) { }
                 .allowsHitTesting(false)
         }
-    }
-    
-    func getTruncatedString() -> AttributedString? {
-        let nsAttributedString = NSAttributedString(text.attributed)
-        if nsAttributedString.length < maxChars { return nil }
-        
-        let range = NSRange(location: 0, length: maxChars)
-        let truncatedAttributedString = nsAttributedString.attributedSubstring(from: range)
-        
-        return AttributedString(truncatedAttributedString) + "..."
     }
 }
 

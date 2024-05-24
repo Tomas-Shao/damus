@@ -2,26 +2,56 @@
 
 # damus
 
-A twitter-like [nostr][nostr] client for iPhone, iPad and MacOS.
+A twitter-like [nostr][nostr] client for iPhone, iPad and MacOS. 
 
 <img src="./ss.png" width="50%" height="50%" />
 
 [nostr]: https://github.com/fiatjaf/nostr
+
+## How is Damus better than twitter?
+There are no toxic algorithms.\
+You can send or receive zaps (satoshis) without asking for permission.\
+[There is no central database](https://fiatjaf.com/nostr.html). Therefore, Damus is censorship resistant.\
+There are no ads.\
+You don't have to reveal sensitive personal information to sign up.\
+No email is required. \
+No phone number is required. \
+Damus is free and open source software. \
+There is no Big Tech moat. Therefore, seamless interoperability with thousands or millions of other nostr apps is possible, and is how [Damus and nostr win](https://www.youtube.com/watch?v=qTixqS-W1yo).
+
+## If there are no ads, how is Damus funded?
+Damus offers a paid subscription 🟣 purple 🟣 https://damus.io/purple/. \
+Initial benefits include a unique subscriber number, subscriber badge, and auto-translate powered by DeepL.
+
+Damus has also graciously received donations or grants from hundreds of Damus users, [Opensats](https://opensats.org/), and the [Human Rights Foundation](https://hrf.org/).
 
 ## Spec Compliance
 
 damus implements the following [Nostr Implementation Possibilities][nips]
 
 - [NIP-01: Basic protocol flow][nip01]
+- [NIP-04: Encrypted direct message][nip04]
 - [NIP-08: Mentions][nip08]
 - [NIP-10: Reply conventions][nip10]
 - [NIP-12: Generic tag queries (hashtags)][nip12]
+- [NIP-19: bech32-encoded entities][NIP19]
+- [NIP-21: nostr: URI scheme][NIP21]
+- [NIP-25: Reactions][NIP25]
+- [NIP-42: Authentication of clients to relays][nip42]
+- [NIP-56: Reporting][nip56]
 
 [nips]: https://github.com/nostr-protocol/nips
 [nip01]: https://github.com/nostr-protocol/nips/blob/master/01.md
+[nip04]: https://github.com/nostr-protocol/nips/blob/master/04.md
 [nip08]: https://github.com/nostr-protocol/nips/blob/master/08.md
 [nip10]: https://github.com/nostr-protocol/nips/blob/master/10.md
 [nip12]: https://github.com/nostr-protocol/nips/blob/master/12.md
+[nip19]: https://github.com/nostr-protocol/nips/blob/master/19.md
+[nip21]: https://github.com/nostr-protocol/nips/blob/master/21.md
+[nip25]: https://github.com/nostr-protocol/nips/blob/master/25.md
+[nip42]: https://github.com/nostr-protocol/nips/blob/master/42.md
+[nip56]: https://github.com/nostr-protocol/nips/blob/master/56.md
+
 
 ## Getting Started on Damus 
 
@@ -32,7 +62,7 @@ damus implements the following [Nostr Implementation Possibilities][nips]
 - Relays: You can add more relays to send your notes to by tapping the "+". 
   - Find more relays to add: https://nostr.info/relays/ 
 - Public Key (pubkey): Your public, personal address and how people can find and tag you
- - Secret Key: Your *private* key unique to you. Never share your private key publically and share with other clients at your own risk!
+ - Secret Key: Your *private* key unique to you. Never share your private key publicly and share with other clients at your own risk!
    - Save your keys somewhere safe
  - Log out
 
@@ -46,19 +76,15 @@ damus implements the following [Nostr Implementation Possibilities][nips]
   1. Search their username in the search bar at the top of the 🔍 Global Feed and click their profile
   2. Tap the 🔑 icon which will copy their pubkey to your clipboard
   3. Go back to your 🏠 Personal Feed and tap the blue + button to compose your Note
-  4. Add @ direcly followed by the pubkey (e.g., `@npub1xtscya34g58tk0z605fvr788k263gsu6cy9x0mhnm87echrgufzsevkk5s`)
-- You can also long-press a Note to grab their User ID aka pubkey or Note ID to link directly to a Note.
+  4. Add @ directly followed by the pubkey (e.g., `@npub1xtscya34g58tk0z605fvr788k263gsu6cy9x0mhnm87echrgufzsevkk5s`)
+- You can also tap the ellipsis menu of a Note (three dots in top right of note) to grab their User ID aka pubkey or Note ID to link directly to a Note.
 - Currently you can't delete your Notes in the iOS app
-- Share images by pasting the image url which you can grab from imgbb, imgur, etc. (i.e., `https://i.ibb.co/2SHZbwm/alpha60.jpg`). Currently images only load for people you follow in the 🏠 Personal Feed. Images are not automatically loaded in 🔍 Global Feed
+- Share images by pasting the image url which you can grab from nostr.build, imgbb, imgur, etc. (i.e., `https://i.ibb.co/2SHZbwm/alpha60.jpg`). Currently images only load for people you follow in the 🏠 Personal Feed. Images are not automatically loaded in 🔍 Global Feed
 - Engaging with Notes
   - 💬 Replying to a Note: Tap the chat icon underneath the note. This will show up in the users’ notifications and in your 🏠 Personal and 🔍 Global Feeds
   - ♺ Reposts: Tap the repost icon which will show up in your 🏠 Personal and 🔍 Global Feeds
   - ♡ Likes: Tap the heart icon. Users will not get a notification, and cannot see who liked their note (currently, web clients can see your pfp only)
-- Formatting Notes (may not format as intended in other web clients)
-  - Italics: 1 asterisk `*italic*`
-  - Bold: 2 asterisk `**bold**`
-  - Strikethrough: 1 tildes `~strikethrough~`
-  - Code: 1 back-tick `` `code` ``
+
 
 #### 💬 Encrypted DMs (chat app, bottom navigation)
 - Tap the chat icon and you'll notice there's nothing to see at first. Go to a user profile and tap the 💬 chat icon next to the follow button to begin a DM
@@ -76,7 +102,9 @@ damus implements the following [Nostr Implementation Possibilities][nips]
 4. For PFP, insert a URL containing your image (support video: https://cdn.jb55.com/vid/pfp-editor.mp4)
 5. Save
 
+
 #### ⚡️ Request Sats 
+Paste an invoice from your favorite LN wallet.
     (Sats or Satoshis are the smallest denomination of bitcoin)
 	
 **Alby (browser extension)**
@@ -94,16 +122,30 @@ damus implements the following [Nostr Implementation Possibilities][nips]
 
 Contributors welcome! Start by examining known issues: https://github.com/damus-io/damus/issues.
 
-### Code
+### Mailing lists
 
-[Email patches][git-send-email] to jb55@jb55.com are preferred, but I accept PRs on GitHub as well.
+We have a few mailing lists that anyone can join to get involved in damus development:
 
-[git-send-email]: http://git-send-email.io
+- [dev][dev-list] - development discussions
+- [patches][patches-list] - code submission and review
+- [product][product-list] - product discussions
+- [design][design-list] - design discussions
+
+[dev-list]: https://damus.io/list/dev
+[patches-list]: https://damus.io/list/patches
+[product-list]: https://damus.io/list/product
+[design-list]: https://damus.io/list/design
+
+### Contributing
+
+See [docs/CONTRIBUTING.md](./docs/CONTRIBUTING.md)
 
 ### Privacy
 Your internet protocol (IP) address is exposed to the relays you connect to, and third party media hosters (e.g. nostr.build, imgur.com, giphy.com, youtube.com etc.) that render on Damus. If you want to improve your privacy, consider utilizing a service that masks your IP address (e.g. a VPN) from trackers online.
 
 The relay also learns which public keys you are requesting, meaning your public key will be tied to your IP address.
+
+It is public information which other profiles (npubs) you are exchanging DMs with. The content of the DMs is encrypted.
 
 ### Translations
 
@@ -115,7 +157,9 @@ All user-facing strings must have a comment in order to provide context to trans
 
 ### Awards
 
+Damus lead dev and founder Will awards developers with satoshis!
 There may be nostr badges awarded for contributors in the future... :)
+
 
 First contributors:
 

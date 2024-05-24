@@ -10,6 +10,7 @@ import SwiftUI
 enum ShowItem {
     case show(NostrEvent?)
     case dontshow(NostrEvent?)
+    case show_damus_app_notification(DamusAppNotification)
 }
 
 func notification_item_event(events: EventCache, notif: NotificationItem) -> ShowItem {
@@ -24,6 +25,8 @@ func notification_item_event(events: EventCache, notif: NotificationItem) -> Sho
         return .dontshow(events.lookup(evid))
     case .profile_zap:
         return .show(nil)
+    case .damus_app_notification(let app_notification):
+        return .show_damus_app_notification(app_notification)
     }
 }
 
@@ -59,10 +62,12 @@ struct NotificationItemView: View {
                 EventGroupView(state: state, event: ev, group: .reaction(evgrp))
             
             case .reply(let ev):
-                NavigationLink(destination: ThreadView(state: state, thread: ThreadModel(event: ev, damus_state: state))) {
+                NavigationLink(value: Route.Thread(thread: ThreadModel(event: ev, damus_state: state))) {
                     EventView(damus: state, event: ev, options: options)
                 }
                 .buttonStyle(.plain)
+            case .damus_app_notification(let notification):
+                DamusAppNotificationView(damus_state: state, notification: notification)
             }
             
             ThiccDivider()
@@ -79,15 +84,17 @@ struct NotificationItemView: View {
                 if let ev {
                     Item(ev)
                 }
+            case .show_damus_app_notification(let notification):
+                DamusAppNotificationView(damus_state: state, notification: notification)
             }
         }
     }
 }
 
-let test_notification_item: NotificationItem = .repost("evid", test_event_group)
+let test_notification_item: NotificationItem = .repost(test_note.id, test_event_group)
 
 struct NotificationItemView_Previews: PreviewProvider {
     static var previews: some View {
-        NotificationItemView(state: test_damus_state(), item: test_notification_item)
+        NotificationItemView(state: test_damus_state, item: test_notification_item)
     }
 }

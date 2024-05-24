@@ -18,16 +18,16 @@ struct ConfigView: View {
     @State var delete_account_warning: Bool = false
     @State var confirm_delete_account: Bool = false
     @State var delete_text: String = ""
-    
+
     @ObservedObject var settings: UserSettingsStore
 
     private let DELETE_KEYWORD = "DELETE"
-    
+
     init(state: DamusState) {
         self.state = state
         _settings = ObservedObject(initialValue: state.settings)
     }
-    
+
     func textColor() -> Color {
         colorScheme == .light ? DamusColors.black : DamusColors.white
     }
@@ -36,36 +36,47 @@ struct ConfigView: View {
         ZStack(alignment: .leading) {
             Form {
                 Section {
-                    NavigationLink(destination: KeySettingsView(keypair: state.keypair)) {
-                        IconLabel(NSLocalizedString("Keys", comment: "Settings section for managing keys"), img_name: "key", color: .purple)
+                    NavigationLink(value: Route.KeySettings(keypair: state.keypair)) {
+                        IconLabel(NSLocalizedString("Keys", comment: "Settings section for managing keys"), img_name: "Key", color: .purple)
                     }
-                    
-                    NavigationLink(destination: AppearanceSettingsView(settings: settings)) {
-                        IconLabel(NSLocalizedString("Appearance", comment: "Section header for text and appearance settings"), img_name: "eye", color: .red)
+
+                    NavigationLink(value: Route.AppearanceSettings(settings: settings)) {
+                        IconLabel(NSLocalizedString("Appearance and filters", comment: "Section header for text, appearance, and content filter settings"), img_name: "eye", color: .red)
                     }
-                    
-                    NavigationLink(destination: SearchSettingsView(settings: settings)) {
-                        IconLabel(NSLocalizedString("Search/Universe", comment: "Section header for search/universe settings"), img_name: "magnifyingglass", color: .red)
+
+                    NavigationLink(value: Route.SearchSettings(settings: settings)) {
+                        IconLabel(NSLocalizedString("Search/Universe", comment: "Section header for search/universe settings"), img_name: "search", color: .red)
                     }
-                    
-                    NavigationLink(destination: NotificationSettingsView(settings: settings)) {
+
+                    NavigationLink(value: Route.NotificationSettings(settings: settings)) {
                         IconLabel(NSLocalizedString("Notifications", comment: "Section header for Damus notifications"), img_name: "notification-bell-on", color: .blue)
                     }
-                    
-                    NavigationLink(destination: ZapSettingsView(settings: settings)) {
+
+                    NavigationLink(value: Route.ZapSettings(settings: settings)) {
                         IconLabel(NSLocalizedString("Zaps", comment: "Section header for zap settings"), img_name: "zap.fill", color: .orange)
                     }
-                    
-                    NavigationLink(destination: TranslationSettingsView(settings: settings)) {
+
+                    NavigationLink(value: Route.TranslationSettings(settings: settings)) {
                         IconLabel(NSLocalizedString("Translation", comment: "Section header for text and appearance settings"), img_name: "globe", color: .green)
                     }
+                    
+                    NavigationLink(value: Route.ReactionsSettings(settings: settings)) {
+                        IconLabel(NSLocalizedString("Reactions", comment: "Section header for reactions settings"), img_name: "shaka.fill", color: .purple)
+                    }
+                    
+                    NavigationLink(value: Route.DeveloperSettings(settings: settings)) {
+                        IconLabel(NSLocalizedString("Developer", comment: "Section header for developer settings"), img_name: "magic-stick2.fill", color: DamusColors.adaptableBlack)
+                    }
+                    
+                    NavigationLink(value: Route.FirstAidSettings(settings: settings)) {
+                        IconLabel(NSLocalizedString("First Aid", comment: "Section header for first aid tools and settings"), img_name: "help2", color: .red)
+                    }
                 }
-                
 
                 Section(NSLocalizedString("Sign Out", comment: "Section title for signing out")) {
                     Button(action: {
                         if state.keypair.privkey == nil {
-                            notify(.logout, ())
+                            logout(state)
                         } else {
                             confirm_logout = true
                         }
@@ -77,7 +88,7 @@ struct ConfigView: View {
                 }
 
                 if state.is_privkey_user {
-                    Section(header: Text(NSLocalizedString("Permanently Delete Account", comment: "Section title for deleting the user"))) {
+                    Section(header: Text("Permanently Delete Account", comment: "Section title for deleting the user")) {
                         Button(action: {
                             delete_account_warning = true
                         }, label: {
@@ -87,12 +98,16 @@ struct ConfigView: View {
                         })
                     }
                 }
-
-
-                if let bundleShortVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"], let bundleVersion = Bundle.main.infoDictionary?["CFBundleVersion"] {
-                    Section(NSLocalizedString("Version", comment: "Section title for displaying the version number of the Damus app.")) {
-                        Text(verbatim: "\(bundleShortVersion) (\(bundleVersion))")
-                    }
+                
+                Section(NSLocalizedString("Version", comment: "Section title for displaying the version number of the Damus app.")) {
+                    Text(verbatim: VersionInfo.version)
+                        .contextMenu {
+                            Button {
+                                UIPasteboard.general.string = VersionInfo.version
+                            } label: {
+                                Label(NSLocalizedString("Copy", comment: "Context menu option for copying the version of damus."), image: "copy2")
+                            }
+                        }
                 }
             }
         }
@@ -113,17 +128,13 @@ struct ConfigView: View {
                 confirm_delete_account = false
             }
             Button(NSLocalizedString("Delete", comment: "Button for deleting the users account."), role: .destructive) {
-                guard let full_kp = state.keypair.to_full() else {
+                guard let keypair = state.keypair.to_full(),
+                      delete_text == DELETE_KEYWORD,
+                      let ev = created_deleted_account_profile(keypair: keypair) else {
                     return
                 }
-                
-                guard delete_text == DELETE_KEYWORD else {
-                    return
-                }
-                
-                let ev = created_deleted_account_profile(keypair: full_kp)
                 state.postbox.send(ev)
-                notify(.logout, ())
+                logout(state)
             }
         }
         .alert(NSLocalizedString("Logout", comment: "Alert for logging out the user."), isPresented: $confirm_logout) {
@@ -131,7 +142,7 @@ struct ConfigView: View {
                 confirm_logout = false
             }
             Button(NSLocalizedString("Logout", comment: "Button for logging out the user."), role: .destructive) {
-                notify(.logout, ())
+                logout(state)
             }
         } message: {
                 Text("Make sure your nsec account key is saved before you logout or you will lose access to this account", comment: "Reminder message in alert to get customer to verify that their private security account key is saved saved before logging out.")
@@ -146,7 +157,7 @@ struct ConfigView: View {
 struct ConfigView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationView {
-            ConfigView(state: test_damus_state())
+            ConfigView(state: test_damus_state)
         }
     }
 }
@@ -164,12 +175,6 @@ func handle_string_amount(new_value: String) -> Int? {
     guard let amt = NumberFormatter().number(from: filtered) as? Int else {
         return nil
     }
-    
-    return amt
-}
 
-func clear_kingfisher_cache() -> Void {
-    KingfisherManager.shared.cache.clearMemoryCache()
-    KingfisherManager.shared.cache.clearDiskCache()
-    KingfisherManager.shared.cache.cleanExpiredDiskCache()
+    return amt
 }

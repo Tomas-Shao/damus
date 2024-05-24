@@ -7,20 +7,20 @@
 
 import Foundation
 
-public struct NoteZapTarget: Equatable, Hashable {
-    public let note_id: String
-    public let author: String
+struct NoteZapTarget: Equatable, Hashable {
+    public let note_id: NoteId
+    public let author: Pubkey
 }
 
-public enum ZapTarget: Equatable {
-    case profile(String)
+enum ZapTarget: Equatable, Hashable {
+    case profile(Pubkey)
     case note(NoteZapTarget)
     
-    public static func note(id: String, author: String) -> ZapTarget {
+    static func note(id: NoteId, author: Pubkey) -> ZapTarget {
         return .note(NoteZapTarget(note_id: id, author: author))
     }
-    
-    var pubkey: String {
+
+    var pubkey: Pubkey {
         switch self {
         case .profile(let pk):
             return pk
@@ -28,20 +28,42 @@ public enum ZapTarget: Equatable {
             return note_target.author
         }
     }
-    
-    var id: String {
+
+    var note_id: NoteId? {
         switch self {
-        case .note(let note_target):
-            return note_target.note_id
-        case .profile(let pk):
-            return pk
+        case .profile:
+            return nil
+        case .note(let noteZapTarget):
+            return noteZapTarget.note_id
+        }
+    }
+
+    var id: Data {
+        switch self {
+        case .profile(let pubkey):
+            return pubkey.id
+        case .note(let noteZapTarget):
+            return noteZapTarget.note_id.id
         }
     }
 }
 
 struct ZapRequest {
     let ev: NostrEvent
+    let marked_hidden: Bool
+
+    var id: ZapRequestId {
+        ZapRequestId(from_zap_request: self)
+    }
+
+    var is_in_thread: Bool {
+        return !self.ev.content.isEmpty && !marked_hidden
+    }
     
+    init(ev: NostrEvent) {
+        self.ev = ev
+        self.marked_hidden = ev.tags.first(where: { t in t.count > 0 && t[0].matches_str("hidden") }) != nil
+    }
 }
 
 enum ExtPendingZapStateType {
@@ -125,11 +147,15 @@ class PendingZap {
     }
 }
 
-struct ZapRequestId: Equatable {
-    let reqid: String
-    
+struct ZapRequestId: Equatable, Hashable {
+    let reqid: NoteId
+
+    init(from_zap_request: ZapRequest) {
+        self.reqid = from_zap_request.ev.id
+    }
+
     init(from_zap: Zapping) {
-        self.reqid = from_zap.request.id
+        self.reqid = from_zap.request.ev.id
     }
     
     init(from_makezap: MakeZapRequest) {
@@ -198,16 +224,16 @@ enum Zapping {
         }
     }
     
-    var request: NostrEvent {
+    var request: ZapRequest {
         switch self {
         case .zap(let zap):
-            return zap.request_ev
+            return zap.request
         case .pending(let pzap):
-            return pzap.request.ev
+            return pzap.request
         }
     }
     
-    var created_at: Int64 {
+    var created_at: UInt32 {
         switch self {
         case .zap(let zap):
             return zap.event.created_at
@@ -227,6 +253,15 @@ enum Zapping {
         }
     }
     
+    var is_in_thread: Bool {
+        switch self {
+        case .zap(let zap):
+            return zap.request.is_in_thread
+        case .pending(let pzap):
+            return pzap.request.is_in_thread
+        }
+    }
+    
     var is_anon: Bool {
         switch self {
         case .zap(let zap):
@@ -240,17 +275,17 @@ enum Zapping {
 struct Zap {
     public let event: NostrEvent
     public let invoice: ZapInvoice
-    public let zapper: String /// zap authorizer
+    public let zapper: Pubkey /// zap authorizer
     public let target: ZapTarget
-    public let request: ZapRequest
+    public let raw_request: ZapRequest
     public let is_anon: Bool
-    public let private_request: NostrEvent?
+    public let private_request: ZapRequest?
     
-    var request_ev: NostrEvent {
-        return private_request ?? self.request.ev
+    var request: ZapRequest {
+        return private_request ?? self.raw_request
     }
     
-    public static func from_zap_event(zap_ev: NostrEvent, zapper: String, our_privkey: String?) -> Zap? {
+    public static func from_zap_event(zap_ev: NostrEvent, zapper: Pubkey, our_privkey: Privkey?) -> Zap? {
         /// Make sure that we only create a zap event if it is authorized by the profile or event
         guard zapper == zap_ev.pubkey else {
             return nil
@@ -277,7 +312,7 @@ struct Zap {
         guard let desc = get_zap_description(zap_ev, inv_desc: zap_invoice.description) else {
             return nil
         }
-        
+
         guard let zap_req = decode_nostr_event_json(desc) else {
             return nil
         }
@@ -295,9 +330,73 @@ struct Zap {
         }
         
         let is_anon = private_request == nil && event_is_anonymous(ev: zap_req)
+        let preq = private_request.map { pr in ZapRequest(ev: pr) }
         
-        return Zap(event: zap_ev, invoice: zap_invoice, zapper: zapper, target: target, request: ZapRequest(ev: zap_req), is_anon: is_anon, private_request: private_request)
+        return Zap(event: zap_ev, invoice: zap_invoice, zapper: zapper, target: target, raw_request: ZapRequest(ev: zap_req), is_anon: is_anon, private_request: preq)
     }
+}
+
+func decrypt_private_zap(our_privkey: Privkey, zapreq: NostrEvent, target: ZapTarget) -> NostrEvent? {
+    guard let anon_tag = zapreq.tags.first(where: { t in
+        t.count >= 2 && t[0].matches_str("anon")
+    }) else {
+        return nil
+    }
+    
+    let enc_note = anon_tag[1].string()
+
+    var note = decrypt_note(our_privkey: our_privkey, their_pubkey: zapreq.pubkey, enc_note: enc_note, encoding: .bech32)
+    
+    // check to see if the private note was from us
+    if note == nil {
+        guard let our_private_keypair = generate_private_keypair(our_privkey: our_privkey, id: NoteId(target.id), created_at: zapreq.created_at) else {
+            return nil
+        }
+        // use our private keypair and their pubkey to get the shared secret
+        note = decrypt_note(our_privkey: our_private_keypair.privkey, their_pubkey: target.pubkey, enc_note: enc_note, encoding: .bech32)
+    }
+    
+    guard let note else {
+        return nil
+    }
+        
+    guard note.kind == 9733 else {
+        return nil
+    }
+    
+    let zr_etag = zapreq.referenced_ids.first
+    let note_etag = note.referenced_ids.first
+    
+    guard zr_etag == note_etag else {
+        return nil
+    }
+    
+    let zr_ptag = zapreq.referenced_pubkeys.first
+    let note_ptag = note.referenced_pubkeys.first
+    
+    guard let zr_ptag, let note_ptag, zr_ptag == note_ptag else {
+        return nil
+    }
+    
+    guard validate_event(ev: note) == .ok else {
+        return nil
+    }
+    
+    return note
+}
+
+func event_is_anonymous(ev: NostrEvent) -> Bool {
+    return ev.known_kind == .zap_request && event_has_tag(ev: ev, tag: "anon")
+}
+
+func event_has_tag(ev: NostrEvent, tag: String) -> Bool {
+    for t in ev.tags {
+        if t.count >= 1 && t[0].matches_str(tag) {
+            return true
+        }
+    }
+    
+    return false
 }
 
 /// Fetches the description from either the invoice, or tags, depending on the type of invoice
@@ -310,9 +409,6 @@ func get_zap_description(_ ev: NostrEvent, inv_desc: InvoiceDescription) -> Stri
             return nil
         }
         guard let data = desc.data(using: .utf8) else {
-            return nil
-        }
-        guard sha256(data) == deschash else {
             return nil
         }
         
@@ -329,11 +425,11 @@ func invoice_to_zap_invoice(_ invoice: Invoice) -> ZapInvoice? {
 }
 
 func determine_zap_target(_ ev: NostrEvent) -> ZapTarget? {
-    guard let ptag = event_tag(ev, name: "p") else {
+    guard let ptag = ev.referenced_pubkeys.first else {
         return nil
     }
     
-    if let etag = event_tag(ev, name: "e") {
+    if let etag = ev.referenced_ids.first {
         return ZapTarget.note(id: etag, author: ptag)
     }
     
@@ -341,7 +437,7 @@ func determine_zap_target(_ ev: NostrEvent) -> ZapTarget? {
 }
                    
 func decode_bolt11(_ s: String) -> Invoice? {
-    var bs = blocks()
+    var bs = note_blocks()
     bs.num_blocks = 0
     blocks_init(&bs)
     
@@ -357,7 +453,7 @@ func decode_bolt11(_ s: String) -> Invoice? {
     
     let block = bs.blocks[0]
     
-    guard let converted = convert_block(block, tags: []) else {
+    guard let converted = Block(block) else {
         blocks_free(&bs)
         return nil
     }
@@ -373,8 +469,8 @@ func decode_bolt11(_ s: String) -> Invoice? {
 
 func event_tag(_ ev: NostrEvent, name: String) -> String? {
     for tag in ev.tags {
-        if tag.count >= 2 && tag[0] == name {
-            return tag[1]
+        if tag.count >= 2 && tag[0].matches_str(name) {
+            return tag[1].string()
         }
     }
     
@@ -382,62 +478,20 @@ func event_tag(_ ev: NostrEvent, name: String) -> String? {
 }
 
 func decode_nostr_event_json(_ desc: String) -> NostrEvent? {
-    let decoder = JSONDecoder()
-    guard let dat = desc.data(using: .utf8) else {
-        return nil
-    }
-    guard let ev = try? decoder.decode(NostrEvent.self, from: dat) else {
-        return nil
-    }
-    
-    return ev
+    return NostrEvent.owned_from_json(json: desc)
 }
 
-func fetch_zapper_from_lnurl(_ lnurl: String) async -> String? {
-    guard let endpoint = await fetch_static_payreq(lnurl) else {
-        return nil
-    }
-    
-    guard let allows = endpoint.allowsNostr, allows else {
-        return nil
-    }
-    
-    guard let key = endpoint.nostrPubkey, key.count == 64 else {
-        return nil
-    }
-    
-    return endpoint.nostrPubkey
-}
 
-func decode_lnurl(_ lnurl: String) -> URL? {
-    guard let decoded = try? bech32_decode(lnurl) else {
-        return nil
-    }
-    guard decoded.hrp == "lnurl" else {
-        return nil
-    }
-    guard let url = URL(string: String(decoding: decoded.data, as: UTF8.self)) else {
-        return nil
-    }
-    return url
-}
-
-func fetch_static_payreq(_ lnurl: String) async -> LNUrlPayRequest? {
-    guard let url = decode_lnurl(lnurl) else {
+func fetch_zapper_from_lnurl(lnurls: LNUrls, pubkey: Pubkey, lnurl: String) async -> Pubkey? {
+    guard let endpoint = await lnurls.lookup_or_fetch(pubkey: pubkey, lnurl: lnurl),
+          let allows = endpoint.allowsNostr, allows,
+          let key = endpoint.nostrPubkey,
+          let pk = hex_decode_pubkey(key)
+    else {
         return nil
     }
     
-    guard let ret = try? await URLSession.shared.data(from: url) else {
-        return nil
-    }
-    
-    let json_str = String(decoding: ret.0, as: UTF8.self)
-    
-    guard let endpoint: LNUrlPayRequest = decode_json(json_str) else {
-        return nil
-    }
-    
-    return endpoint
+    return pk
 }
 
 func fetch_zap_invoice(_ payreq: LNUrlPayRequest, zapreq: NostrEvent?, msats: Int64, zap_type: ZapType, comment: String?) async -> String? {

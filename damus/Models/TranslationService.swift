@@ -29,20 +29,26 @@ enum TranslationService: String, CaseIterable, Identifiable, StringCodable {
     }
 
     case none
+    case purple
     case libretranslate
     case deepl
     case nokyctranslate
+    case winetranslate
 
     var model: Model {
         switch self {
         case .none:
             return .init(tag: self.rawValue, displayName: NSLocalizedString("none_translation_service", value: "None", comment: "Dropdown option for selecting no translation service."))
+        case .purple:
+            return .init(tag: self.rawValue, displayName: NSLocalizedString("Damus Purple", comment: "Dropdown option for selecting Damus Purple as a translation service."))
         case .libretranslate:
             return .init(tag: self.rawValue, displayName: NSLocalizedString("LibreTranslate (Open Source)", comment: "Dropdown option for selecting LibreTranslate as the translation service."))
         case .deepl:
             return .init(tag: self.rawValue, displayName: NSLocalizedString("DeepL (Proprietary, Higher Accuracy)", comment: "Dropdown option for selecting DeepL as the translation service."))
         case .nokyctranslate:
             return .init(tag: self.rawValue, displayName: NSLocalizedString("NoKYCTranslate.com (Prepay with BTC)", comment: "Dropdown option for selecting NoKYCTranslate.com as the translation service."))
+         case .winetranslate:
+            return .init(tag: self.rawValue, displayName: NSLocalizedString("translate.nostr.wine (DeepL, Pay with BTC)", comment: "Dropdown option for selecting translate.nostr.wine as the translation service."))
         }
     }
 }

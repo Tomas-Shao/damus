@@ -15,6 +15,11 @@ struct SearchHomeView: View {
     @State var search: String = ""
     @FocusState private var isFocused: Bool
 
+    var content_filter: (NostrEvent) -> Bool {
+        let filters = ContentFilters.defaults(damus_state: self.damus_state)
+        return ContentFilters(filters: filters).filter
+    }
+
     let preferredLanguages = Set(Locale.preferredLanguages.map { localeToLanguage($0) })
     
     var SearchInput: some View {
@@ -44,13 +49,18 @@ struct SearchHomeView: View {
     }
     
     var GlobalContent: some View {
-        return TimelineView(
+        return TimelineView<AnyView>(
             events: model.events,
             loading: $model.loading,
             damus: damus_state,
             show_friend_icon: true,
             filter: { ev in
-                if damus_state.muted_threads.isMutedThread(ev, privkey: self.damus_state.keypair.privkey) {
+                if !content_filter(ev) {
+                    return false
+                }
+                
+                let event_muted = damus_state.mutelist_manager.is_event_muted(ev)
+                if event_muted {
                     return false
                 }
 
@@ -65,6 +75,23 @@ struct SearchHomeView: View {
                 }
 
                 return preferredLanguages.contains(note_lang)
+            },
+            content: {
+                AnyView(VStack {
+                    SuggestedHashtagsView(damus_state: damus_state, max_items: 5, events: model.events)
+                    
+                    Divider()
+                        .frame(height: 1)
+                    
+                    HStack {
+                        Image("notes.fill")
+                        Text("All recent notes", comment: "A label indicating that the notes being displayed below it are all recent notes")
+                        Spacer()
+                    }
+                    .foregroundColor(.secondary)
+                    .padding(.top, 20)
+                    .padding(.horizontal)
+                })
             }
         )
         .refreshable {
@@ -125,10 +152,7 @@ struct SearchHomeView: View {
 
 struct SearchHomeView_Previews: PreviewProvider {
     static var previews: some View {
-        let state = test_damus_state()
-        SearchHomeView(
-            damus_state: state,
-            model: SearchHomeModel(damus_state: state)
-        )
+        let state = test_damus_state
+        SearchHomeView(damus_state: state, model: SearchHomeModel(damus_state: state))
     }
 }

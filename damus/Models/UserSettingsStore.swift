@@ -9,35 +9,52 @@ import Foundation
 import UIKit
 
 let fallback_zap_amount = 1000
+let default_emoji_reactions = ["🤣", "🤙", "⚡", "💜", "🔥", "😀", "😃", "😄", "🥶"]
+
+func setting_property_key(key: String) -> String {
+    return pk_setting_key(UserSettingsStore.pubkey ?? .empty, key: key)
+}
+
+func setting_get_property_value<T>(key: String, scoped_key: String, default_value: T) -> T {
+    if let loaded = DamusUserDefaults.standard.object(forKey: scoped_key) as? T {
+        return loaded
+    } else if let loaded = DamusUserDefaults.standard.object(forKey: key) as? T {
+        // If pubkey-scoped setting does not exist but the deprecated non-pubkey-scoped setting does,
+        // migrate the deprecated setting into the pubkey-scoped one and delete the deprecated one.
+        DamusUserDefaults.standard.set(loaded, forKey: scoped_key)
+        DamusUserDefaults.standard.removeObject(forKey: key)
+        return loaded
+    } else {
+        return default_value
+    }
+}
+
+func setting_set_property_value<T: Equatable>(scoped_key: String, old_value: T, new_value: T) -> T? {
+    guard old_value != new_value else { return nil }
+    DamusUserDefaults.standard.set(new_value, forKey: scoped_key)
+    UserSettingsStore.shared?.objectWillChange.send()
+    return new_value
+}
 
 @propertyWrapper struct Setting<T: Equatable> {
     private let key: String
     private var value: T
     
     init(key: String, default_value: T) {
-        self.key = pk_setting_key(UserSettingsStore.pubkey ?? "", key: key)
-        if let loaded = UserDefaults.standard.object(forKey: self.key) as? T {
-            self.value = loaded
-        } else if let loaded = UserDefaults.standard.object(forKey: key) as? T {
-            // If pubkey-scoped setting does not exist but the deprecated non-pubkey-scoped setting does,
-            // migrate the deprecated setting into the pubkey-scoped one and delete the deprecated one.
-            self.value = loaded
-            UserDefaults.standard.set(loaded, forKey: self.key)
-            UserDefaults.standard.removeObject(forKey: key)
-        } else {
-            self.value = default_value
+        if T.self == Bool.self {
+            UserSettingsStore.bool_options.insert(key)
         }
+        let scoped_key = setting_property_key(key: key)
+
+        self.value = setting_get_property_value(key: key, scoped_key: scoped_key, default_value: default_value)
+        self.key = scoped_key
     }
-    
+
     var wrappedValue: T {
         get { return value }
         set {
-            guard self.value != newValue else {
-                return
-            }
-            self.value = newValue
-            UserDefaults.standard.set(newValue, forKey: key)
-            UserSettingsStore.shared!.objectWillChange.send()
+            guard let new_val = setting_set_property_value(scoped_key: key, old_value: value, new_value: newValue) else { return }
+            self.value = new_val
         }
     }
 }
@@ -47,15 +64,15 @@ let fallback_zap_amount = 1000
     private var value: T
     
     init(key: String, default_value: T) {
-        self.key = pk_setting_key(UserSettingsStore.pubkey ?? "", key: key)
-        if let loaded = UserDefaults.standard.string(forKey: self.key), let val = T.init(from: loaded) {
+        self.key = pk_setting_key(UserSettingsStore.pubkey ?? .empty, key: key)
+        if let loaded = DamusUserDefaults.standard.string(forKey: self.key), let val = T.init(from: loaded) {
             self.value = val
-        } else if let loaded = UserDefaults.standard.string(forKey: key), let val = T.init(from: loaded) {
+        } else if let loaded = DamusUserDefaults.standard.string(forKey: key), let val = T.init(from: loaded) {
             // If pubkey-scoped setting does not exist but the deprecated non-pubkey-scoped setting does,
             // migrate the deprecated setting into the pubkey-scoped one and delete the deprecated one.
             self.value = val
-            UserDefaults.standard.set(val.to_string(), forKey: self.key)
-            UserDefaults.standard.removeObject(forKey: key)
+            DamusUserDefaults.standard.set(val.to_string(), forKey: self.key)
+            DamusUserDefaults.standard.removeObject(forKey: key)
         } else {
             self.value = default_value
         }
@@ -68,15 +85,24 @@ let fallback_zap_amount = 1000
                 return
             }
             self.value = newValue
-            UserDefaults.standard.set(newValue.to_string(), forKey: key)
+            DamusUserDefaults.standard.set(newValue.to_string(), forKey: key)
             UserSettingsStore.shared!.objectWillChange.send()
         }
     }
 }
 
 public class UserSettingsStore: ObservableObject {
-    static var pubkey: String? = nil
+    static var pubkey: Pubkey? = nil
     static var shared: UserSettingsStore? = nil
+    static var bool_options = Set<String>()
+    
+    static func globally_load_for(pubkey: Pubkey) -> UserSettingsStore {
+        // dumb stuff needed for property wrappers
+        UserSettingsStore.pubkey = pubkey
+        let settings = UserSettingsStore()
+        UserSettingsStore.shared = settings
+        return settings
+    }
     
     @StringSetting(key: "default_wallet", default_value: .system_default_wallet)
     var default_wallet: Wallet
@@ -84,14 +110,23 @@ public class UserSettingsStore: ObservableObject {
     @StringSetting(key: "default_media_uploader", default_value: .nostrBuild)
     var default_media_uploader: MediaUploader
     
-    @Setting(key: "show_wallet_selector", default_value: true)
+    @Setting(key: "show_wallet_selector", default_value: false)
     var show_wallet_selector: Bool
     
     @Setting(key: "left_handed", default_value: false)
     var left_handed: Bool
     
-    @Setting(key: "always_show_images", default_value: false)
-    var always_show_images: Bool
+    @Setting(key: "blur_images", default_value: true)
+    var blur_images: Bool
+    
+    @Setting(key: "media_previews", default_value: true)
+    var media_previews: Bool
+    
+    @Setting(key: "hide_nsfw_tagged_content", default_value: false)
+    var hide_nsfw_tagged_content: Bool
+    
+    @Setting(key: "show_profile_action_sheet_on_pfp_click", default_value: true)
+    var show_profile_action_sheet_on_pfp_click: Bool
 
     @Setting(key: "zap_vibration", default_value: true)
     var zap_vibration: Bool
@@ -110,7 +145,10 @@ public class UserSettingsStore: ObservableObject {
 
     @Setting(key: "repost_notification", default_value: true)
     var repost_notification: Bool
-    
+
+    @Setting(key: "font_size", default_value: 1.0)
+    var font_size: Double
+
     @Setting(key: "dm_notification", default_value: true)
     var dm_notification: Bool
     
@@ -126,6 +164,10 @@ public class UserSettingsStore: ObservableObject {
     @Setting(key: "truncate_timeline_text", default_value: false)
     var truncate_timeline_text: Bool
     
+    /// Nozaps mode gimps note zapping to fit into apple's content-tipping guidelines. It can not be configurable to end-users on the app store
+    @Setting(key: "nozaps", default_value: true)
+    var nozaps: Bool
+    
     @Setting(key: "truncate_mention_text", default_value: true)
     var truncate_mention_text: Bool
     
@@ -134,6 +176,12 @@ public class UserSettingsStore: ObservableObject {
     
     @Setting(key: "auto_translate", default_value: true)
     var auto_translate: Bool
+
+    @Setting(key: "show_general_statuses", default_value: true)
+    var show_general_statuses: Bool
+
+    @Setting(key: "show_music_statuses", default_value: true)
+    var show_music_statuses: Bool
 
     @Setting(key: "show_only_preferred_languages", default_value: false)
     var show_only_preferred_languages: Bool
@@ -149,6 +197,33 @@ public class UserSettingsStore: ObservableObject {
     
     @Setting(key: "donation_percent", default_value: 0)
     var donation_percent: Int
+    
+    @Setting(key: "developer_mode", default_value: false)
+    var developer_mode: Bool
+    
+    @Setting(key: "always_show_onboarding_suggestions", default_value: false)
+    var always_show_onboarding_suggestions: Bool
+
+    @Setting(key: "enable_experimental_push_notifications", default_value: false)
+    var enable_experimental_push_notifications: Bool
+    
+    @Setting(key: "send_device_token_to_localhost", default_value: false)
+    var send_device_token_to_localhost: Bool
+    
+    @Setting(key: "enable_experimental_purple_api", default_value: false)
+    var enable_experimental_purple_api: Bool
+    
+    @StringSetting(key: "purple_environment", default_value: .production)
+    var purple_enviroment: DamusPurpleEnvironment
+
+    @Setting(key: "enable_experimental_purple_iap_support", default_value: false)
+    var enable_experimental_purple_iap_support: Bool
+    
+    @Setting(key: "emoji_reactions", default_value: default_emoji_reactions)
+    var emoji_reactions: [String]
+    
+    @Setting(key: "default_emoji_reaction", default_value: "🤙")
+    var default_emoji_reaction: String
 
     // Helper for inverse of disable_animation.
     // disable_animation was introduced as a setting first, but it's more natural for the settings UI to show the inverse.
@@ -179,7 +254,7 @@ public class UserSettingsStore: ObservableObject {
         }
     }
 
-    @StringSetting(key: "libretranslate_server", default_value: .terraprint)
+    @StringSetting(key: "libretranslate_server", default_value: .custom)
     var libretranslate_server: LibreTranslateServer
     
     @Setting(key: "libretranslate_url", default_value: "")
@@ -202,6 +277,15 @@ public class UserSettingsStore: ObservableObject {
             internal_nokyctranslate_api_key = newValue == "" ? nil : newValue
         }
     }
+
+    var winetranslate_api_key: String {
+        get {
+            return internal_winetranslate_api_key ?? ""
+        }
+        set {
+            internal_winetranslate_api_key = newValue == "" ? nil : newValue
+        }
+    }
     
     // These internal keys are necessary because entries in the keychain need to be Optional,
     // but the translation view needs non-Optional String in order to use them as Bindings.
@@ -210,6 +294,9 @@ public class UserSettingsStore: ObservableObject {
     
     @KeychainStorage(account: "nokyctranslate_apikey")
     var internal_nokyctranslate_api_key: String?
+
+    @KeychainStorage(account: "winetranslate_apikey")
+    var internal_winetranslate_api_key: String?
     
     @KeychainStorage(account: "libretranslate_apikey")
     var internal_libretranslate_api_key: String?
@@ -221,16 +308,26 @@ public class UserSettingsStore: ObservableObject {
         switch translation_service {
         case .none:
             return false
+        case .purple:
+            return true
         case .libretranslate:
             return URLComponents(string: libretranslate_url) != nil
         case .deepl:
             return internal_deepl_api_key != nil
         case .nokyctranslate:
             return internal_nokyctranslate_api_key != nil
+        case .winetranslate:
+            return internal_winetranslate_api_key != nil
         }
     }
+    
+    // MARK: Internal, hidden settings
+    
+    @Setting(key: "latest_contact_event_id", default_value: nil)
+    var latest_contact_event_id_hex: String?
+    
 }
 
-func pk_setting_key(_ pubkey: String, key: String) -> String {
-    return "\(pubkey)_\(key)"
+func pk_setting_key(_ pubkey: Pubkey, key: String) -> String {
+    return "\(pubkey.hex())_\(key)"
 }

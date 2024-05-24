@@ -2,18 +2,18 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>collapsed_event_view_other_notes</key>
+	<key>followed_by_three_and_others</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>
-		<string>%#@NOTES@</string>
-		<key>NOTES</key>
+		<string>%#@OTHERS@</string>
+		<key>OTHERS</key>
 		<dict>
 			<key>NSStringFormatSpecTypeKey</key>
 			<string>NSStringPluralRuleType</string>
 			<key>NSStringFormatValueTypeKey</key>
 			<string>d</string>
 			<key>other</key>
-			<string>... %d bài đăng khác ...</string>
+			<string>Được theo dõi bởi %2$@, %3$@, %4$@ và %1$d những người khác </string>
 		</dict>
 	</dict>
 	<key>followers_count</key>
@@ -44,6 +44,20 @@
 			<string>Đang theo dõi</string>
 		</dict>
 	</dict>
+	<key>imports_count</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@IMPORTS@</string>
+		<key>IMPORTS</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>other</key>
+			<string>Nhập</string>
+		</dict>
+	</dict>
 	<key>reacted_tagged_in_3</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>
@@ -55,10 +69,10 @@
 			<key>NSStringFormatValueTypeKey</key>
 			<string>d</string>
 			<key>other</key>
-			<string>%2$@ và %1$d người khác đã bày tỏ cảm xúc về bài đăng mà bạn được gắn thẻ</string>
+			<string>%2$@ và %1$d khác đã thể hiện cảm xúc trên bài note mà bạn được gắn thẻ</string>
 		</dict>
 	</dict>
-	<key>reacted_your_post_3</key>
+	<key>reacted_your_note_3</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>
 		<string>%#@REACTED@</string>
@@ -69,7 +83,7 @@
 			<key>NSStringFormatValueTypeKey</key>
 			<string>d</string>
 			<key>other</key>
-			<string>%2$@ và %1$d người khác đã bày tỏ cảm xúc về bài đăng bạn</string>
+			<string>%2$@ và %1$d đã thể hiện cảm xúc trên bài note của bạn</string>
 		</dict>
 	</dict>
 	<key>reacted_your_profile_3</key>
@@ -139,10 +153,10 @@
 			<key>NSStringFormatValueTypeKey</key>
 			<string>d</string>
 			<key>other</key>
-			<string>%2$@ và %1$d người khác đã đăng lại bài đăng mà bạn được gắn thẻ</string>
+			<string>%2$@ và %1$d đã đăng lại bài note mà bạn được gắn thẻ</string>
 		</dict>
 	</dict>
-	<key>reposted_your_post_3</key>
+	<key>reposted_your_note_3</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>
 		<string>%#@REPOSTED@</string>
@@ -153,7 +167,7 @@
 			<key>NSStringFormatValueTypeKey</key>
 			<string>d</string>
 			<key>other</key>
-			<string>%2$@ và %1$d người khác đã đăng lại bài đăng của bạn</string>
+			<string>%2$@ và %1$d khác đã đăng lại bài note của bạn</string>
 		</dict>
 	</dict>
 	<key>reposted_your_profile_3</key>
@@ -184,6 +198,34 @@
 			<string>Đăng lại</string>
 		</dict>
 	</dict>
+	<key>quoted_reposts_count</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@QUOTE_REPOSTS@</string>
+		<key>QUOTE_REPOSTS</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>other</key>
+			<string>Trích dẫn</string>
+		</dict>
+	</dict>
+	<key>sats</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@SATS@</string>
+		<key>SATS</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>other</key>
+			<string>sats</string>
+		</dict>
+	</dict>
 	<key>sats_count</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>
@@ -196,6 +238,34 @@
 			<string>@</string>
 			<key>other</key>
 			<string>%2$@ sats</string>
+		</dict>
+	</dict>
+	<key>users_talking_about_it</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@USERS@</string>
+		<key>USERS</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>other</key>
+			<string>%d người dùng đang nói về điều đó</string>
+		</dict>
+	</dict>
+	<key>word_count</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@WORDS@</string>
+		<key>WORDS</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>other</key>
+			<string>%d Từ</string>
 		</dict>
 	</dict>
 	<key>zap_notification_no_message</key>
@@ -223,7 +293,7 @@
 			<key>NSStringFormatValueTypeKey</key>
 			<string>@</string>
 			<key>other</key>
-			<string>Bạn đã nhận được %2$@ sats từ %3$@: "%4$@"</string>
+			<string>Bạn nhận được %2$@ sats từ %3$@: &quot;%4$@&quot;</string>
 		</dict>
 	</dict>
 	<key>zapped_tagged_in_3</key>
@@ -237,10 +307,10 @@
 			<key>NSStringFormatValueTypeKey</key>
 			<string>d</string>
 			<key>other</key>
-			<string>%2$@ và %1$d người khác đã zap bài đăng mà bạn được gắn thẻ</string>
+			<string>%2$@ và %1$d khác zap bài note mà bạn được gắn thẻ</string>
 		</dict>
 	</dict>
-	<key>zapped_your_post_3</key>
+	<key>zapped_your_note_3</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>
 		<string>%#@ZAPPED@</string>
@@ -251,7 +321,7 @@
 			<key>NSStringFormatValueTypeKey</key>
 			<string>d</string>
 			<key>other</key>
-			<string>%2$@ và %1$d người khác đã zap bài đăng của bạn</string>
+			<string>%2$@ và %1$d khác zap bài note của bạn.</string>
 		</dict>
 	</dict>
 	<key>zapped_your_profile_3</key>
@@ -265,7 +335,7 @@
 			<key>NSStringFormatValueTypeKey</key>
 			<string>d</string>
 			<key>other</key>
-			<string>%2$@ và %1$d người khác đã zap hồ sơ của bạn</string>
+			<string>%2$@ và %1$d đã zap bạn</string>
 		</dict>
 	</dict>
 	<key>zaps_count</key>

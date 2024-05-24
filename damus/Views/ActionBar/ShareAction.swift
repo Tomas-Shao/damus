@@ -10,18 +10,20 @@ import SwiftUI
 struct ShareAction: View {
     let event: NostrEvent
     let bookmarks: BookmarksManager
+    let userProfile: ProfileModel
     @State private var isBookmarked: Bool = false
 
     @Binding var show_share: Bool
     
     @Environment(\.dismiss) var dismiss
     
-    init(event: NostrEvent, bookmarks: BookmarksManager, show_share: Binding<Bool>) {
+    init(event: NostrEvent, bookmarks: BookmarksManager, show_share: Binding<Bool>, userProfile: ProfileModel) {
         let bookmarked = bookmarks.isBookmarked(event)
         self._isBookmarked = State(initialValue: bookmarked)
         
         self.bookmarks = bookmarks
         self.event = event
+        self.userProfile = userProfile
         self._show_share = show_share
     }
     
@@ -38,7 +40,7 @@ struct ShareAction: View {
                 
                 ShareActionButton(img: "link", text: NSLocalizedString("Copy Link", comment: "Button to copy link to note")) {
                     dismiss()
-                    UIPasteboard.general.string = "https://damus.io/" + (bech32_note_id(event.id) ?? event.id)
+                    UIPasteboard.general.string = "https://damus.io/" + Bech32Object.encode(.nevent(NEvent(noteid: event.id, relays: userProfile.getCappedRelayStrings())))
                 }
                 
                 let bookmarkImg = isBookmarked ? "bookmark.fill" : "bookmark"
@@ -51,7 +53,7 @@ struct ShareAction: View {
                 
                 ShareActionButton(img: "globe", text: NSLocalizedString("Broadcast", comment: "Button to broadcast note to all your relays")) {
                     dismiss()
-                    NotificationCenter.default.post(name: .broadcast_event, object: event)
+                    notify(.broadcast(event))
                 }
                 
                 ShareActionButton(img: "upload", text: NSLocalizedString("Share Via...", comment: "Button to present iOS share sheet")) {
@@ -68,6 +70,12 @@ struct ShareAction: View {
                     dismiss()
                 }
             }
+        }
+        .onAppear() {
+            userProfile.subscribeToFindRelays()
+        }
+        .onDisappear() {
+            userProfile.unsubscribeFindRelays()
         }
     }
 }

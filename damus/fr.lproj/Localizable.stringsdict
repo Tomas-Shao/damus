@@ -2,24 +2,6 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>collapsed_event_view_other_notes</key>
-	<dict>
-		<key>NSStringLocalizedFormatKey</key>
-		<string>%#@NOTES@</string>
-		<key>NOTES</key>
-		<dict>
-			<key>NSStringFormatSpecTypeKey</key>
-			<string>NSStringPluralRuleType</string>
-			<key>NSStringFormatValueTypeKey</key>
-			<string>d</string>
-			<key>one</key>
-			<string>... %d autre note ...</string>
-			<key>many</key>
-			<string>... %d autres notes ...</string>
-			<key>other</key>
-			<string>... %d autres notes ...</string>
-		</dict>
-	</dict>
 	<key>followers_count</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>
@@ -67,14 +49,14 @@
 			<key>NSStringFormatValueTypeKey</key>
 			<string>d</string>
 			<key>one</key>
-			<string>%2$@ et %1$d autre ont réagi à une publication dans laquelle vous apparaissez</string>
+			<string>%2$@ et %1$d autre ont réagi à une note dans laquelle vous apparaissez</string>
 			<key>many</key>
-			<string>%2$@ et %1$d autres ont réagi à une publication dans laquelle vous apparaissez</string>
+			<string>%2$@ et %1$d autres ont réagi à une note dans laquelle vous apparaissez</string>
 			<key>other</key>
-			<string>%2$@ et %1$d autres ont réagi à une publication dans laquelle vous apparaissez</string>
+			<string>%2$@ et %1$d autres ont réagi à une note dans laquelle vous apparaissez</string>
 		</dict>
 	</dict>
-	<key>reacted_your_post_3</key>
+	<key>reacted_your_note_3</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>
 		<string>%#@REACTED@</string>
@@ -85,11 +67,11 @@
 			<key>NSStringFormatValueTypeKey</key>
 			<string>d</string>
 			<key>one</key>
-			<string>%2$@ et %1$d autre ont réagi à votre publication</string>
+			<string>%2$@ et %1$d autre ont réagi à votre note</string>
 			<key>many</key>
-			<string>%2$@ et %1$d autres ont réagi à votre publication</string>
+			<string>%2$@ et %1$d autres ont réagi à votre note</string>
 			<key>other</key>
-			<string>%2$@ et %1$d autres ont réagi à votre publication</string>
+			<string>%2$@ et %1$d autres ont réagi à votre note</string>
 		</dict>
 	</dict>
 	<key>reacted_your_profile_3</key>
@@ -175,14 +157,14 @@
 			<key>NSStringFormatValueTypeKey</key>
 			<string>d</string>
 			<key>one</key>
-			<string>%2$@ et %1$d autre ont cité une publication dans laquelle vous apparaissez</string>
+			<string>%2$@ et %1$d autre ont republié une note dans laquelle vous apparaissez</string>
 			<key>many</key>
-			<string>%2$@ et %1$d autres ont cité une publication dans laquelle vous apparaissez</string>
+			<string>%2$@ et %1$d autres ont republié une note dans laquelle vous apparaissez</string>
 			<key>other</key>
-			<string>%2$@ et %1$d autres ont republié une publication dans laquelle vous apparaissez</string>
+			<string>%2$@ et %1$d autres ont republié une note dans laquelle vous apparaissez</string>
 		</dict>
 	</dict>
-	<key>reposted_your_post_3</key>
+	<key>reposted_your_note_3</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>
 		<string>%#@REPOSTED@</string>
@@ -193,11 +175,11 @@
 			<key>NSStringFormatValueTypeKey</key>
 			<string>d</string>
 			<key>one</key>
-			<string>%2$@ et %1$d autre ont cité votre publication</string>
+			<string>%2$@ et %1$d autre ont republié votre note</string>
 			<key>many</key>
-			<string>%2$@ et %1$d autres ont cité votre publication</string>
+			<string>%2$@ et %1$d autres ont republié votre note</string>
 			<key>other</key>
-			<string>%2$@ et %1$d autres ont republié votre publication</string>
+			<string>%2$@ et %1$d autres ont republié votre note</string>
 		</dict>
 	</dict>
 	<key>reposted_your_profile_3</key>
@@ -301,11 +283,11 @@
 			<key>NSStringFormatValueTypeKey</key>
 			<string>@</string>
 			<key>one</key>
-			<string>Vous avez reçu %2$@ sat de %3$@: "%4$@"</string>
+			<string>Vous avez reçu %2$@ sat de %3$@: &quot;%4$@&quot;</string>
 			<key>many</key>
-			<string>Vous avez reçu %2$@ sats de %3$@: "%4$@"</string>
+			<string>Vous avez reçu %2$@ sats de %3$@: &quot;%4$@&quot;</string>
 			<key>other</key>
-			<string>Vous avez reçu %2$@ sats de %3$@: "%4$@"</string>
+			<string>Vous avez reçu %2$@ sats de %3$@: &quot;%4$@&quot;</string>
 		</dict>
 	</dict>
 	<key>zapped_tagged_in_3</key>
@@ -319,14 +301,14 @@
 			<key>NSStringFormatValueTypeKey</key>
 			<string>d</string>
 			<key>one</key>
-			<string>%2$@ et %1$d autre ont zappé une publication dans laquelle vous apparaissez</string>
+			<string>%2$@ et %1$d autre ont zappé une note dans laquelle vous apparaissez</string>
 			<key>many</key>
-			<string>%2$@ et %1$d autres ont zappé une publication dans laquelle vous apparaissez</string>
+			<string>%2$@ et %1$d autres ont zappé une note dans laquelle vous apparaissez</string>
 			<key>other</key>
-			<string>%2$@ et %1$d autres ont zappé une publication dans laquelle vous apparaissez</string>
+			<string>%2$@ et %1$d autres ont zappé une note dans laquelle vous apparaissez</string>
 		</dict>
 	</dict>
-	<key>zapped_your_post_3</key>
+	<key>zapped_your_note_3</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>
 		<string>%#@ZAPPED@</string>
@@ -337,11 +319,11 @@
 			<key>NSStringFormatValueTypeKey</key>
 			<string>d</string>
 			<key>one</key>
-			<string>%2$@ et %1$d autre ont zappé votre publication</string>
+			<string>%2$@ et %1$d autre ont zappé votre note</string>
 			<key>many</key>
-			<string>%2$@ et %1$d autres ont zappé votre publication</string>
+			<string>%2$@ et %1$d autres ont zappé votre note</string>
 			<key>other</key>
-			<string>%2$@ et %1$d autres ont zappé votre publication</string>
+			<string>%2$@ et %1$d autres ont zappé votre note</string>
 		</dict>
 	</dict>
 	<key>zapped_your_profile_3</key>
@@ -355,11 +337,11 @@
 			<key>NSStringFormatValueTypeKey</key>
 			<string>d</string>
 			<key>one</key>
-			<string>%2$@ et %1$d autre ont zappé votre profile</string>
+			<string>%2$@ et %1$d autre vous ont zappé</string>
 			<key>many</key>
-			<string>%2$@ et %1$d autres ont zappé votre profile</string>
+			<string>%2$@ et %1$d autres vous ont zappé</string>
 			<key>other</key>
-			<string>%2$@ et %1$d autres ont zappé votre profile</string>
+			<string>%2$@ et %1$d autres vous ont zappé</string>
 		</dict>
 	</dict>
 	<key>zaps_count</key>

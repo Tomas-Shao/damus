@@ -10,30 +10,59 @@ import Network
 
 struct RelayHandler {
     let sub_id: String
-    let callback: (String, NostrConnectionEvent) -> ()
+    let callback: (RelayURL, NostrConnectionEvent) -> ()
 }
 
 struct QueuedRequest {
-    let req: NostrRequest
-    let relay: String
+    let req: NostrRequestType
+    let relay: RelayURL
+    let skip_ephemeral: Bool
+}
+
+struct SeenEvent: Hashable {
+    let relay_id: RelayURL
+    let evid: NoteId
 }
 
 public class RelayPool {
     var relays: [Relay] = []
     var handlers: [RelayHandler] = []
     var request_queue: [QueuedRequest] = []
-    var seen: Set<String> = Set()
-    var counts: [String: UInt64] = [:]
-    
+    var seen: Set<SeenEvent> = Set()
+    var counts: [RelayURL: UInt64] = [:]
+    var ndb: Ndb
+    var keypair: Keypair?
+    var message_received_function: (((String, RelayDescriptor)) -> Void)?
+    var message_sent_function: (((String, Relay)) -> Void)?
+
     private let network_monitor = NWPathMonitor()
     private let network_monitor_queue = DispatchQueue(label: "io.damus.network_monitor")
     private var last_network_status: NWPath.Status = .unsatisfied
 
-    public init() {
+    func close() {
+        disconnect()
+        relays = []
+        handlers = []
+        request_queue = []
+        seen.removeAll()
+        counts = [:]
+        keypair = nil
+    }
+
+    public init(ndb: Ndb, keypair: Keypair? = nil) {
+        self.ndb = ndb
+        self.keypair = keypair
+
         network_monitor.pathUpdateHandler = { [weak self] path in
             if (path.status == .satisfied || path.status == .requiresConnection) && self?.last_network_status != path.status {
                 DispatchQueue.main.async {
                     self?.connect_to_disconnected()
+                }
+            }
+            
+            if let self, path.status != self.last_network_status {
+                for relay in self.relays {
+                    relay.connection.log?.add("Network state: \(path.status)")
                 }
             }
             
@@ -64,8 +93,8 @@ public class RelayPool {
             relay.connection.ping()
         }
     }
-    
-    public func register_handler(sub_id: String, handler: @escaping (String, NostrConnectionEvent) -> ()) {
+
+    public func register_handler(sub_id: String, handler: @escaping (RelayURL, NostrConnectionEvent) -> ()) {
         for handler in handlers {
             // don't add duplicate handlers
             if handler.sub_id == sub_id {
@@ -75,14 +104,15 @@ public class RelayPool {
         self.handlers.append(RelayHandler(sub_id: sub_id, callback: handler))
         print("registering \(sub_id) handler, current: \(self.handlers.count)")
     }
-    
-    func remove_relay(_ relay_id: String) {
+
+    func remove_relay(_ relay_id: RelayURL) {
         var i: Int = 0
-        
+
         self.disconnect(to: [relay_id])
         
         for relay in relays {
             if relay.id == relay_id {
+                relay.connection.disablePermanently()
                 relays.remove(at: i)
                 break
             }
@@ -90,18 +120,31 @@ public class RelayPool {
             i += 1
         }
     }
-    
+
     func add_relay(_ desc: RelayDescriptor) throws {
-        let url = desc.url
-        let relay_id = get_relay_id(url)
+        let relay_id = desc.url
         if get_relay(relay_id) != nil {
             throw RelayError.RelayAlreadyExists
         }
-        let conn = RelayConnection(url: url) { event in
+        let conn = RelayConnection(url: desc.url, handleEvent: { event in
             self.handle_event(relay_id: relay_id, event: event)
-        }
+        }, processEvent: { wsev in
+            guard case .message(let msg) = wsev,
+                  case .string(let str) = msg
+            else { return }
+
+            let _ = self.ndb.process_event(str)
+            self.message_received_function?((str, desc))
+        })
         let relay = Relay(descriptor: desc, connection: conn)
         self.relays.append(relay)
+    }
+
+    func setLog(_ log: RelayLog, for relay_id: RelayURL) {
+        // add the current network state to the log
+        log.add("Network state: \(network_monitor.currentPath.status)")
+
+        get_relay(relay_id)?.connection.log = log
     }
     
     /// This is used to retry dead connections
@@ -110,9 +153,9 @@ public class RelayPool {
             let c = relay.connection
             
             let is_connecting = c.isConnecting
-            
+
             if is_connecting && (Date.now.timeIntervalSince1970 - c.last_connection_attempt) > 5 {
-                print("stale connection detected (\(relay.descriptor.url.url.absoluteString)). retrying...")
+                print("stale connection detected (\(relay.descriptor.url.absoluteString)). retrying...")
                 relay.connection.reconnect()
             } else if relay.is_broken || is_connecting || c.isConnected {
                 continue
@@ -122,8 +165,8 @@ public class RelayPool {
             
         }
     }
-    
-    func reconnect(to: [String]? = nil) {
+
+    func reconnect(to: [RelayURL]? = nil) {
         let relays = to.map{ get_relays($0) } ?? self.relays
         for relay in relays {
             // don't try to reconnect to broken relays
@@ -131,38 +174,38 @@ public class RelayPool {
         }
     }
 
-    public func connect(to: [String]? = nil) {
+    public func connect(to: [RelayURL]? = nil) {
         let relays = to.map{ get_relays($0) } ?? self.relays
         for relay in relays {
             relay.connection.connect()
         }
     }
 
-    func disconnect(to: [String]? = nil) {
+    func disconnect(to: [RelayURL]? = nil) {
         let relays = to.map{ get_relays($0) } ?? self.relays
         for relay in relays {
             relay.connection.disconnect()
         }
     }
-    
-    func unsubscribe(sub_id: String, to: [String]? = nil) {
+
+    func unsubscribe(sub_id: String, to: [RelayURL]? = nil) {
         if to == nil {
             self.remove_handler(sub_id: sub_id)
         }
         self.send(.unsubscribe(sub_id), to: to)
     }
-    
-    func subscribe(sub_id: String, filters: [NostrFilter], handler: @escaping (String, NostrConnectionEvent) -> (), to: [String]? = nil) {
+
+    func subscribe(sub_id: String, filters: [NostrFilter], handler: @escaping (RelayURL, NostrConnectionEvent) -> (), to: [RelayURL]? = nil) {
         register_handler(sub_id: sub_id, handler: handler)
         send(.subscribe(.init(filters: filters, sub_id: sub_id)), to: to)
     }
-    
-    func subscribe_to(sub_id: String, filters: [NostrFilter], to: [String]?, handler: @escaping (String, NostrConnectionEvent) -> ()) {
+
+    func subscribe_to(sub_id: String, filters: [NostrFilter], to: [RelayURL]?, handler: @escaping (RelayURL, NostrConnectionEvent) -> ()) {
         register_handler(sub_id: sub_id, handler: handler)
         send(.subscribe(.init(filters: filters, sub_id: sub_id)), to: to)
     }
-    
-    func count_queued(relay: String) -> Int {
+
+    func count_queued(relay: RelayURL) -> Int {
         var c = 0
         for request in request_queue {
             if request.relay == relay {
@@ -172,20 +215,34 @@ public class RelayPool {
         
         return c
     }
-    
-    func queue_req(r: NostrRequest, relay: String) {
+
+    func queue_req(r: NostrRequestType, relay: RelayURL, skip_ephemeral: Bool) {
         let count = count_queued(relay: relay)
         guard count <= 10 else {
             print("can't queue, too many queued events for \(relay)")
             return
         }
         
-        print("queueing request: \(r) for \(relay)")
-        request_queue.append(QueuedRequest(req: r, relay: relay))
+        print("queueing request for \(relay)")
+        request_queue.append(QueuedRequest(req: r, relay: relay, skip_ephemeral: skip_ephemeral))
     }
     
-    public func send(_ req: NostrRequest, to: [String]? = nil, skip_ephemeral: Bool = true) {
+    public func send_raw_to_local_ndb(_ req: NostrRequestType) {
+        // send to local relay (nostrdb)
+        switch req {
+            case .typical(let r):
+                if case .event = r, let rstr = make_nostr_req(r) {
+                    let _ = ndb.process_client_event(rstr)
+                }
+            case .custom(let string):
+                let _ = ndb.process_client_event(string)
+        }
+    }
+
+    func send_raw(_ req: NostrRequestType, to: [RelayURL]? = nil, skip_ephemeral: Bool = true) {
         let relays = to.map{ get_relays($0) } ?? self.relays
+
+        self.send_raw_to_local_ndb(req)
 
         for relay in relays {
             if req.is_read && !(relay.descriptor.info.read ?? true) {
@@ -201,24 +258,30 @@ public class RelayPool {
             }
             
             guard relay.connection.isConnected else {
-                queue_req(r: req, relay: relay.id)
+                queue_req(r: req, relay: relay.id, skip_ephemeral: skip_ephemeral)
                 continue
             }
             
-            relay.connection.send(req)
+            relay.connection.send(req, callback: { str in
+                self.message_sent_function?((str, relay))
+            })
         }
     }
-    
-    func get_relays(_ ids: [String]) -> [Relay] {
+
+    func send(_ req: NostrRequest, to: [RelayURL]? = nil, skip_ephemeral: Bool = true) {
+        send_raw(.typical(req), to: to, skip_ephemeral: skip_ephemeral)
+    }
+
+    func get_relays(_ ids: [RelayURL]) -> [Relay] {
         // don't include ephemeral relays in the default list to query
         relays.filter { ids.contains($0.id) }
     }
-    
-    func get_relay(_ id: String) -> Relay? {
+
+    func get_relay(_ id: RelayURL) -> Relay? {
         relays.first(where: { $0.id == id })
     }
-    
-    func run_queue(_ relay_id: String) {
+
+    func run_queue(_ relay_id: RelayURL) {
         self.request_queue = request_queue.reduce(into: Array<QueuedRequest>()) { (q, req) in
             guard req.relay == relay_id else {
                 q.append(req)
@@ -226,14 +289,14 @@ public class RelayPool {
             }
             
             print("running queueing request: \(req.req) for \(relay_id)")
-            self.send(req.req, to: [relay_id])
+            self.send_raw(req.req, to: [relay_id], skip_ephemeral: false)
         }
     }
-    
-    func record_seen(relay_id: String, event: NostrConnectionEvent) {
+
+    func record_seen(relay_id: RelayURL, event: NostrConnectionEvent) {
         if case .nostr_event(let ev) = event {
             if case .event(_, let nev) = ev {
-                let k = relay_id + nev.id
+                let k = SeenEvent(relay_id: relay_id, evid: nev.id)
                 if !seen.contains(k) {
                     seen.insert(k)
                     if counts[relay_id] == nil {
@@ -245,27 +308,51 @@ public class RelayPool {
             }
         }
     }
-    
-    func handle_event(relay_id: String, event: NostrConnectionEvent) {
+
+    func handle_event(relay_id: RelayURL, event: NostrConnectionEvent) {
         record_seen(relay_id: relay_id, event: event)
-        
+
         // run req queue when we reconnect
         if case .ws_event(let ws) = event {
             if case .connected = ws {
                 run_queue(relay_id)
             }
         }
-        
+
+        // Handle auth
+        if case let .nostr_event(nostrResponse) = event,
+           case let .auth(challenge_string) = nostrResponse {
+            if let relay = get_relay(relay_id) {
+                print("received auth request from \(relay.descriptor.url.id)")
+                relay.authentication_state = .pending
+                if let keypair {
+                    if let fullKeypair = keypair.to_full() {
+                        if let authRequest = make_auth_request(keypair: fullKeypair, challenge_string: challenge_string, relay: relay) {
+                            send(.auth(authRequest), to: [relay_id], skip_ephemeral: false)
+                            relay.authentication_state = .verified
+                        } else {
+                            print("failed to make auth request")
+                        }
+                    } else {
+                        print("keypair provided did not contain private key, can not sign auth request")
+                        relay.authentication_state = .error(.no_private_key)
+                    }
+                } else {
+                    print("no keypair to reply to auth request")
+                    relay.authentication_state = .error(.no_key)
+                }
+            } else {
+                print("no relay found for \(relay_id)")
+            }
+        }
+
         for handler in handlers {
             handler.callback(relay_id, event)
         }
     }
 }
 
-public func add_rw_relay(_ pool: RelayPool, _ url: String) {
-    guard let url = RelayURL(url) else {
-        return
-    }
+public func add_rw_relay(_ pool: RelayPool, _ url: RelayURL) {
     try? pool.add_relay(RelayDescriptor(url: url, info: .rw))
 }
 

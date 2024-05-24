@@ -7,30 +7,13 @@
 
 import SwiftUI
 
-func hex_col(r: UInt8, g: UInt8, b: UInt8) -> Color {
-    return Color(.sRGB,
-                 red: Double(r) / Double(0xff),
-                 green: Double(g) / Double(0xff),
-                 blue: Double(b) / Double(0xff),
-                 opacity: 1.0)
-}
-
-
 public struct SetupView: View {
-    @State private var eula = false
-
-    public init(eula: Bool = false) {
-        self.eula = eula
-    }
+    @StateObject var navigationCoordinator: NavigationCoordinator = NavigationCoordinator()
     
     public var body: some View {
-        NavigationView {
+        NavigationStack(path: $navigationCoordinator.path) {
             ZStack {
                 VStack(alignment: .center) {
-                    NavigationLink(destination: EULAView(), isActive: $eula) {
-                        EmptyView()
-                    }
-                    
                     Spacer()
                     
                     Image("logo-nobg", bundle: Bundle(for: DamusColors.self))
@@ -38,18 +21,13 @@ public struct SetupView: View {
                         .shadow(color: DamusColors.purple, radius: 2)
                         .frame(width: 56, height: 56, alignment: .center)
                         .padding(.top, 20.0)
-                    
-                    HStack {
-                        Text("Welcome to", comment: "Welcome text shown on the first screen when user is not logged in.")
-                            .font(.title)
-                            .fontWeight(.heavy)
-                        Text("Damus")
-                            .font(.title)
-                            .fontWeight(.heavy)
-                            .foregroundStyle(DamusLogoGradient.gradient)
-                    }
-                    
-                    Text("The go-to iOS nostr client", comment: "Quick description of what Damus is")
+
+                    Text("Welcome to Damus", comment: "Welcome text shown on the first screen when user is not logged in.")
+                        .font(.title)
+                        .fontWeight(.heavy)
+                        .foregroundStyle(DamusLogoGradient.gradient)
+
+                    Text("The go-to iOS Nostr client", comment: "Quick description of what Damus is")
                         .foregroundColor(DamusColors.mediumGrey)
                         .padding(.top, 10)
                     
@@ -62,10 +40,10 @@ public struct SetupView: View {
                     Spacer()
                     
                     Button(action: {
-                        eula.toggle()
+                        navigationCoordinator.push(route: Route.Login)
                     }) {
                         HStack {
-                            Text("Let's get started!", comment:  "Button to continue to login page.")
+                            Text("Let's get started!", comment: "Button to continue to login page.")
                                 .fontWeight(.semibold)
                         }
                         .frame(minWidth: 300, maxWidth: .infinity, maxHeight: 12, alignment: .center)
@@ -74,13 +52,10 @@ public struct SetupView: View {
                     .padding()
                 }
             }
-            .background(
-                Image("login-header", bundle: Bundle(for: DamusColors.self))
-                    .resizable()
-                    .frame(maxWidth: .infinity, maxHeight: 300, alignment: .center)
-                    .ignoresSafeArea(),
-                alignment: .top
-            )
+            .background(DamusBackground(maxHeight: 300), alignment: .top)
+            .navigationDestination(for: Route.self) { route in
+                route.view(navigationCoordinator: navigationCoordinator, damusState: DamusState.empty)
+            }
         }
         .navigationBarTitleDisplayMode(.inline)
         .navigationViewStyle(StackNavigationViewStyle())
@@ -94,7 +69,7 @@ struct LearnAboutNostrLink: View {
             Button(action: {
                 openURL(URL(string: "https://nostr.com")!)
             }, label: {
-                Text("Learn more about nostr")
+                Text("Learn more about Nostr", comment: "Button that opens up a webpage where the user can learn more about Nostr.")
                     .foregroundColor(.accentColor)
             })
             
@@ -110,16 +85,17 @@ struct WhatIsNostr: View {
         HStack(alignment: .top) {
             Image("nostr-logo", bundle: Bundle(for: DamusColors.self))
             VStack(alignment: .leading) {
-                Text("What is nostr?")
+                Text("What is Nostr?", comment: "Heading text for section describing what is Nostr.")
                     .fontWeight(.bold)
                     .padding(.vertical, 10)
                 
-                Text("Nostr is a protocol, designed for simplicity, that aims to create a censorship-resistant global social network")
+                Text("Nostr is a protocol, designed for simplicity, that aims to create a censorship-resistant global social network", comment: "Description about what is Nostr.")
                     .foregroundColor(DamusColors.mediumGrey)
                 
                 LearnAboutNostrLink()
                     .padding(.top, 10)
             }
+            Spacer()
         }
     }
 }
@@ -129,13 +105,14 @@ struct WhyWeNeedNostr: View {
         HStack(alignment: .top) {
             Image("lightbulb", bundle: Bundle(for: DamusColors.self))
             VStack(alignment: .leading) {
-                Text("Why we need nostr?")
+                Text("Why we need Nostr?", comment: "Heading text for section describing why Nostr is needed.")
                     .fontWeight(.bold)
                     .padding(.vertical, 10)
                 
-                Text("Social media has developed into a key way information flows around the world. Unfortunately, our current social media systems are broken")
+                Text("Social media has developed into a key way information flows around the world. Unfortunately, our current social media systems are broken", comment: "Description about why Nostr is needed.")
                     .foregroundColor(DamusColors.mediumGrey)
             }
+            Spacer()
         }
     }
 }

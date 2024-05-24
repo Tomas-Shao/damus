@@ -57,6 +57,25 @@ enum RelayFlags: Int {
     case broken = 1
 }
 
+enum RelayAuthenticationError {
+    /// Only a public key was provided in keypair to sign challenge.
+    ///
+    /// A private key is required to sign `auth` challenge.
+    case no_private_key
+    /// No keypair was provided to sign challenge.
+    case no_key
+}
+enum RelayAuthenticationState: Equatable {
+    /// No `auth` request has been made from this relay
+    case none
+    /// We have received an `auth` challenge, but have not yet replied to the challenge
+    case pending
+    /// We have received an `auth` challenge and replied with an `auth` event
+    case verified
+    /// We received an `auth` challenge but failed to reply to the challenge
+    case error(RelayAuthenticationError)
+}
+
 struct Limitations: Codable {
     let payment_required: Bool?
     
@@ -65,16 +84,45 @@ struct Limitations: Codable {
     }
 }
 
+struct Admission: Codable {
+    let amount: Int64
+    let unit: String
+}
+
+struct Subscription: Codable {
+    let amount: Int64
+    let unit: String
+    let period: Int
+}
+
+struct Publication: Codable {
+    let kinds: [Int]
+    let amount: Int64
+    let unit: String
+}
+
+struct Fees: Codable {
+    let admission: [Admission]?
+    let subscription: [Subscription]?
+    let publication: [Publication]?
+    
+    static var empty: Fees {
+        Fees(admission: nil, subscription: nil, publication: nil)
+    }
+}
+
 struct RelayMetadata: Codable {
     let name: String?
     let description: String?
-    let pubkey: String?
+    let pubkey: Pubkey?
     let contact: String?
     let supported_nips: [Int]?
     let software: String?
     let version: String?
     let limitation: Limitations?
     let payments_url: String?
+    let icon: String?
+    let fees: Fees?
     
     var is_paid: Bool {
         return limitation?.payment_required ?? false
@@ -84,29 +132,27 @@ struct RelayMetadata: Codable {
  class Relay: Identifiable {
     let descriptor: RelayDescriptor
     let connection: RelayConnection
-    
+    var authentication_state: RelayAuthenticationState
+
     var flags: Int
     
     init(descriptor: RelayDescriptor, connection: RelayConnection) {
         self.flags = 0
         self.descriptor = descriptor
         self.connection = connection
+        self.authentication_state = RelayAuthenticationState.none
     }
     
     var is_broken: Bool {
         return (flags & RelayFlags.broken.rawValue) == RelayFlags.broken.rawValue
     }
-    
-    var id: String {
-        return get_relay_id(descriptor.url)
+
+    var id: RelayURL {
+        return descriptor.url
     }
 
 }
 
 enum RelayError: Error {
     case RelayAlreadyExists
-}
-
-func get_relay_id(_ url: RelayURL) -> String {
-    return url.url.absoluteString
 }

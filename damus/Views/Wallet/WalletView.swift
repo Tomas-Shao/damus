@@ -20,23 +20,64 @@ struct WalletView: View {
     
     func MainWalletView(nwc: WalletConnectURL) -> some View {
         VStack {
-            SupportDamus
-            
-            Spacer()
-            
-            Text(verbatim: nwc.relay.id)
-            
-            if let lud16 = nwc.lud16 {
-                Text(verbatim: lud16)
+            if !damus_state.settings.nozaps {
+                SupportDamus
+                
+                Spacer()
             }
             
-            BigButton(NSLocalizedString("Disconnect Wallet", comment: "Text for button to disconnect from Nostr Wallet Connect lightning wallet.")) {
+            VStack(spacing: 5) {
+                VStack(spacing: 10) {
+                    Text("Wallet Relay", comment: "Label text indicating that below it is the information about the wallet relay.")
+                        .fontWeight(.semibold)
+                        .padding(.top)
+
+                    Divider()
+
+                    RelayView(state: damus_state, relay: nwc.relay, showActionButtons: .constant(false), recommended: false)
+                }
+                .frame(maxWidth: .infinity, minHeight: 125, alignment: .top)
+                .padding(.horizontal, 10)
+                .background(DamusColors.neutral1)
+                .cornerRadius(10)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(DamusColors.neutral3, lineWidth: 1)
+                )
+                
+                if let lud16 = nwc.lud16 {
+                    VStack(spacing: 10) {
+                        Text("Wallet Address", comment: "Label text indicating that below it is the wallet address.")
+                            .fontWeight(.semibold)
+                        
+                        Divider()
+                        
+                        Text(lud16)
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 75, alignment: .center)
+                    .padding(.horizontal, 10)
+                    .background(DamusColors.neutral1)
+                    .cornerRadius(10)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(DamusColors.neutral3, lineWidth: 1)
+                    )
+                }
+            }
+            
+            Button(action: {
                 self.model.disconnect()
+            }) {
+                HStack {
+                    Text("Disconnect Wallet", comment: "Text for button to disconnect from Nostr Wallet Connect lightning wallet.")
+                }
+                .frame(minWidth: 300, maxWidth: .infinity, maxHeight: 18, alignment: .center)
             }
+            .buttonStyle(GradientButtonStyle())
             
         }
         .navigationTitle(NSLocalizedString("Wallet", comment: "Navigation title for Wallet view"))
-        .navigationBarTitleDisplayMode(.large)
+        .navigationBarTitleDisplayMode(.inline)
         .padding()
     }
     
@@ -143,7 +184,7 @@ struct WalletView: View {
                     Spacer()
                 }
                 
-                EventProfile(damus_state: damus_state, pubkey: damus_state.pubkey, profile: damus_state.profiles.lookup(id: damus_state.pubkey), size: .small)
+                EventProfile(damus_state: damus_state, pubkey: damus_state.pubkey, size: .small)
             }
             .padding(25)
         }
@@ -153,45 +194,49 @@ struct WalletView: View {
     var body: some View {
         switch model.connect_state {
         case .new:
-            ConnectWalletView(model: model)
+            ConnectWalletView(model: model, nav: damus_state.nav)
         case .none:
-            ConnectWalletView(model: model)
+            ConnectWalletView(model: model, nav: damus_state.nav)
         case .existing(let nwc):
             MainWalletView(nwc: nwc)
                 .onAppear() {
-                    model.inital_percent = settings.donation_percent
+                    model.initial_percent = settings.donation_percent
                 }
                 .onChange(of: settings.donation_percent) { p in
-                    guard let profile = damus_state.profiles.lookup(id: damus_state.pubkey) else {
+                    let profile_txn = damus_state.profiles.lookup(id: damus_state.pubkey)
+                    guard let profile = profile_txn?.unsafeUnownedValue else {
                         return
                     }
                     
-                    profile.damus_donation = p
-                    
-                    notify(.profile_updated, ProfileUpdate(pubkey: damus_state.pubkey, profile: profile))
+                    let prof = Profile(name: profile.name, display_name: profile.display_name, about: profile.about, picture: profile.picture, banner: profile.banner, website: profile.website, lud06: profile.lud06, lud16: profile.lud16, nip05: profile.nip05, damus_donation: p, reactions: profile.reactions)
+
+                    notify(.profile_updated(.manual(pubkey: self.damus_state.pubkey, profile: prof)))
                 }
                 .onDisappear {
+                    let profile_txn = damus_state.profiles.lookup(id: damus_state.pubkey)
+                    
                     guard let keypair = damus_state.keypair.to_full(),
-                          let profile = damus_state.profiles.lookup(id: damus_state.pubkey),
-                          model.inital_percent != profile.damus_donation
+                          let profile = profile_txn?.unsafeUnownedValue,
+                          model.initial_percent != profile.damus_donation
                     else {
                         return
                     }
                     
-                    profile.damus_donation = settings.donation_percent
-                    let meta = make_metadata_event(keypair: keypair, metadata: profile)
-                    let tsprofile = TimestampedProfile(profile: profile, timestamp: meta.created_at, event: meta)
-                    damus_state.profiles.add(id: damus_state.pubkey, profile: tsprofile)
+                    let prof = Profile(name: profile.name, display_name: profile.display_name, about: profile.about, picture: profile.picture, banner: profile.banner, website: profile.website, lud06: profile.lud06, lud16: profile.lud16, nip05: profile.nip05, damus_donation: settings.donation_percent, reactions: profile.reactions)
+
+                    guard let meta = make_metadata_event(keypair: keypair, metadata: prof) else {
+                        return
+                    }
                     damus_state.postbox.send(meta)
                 }
         }
     }
 }
 
-let test_wallet_connect_url = WalletConnectURL(pubkey: "pk", relay: .init("wss://relay.damus.io")!, keypair: test_damus_state().keypair.to_full()!, lud16: "jb55@sendsats.com")
+let test_wallet_connect_url = WalletConnectURL(pubkey: test_pubkey, relay: .init("wss://relay.damus.io")!, keypair: test_damus_state.keypair.to_full()!, lud16: "jb55@sendsats.com")
 
 struct WalletView_Previews: PreviewProvider {
-    static let tds = test_damus_state()
+    static let tds = test_damus_state
     static var previews: some View {
         WalletView(damus_state: tds, model: WalletModel(state: .existing(test_wallet_connect_url), settings: tds.settings))
     }

@@ -22,14 +22,14 @@ struct ZapSettingsView: View {
     var body: some View {
         Form {
             Section(
-                header: Text(NSLocalizedString("OnlyZaps", comment: "Section header for enabling OnlyZaps mode (hide reactions)")),
-                footer: Text(NSLocalizedString("Hide all 🤙's", comment: "Section footer describing OnlyZaps mode"))
+                header: Text("OnlyZaps", comment: "Section header for enabling OnlyZaps mode (hide reactions)"),
+                footer: Text("Hide all 🤙's", comment: "Section footer describing OnlyZaps mode")
                 
             ) {
                 Toggle(NSLocalizedString("OnlyZaps mode", comment: "Setting toggle to hide reactions."), isOn: $settings.onlyzaps_mode)
                     .toggleStyle(.switch)
                     .onChange(of: settings.onlyzaps_mode) { newVal in
-                        notify(.onlyzaps_mode, newVal)
+                        notify(.onlyzaps_mode(newVal))
                     }
             }
 

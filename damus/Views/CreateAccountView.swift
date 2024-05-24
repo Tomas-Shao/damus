@@ -9,9 +9,8 @@ import SwiftUI
 
 struct CreateAccountView: View {
     @StateObject var account: CreateAccountModel = CreateAccountModel()
-    @StateObject var profileUploadViewModel = ProfileUploadingViewModel()
-    
-    @State var is_done: Bool = false
+    @StateObject var profileUploadObserver = ImageUploadingObserver()
+    var nav: NavigationCoordinator
     
     func SignupForm<FormContent: View>(@ViewBuilder content: () -> FormContent) -> some View {
         return VStack(alignment: .leading, spacing: 10.0, content: content)
@@ -20,20 +19,16 @@ struct CreateAccountView: View {
     func regen_key() {
         let keypair = generate_new_keypair()
         self.account.pubkey = keypair.pubkey
-        self.account.privkey = keypair.privkey!
+        self.account.privkey = keypair.privkey
     }
     
     var body: some View {
         ZStack(alignment: .top) {
-            NavigationLink(destination: SaveKeysView(account: account), isActive: $is_done) {
-                EmptyView()
-            }
-            
             VStack {
                 VStack(alignment: .center) {
-                    ProfilePictureSelector(pubkey: account.pubkey, viewModel: profileUploadViewModel, callback: uploadedProfilePicture(image_url:))
+                    EditPictureControl(uploader: .nostrBuild, pubkey: account.pubkey, image_url: $account.profile_image , uploadObserver: profileUploadObserver, callback: uploadedProfilePicture)
 
-                    Text(NSLocalizedString("Public Key", comment: "Label to indicate the public key of the account."))
+                    Text("Public Key", comment: "Label to indicate the public key of the account.")
                         .bold()
                         .padding()
                         .onTapGesture {
@@ -46,7 +41,7 @@ struct CreateAccountView: View {
                             regen_key()
                         }
                 }
-                .frame(minWidth: 300, maxWidth: .infinity, minHeight: 300, alignment: .center)
+                .frame(minWidth: 300, maxWidth: .infinity, minHeight: 250, alignment: .center)
                 .background {
                     RoundedRectangle(cornerRadius: 12)
                         .fill(DamusColors.adaptableGrey, strokeBorder: .gray.opacity(0.5), lineWidth: 1)
@@ -63,20 +58,39 @@ struct CreateAccountView: View {
                 .padding(.top, 10)
 
                 Button(action: {
-                    self.is_done = true
+                    nav.push(route: Route.SaveKeys(account: account))
                 }) {
                     HStack {
-                        Text("Create account now", comment:  "Button to create account.")
+                        Text("Create account now", comment: "Button to create account.")
                             .fontWeight(.semibold)
                     }
                     .frame(minWidth: 300, maxWidth: .infinity, maxHeight: 12, alignment: .center)
                 }
                 .buttonStyle(GradientButtonStyle())
-                .disabled(profileUploadViewModel.isLoading)
-                .opacity(profileUploadViewModel.isLoading ? 0.5 : 1)
+                .disabled(profileUploadObserver.isLoading)
+                .opacity(profileUploadObserver.isLoading ? 0.5 : 1)
                 .padding(.top, 20)
+                
+                HStack(spacing: 0) {
+                    Text("By signing up, you agree to our ", comment: "Ask the user if they already have an account on Nostr")
+                        .font(.subheadline)
+                        .foregroundColor(Color("DamusMediumGrey"))
+
+                    Button(action: {
+                        nav.push(route: Route.EULA)
+                    }, label: {
+                        Text("EULA")
+                            .font(.subheadline)
+                    })
+                    .padding(.vertical, 5)
+
+                    Spacer()
+                }
 
                 LoginPrompt()
+                    .padding(.top)
+                
+                Spacer()
             }
             .padding()
         }
@@ -88,7 +102,7 @@ struct CreateAccountView: View {
     }
     
     func uploadedProfilePicture(image_url: URL?) {
-        account.profile_image = image_url?.absoluteString
+        account.profile_image = image_url
     }
 }
 
@@ -96,7 +110,7 @@ struct LoginPrompt: View {
     @Environment(\.dismiss) var dismiss
     var body: some View {
         HStack {
-            Text("Already on nostr?", comment: "Ask the user if they already have an account on nostr")
+            Text("Already on Nostr?", comment: "Ask the user if they already have an account on Nostr")
                 .foregroundColor(Color("DamusMediumGrey"))
 
             Button(NSLocalizedString("Login", comment: "Button to navigate to login view.")) {
@@ -112,7 +126,7 @@ struct BackNav: View {
     @Environment(\.dismiss) var dismiss
     var body: some View {
         Image("chevron-left", bundle: Bundle(for: DamusColors.self))
-            .foregroundColor(.white)
+            .foregroundColor(DamusColors.adaptableBlack)
         .onTapGesture {
             self.dismiss()
         }
@@ -135,13 +149,12 @@ extension View {
 struct CreateAccountView_Previews: PreviewProvider {
     static var previews: some View {
         let model = CreateAccountModel(real: "", nick: "jb55", about: "")
-        return CreateAccountView(account: model)
+        return CreateAccountView(account: model, nav: .init())
     }
 }
 
-func KeyText(_ text: Binding<String>) -> some View {
-    let decoded = hex_decode(text.wrappedValue)!
-    let bechkey = bech32_encode(hrp: PUBKEY_HRP, decoded)
+func KeyText(_ pubkey: Binding<Pubkey>) -> some View {
+    let bechkey = bech32_encode(hrp: PUBKEY_HRP, pubkey.wrappedValue.bytes)
     return Text(bechkey)
         .textSelection(.enabled)
         .multilineTextAlignment(.center)
@@ -167,7 +180,7 @@ func FormLabel(_ title: String, optional: Bool = false) -> some View {
         Text(title)
                 .bold()
         if optional {
-            Text("- optional", comment: "Label indicating that a form input is optional.")
+            Text("optional", comment: "Label indicating that a form input is optional.")
                 .font(.callout)
                 .foregroundColor(DamusColors.mediumGrey)
         }

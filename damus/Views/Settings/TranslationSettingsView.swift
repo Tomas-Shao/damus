@@ -9,6 +9,7 @@ import SwiftUI
 
 struct TranslationSettingsView: View {
     @ObservedObject var settings: UserSettingsStore
+    var damus_state: DamusState
     
     @Environment(\.dismiss) var dismiss
     
@@ -19,9 +20,15 @@ struct TranslationSettingsView: View {
                     .toggleStyle(.switch)
 
                 Picker(NSLocalizedString("Service", comment: "Prompt selection of translation service provider."), selection: $settings.translation_service) {
-                    ForEach(TranslationService.allCases, id: \.self) { server in
+                    ForEach(TranslationService.allCases.filter({ damus_state.purple.enable_purple ? true : $0 != .purple }), id: \.self) { server in
                         Text(server.model.displayName)
                             .tag(server.model.tag)
+                    }
+                }
+                
+                if settings.translation_service == .purple && damus_state.purple.enable_purple {
+                    NavigationLink(destination: DamusPurpleView(damus_state: damus_state)) {
+                        Text("Configure Damus Purple", comment: "Button to allow Damus Purple to be configured")
                     }
                 }
 
@@ -73,13 +80,26 @@ struct TranslationSettingsView: View {
                         Link(NSLocalizedString("Get API Key with BTC/Lightning", comment: "Button to navigate to nokyctranslate website to get a translation API key."), destination: URL(string: "https://nokyctranslate.com")!)
                     }
                 }
+
+                if settings.translation_service == .winetranslate {
+                    SecureField(NSLocalizedString("API Key (required)", comment: "Prompt for required entry of API Key to use translation server."), text: $settings.winetranslate_api_key)
+                        .disableAutocorrection(true)
+                        .disabled(settings.translation_service != .winetranslate)
+                        .autocapitalization(UITextAutocapitalizationType.none)
+
+                    if settings.winetranslate_api_key == "" {
+                        Link(NSLocalizedString("Get API Key with BTC/Lightning", comment: "Button to navigate to translate.nostr.wine to get a translation API key."), destination: URL(string: "https://translate.nostr.wine")!)
+                    }
+                }
                 
                 if settings.translation_service != .none {
                     Toggle(NSLocalizedString("Automatically translate notes", comment: "Toggle to automatically translate notes."), isOn: $settings.auto_translate)
                         .toggleStyle(.switch)
                     
+                    /*
                     Toggle(NSLocalizedString("Translate DMs", comment: "Toggle to translate direct messages."), isOn: $settings.translate_dms)
                         .toggleStyle(.switch)
+                     */
                 }
             }
         }
@@ -92,6 +112,6 @@ struct TranslationSettingsView: View {
 
 struct TranslationSettingsView_Previews: PreviewProvider {
     static var previews: some View {
-        TranslationSettingsView(settings: UserSettingsStore())
+        TranslationSettingsView(settings: UserSettingsStore(), damus_state: test_damus_state)
     }
 }

@@ -8,11 +8,11 @@
 import Foundation
 
 class ZapGroup {
-    var zaps: [Zapping]
-    var msat_total: Int64
-    var zappers: Set<String>
-    
-    var last_event_at: Int64 {
+    var zaps: [Zapping] = []
+    var msat_total: Int64 = 0
+    var zappers = Set<Pubkey>()
+
+    var last_event_at: UInt32 {
         guard let first = zaps.first else {
             return 0
         }
@@ -21,12 +21,12 @@ class ZapGroup {
     }
     
     func zap_requests() -> [NostrEvent] {
-        zaps.map { z in z.request }
+        zaps.map { z in z.request.ev }
     }
     
     func would_filter(_ isIncluded: (NostrEvent) -> Bool) -> Bool {
         for zap in zaps {
-            if !isIncluded(zap.request) {
+            if !isIncluded(zap.request.ev) {
                 return true
             }
         }
@@ -35,7 +35,7 @@ class ZapGroup {
     }
     
     func filter(_ isIncluded: (NostrEvent) -> Bool) -> ZapGroup? {
-        let new_zaps = zaps.filter { isIncluded($0.request) }
+        let new_zaps = zaps.filter { isIncluded($0.request.ev) }
         guard new_zaps.count > 0 else {
             return nil
         }
@@ -46,12 +46,6 @@ class ZapGroup {
         return grp
     }
     
-    init() {
-        self.zaps = []
-        self.msat_total = 0
-        self.zappers = Set()
-    }
-    
     @discardableResult
     func insert(_ zap: Zapping) -> Bool {
         if !insert_uniq_sorted_zap_by_created(zaps: &zaps, new_zap: zap) {
@@ -60,8 +54,8 @@ class ZapGroup {
         
         msat_total += zap.amount
         
-        if !zappers.contains(zap.request.pubkey)  {
-            zappers.insert(zap.request.pubkey)
+        if !zappers.contains(zap.request.ev.pubkey)  {
+            zappers.insert(zap.request.ev.pubkey)
         }
         
         return true

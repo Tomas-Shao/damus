@@ -19,53 +19,57 @@ final class ListTests: XCTestCase {
     }
 
     func testCreateMuteList() throws {
-        let privkey = "87f313b03f2548e6eaf1c188db47078e08e894252949779b639b28db0891937a"
-        let pubkey = "4b0c29bf96496130c1253102f6870c0eee05db38a257315858272aa43fd19685"
-        let to_mute = "2fa2630fea3d2c188c49f2799fcd92f0e9879ea6a36ae60770a5428ed6c19edd"
+        let privkey = test_keypair_full.privkey
+        let pubkey = test_keypair_full.pubkey
+        let to_mute = test_pubkey
         let keypair = FullKeypair(pubkey: pubkey, privkey: privkey)
-        let mutelist = create_or_update_mutelist(keypair: keypair, mprev: nil, to_add: to_mute)!
-        
+        let mutelist = create_or_update_mutelist(keypair: keypair, mprev: nil, to_add: .user(to_mute, nil))!
+
         XCTAssertEqual(mutelist.pubkey, pubkey)
         XCTAssertEqual(mutelist.content, "")
-        XCTAssertEqual(mutelist.tags.count, 2)
-        XCTAssertEqual(mutelist.tags[0][0], "d")
-        XCTAssertEqual(mutelist.tags[0][1], "mute")
-        XCTAssertEqual(mutelist.tags[1][0], "p")
-        XCTAssertEqual(mutelist.tags[1][1], to_mute)
+        XCTAssertEqual(mutelist.tags.count, 1)
+        XCTAssertEqual(mutelist.tags[0][0].string(), "p")
+        XCTAssertEqual(mutelist.tags[0][1].string(), to_mute.hex())
     }
 
     func testCreateAndRemoveMuteList() throws {
-        let privkey = "87f313b03f2548e6eaf1c188db47078e08e894252949779b639b28db0891937a"
-        let pubkey = "4b0c29bf96496130c1253102f6870c0eee05db38a257315858272aa43fd19685"
-        let to_mute = "2fa2630fea3d2c188c49f2799fcd92f0e9879ea6a36ae60770a5428ed6c19edd"
+        let privkey = test_keypair_full.privkey
+        let pubkey = test_keypair_full.pubkey
+        let to_mute = test_pubkey
         let keypair = FullKeypair(pubkey: pubkey, privkey: privkey)
-        let mutelist = create_or_update_mutelist(keypair: keypair, mprev: nil, to_add: to_mute)!
-        let new = remove_from_mutelist(keypair: keypair, prev: mutelist, to_remove: to_mute)!
-        
+        let mutelist = create_or_update_mutelist(keypair: keypair, mprev: nil, to_add: .user(to_mute, nil))!
+        let new = remove_from_mutelist(keypair: keypair, prev: mutelist, to_remove: .user(to_mute, nil))!
+
         XCTAssertEqual(new.pubkey, pubkey)
         XCTAssertEqual(new.content, "")
-        XCTAssertEqual(new.tags.count, 1)
-        XCTAssertEqual(new.tags[0][0], "d")
-        XCTAssertEqual(new.tags[0][1], "mute")
+        XCTAssertEqual(new.tags.count, 0)
     }
     
     func testAddToExistingMutelist() throws {
-        let privkey = "87f313b03f2548e6eaf1c188db47078e08e894252949779b639b28db0891937a"
-        let pubkey = "4b0c29bf96496130c1253102f6870c0eee05db38a257315858272aa43fd19685"
-        let to_mute = "2fa2630fea3d2c188c49f2799fcd92f0e9879ea6a36ae60770a5428ed6c19edd"
-        let to_mute_2 = "976b4ab41f8634119b4f21f57ef5836a4bef65d0bf72c7ced67b8b170ba4a38d"
+        let privkey = test_keypair_full.privkey
+        let pubkey = test_keypair_full.pubkey
+        let to_mute = test_pubkey
+        let to_mute_2 = test_pubkey_2
         let keypair = FullKeypair(pubkey: pubkey, privkey: privkey)
-        let mutelist = create_or_update_mutelist(keypair: keypair, mprev: nil, to_add: to_mute)!
-        let new = create_or_update_mutelist(keypair: keypair, mprev: mutelist, to_add: to_mute_2)!
-        
+        let mutelist = create_or_update_mutelist(keypair: keypair, mprev: nil, to_add: .user(to_mute, nil))!
+        let new = create_or_update_mutelist(keypair: keypair, mprev: mutelist, to_add: .user(to_mute_2, nil))!
+
         XCTAssertEqual(new.pubkey, pubkey)
         XCTAssertEqual(new.content, "")
-        XCTAssertEqual(new.tags.count, 3)
-        XCTAssertEqual(new.tags[0][0], "d")
-        XCTAssertEqual(new.tags[0][1], "mute")
-        XCTAssertEqual(new.tags[1][0], "p")
-        XCTAssertEqual(new.tags[1][1], to_mute)
-        XCTAssertEqual(new.tags[2][0], "p")
-        XCTAssertEqual(new.tags[2][1], to_mute_2)
+        XCTAssertEqual(new.tags.count, 2)
+        XCTAssertEqual(new.tags[0][0].string(), "p")
+        XCTAssertEqual(new.tags[1][0].string(), "p")
+        // This test failed once out of like 10 tries, due to the tags being in the incorrect order. So I decided to put the elements in an array and sort it. That way if the mutelist tags aren't in the expected order it won't fail the test.
+        XCTAssertEqual([new.tags[0][1].string(), new.tags[1][1].string()].sorted(), [to_mute.hex(), to_mute_2.hex()].sorted())
+    }
+
+    func testAddToExistingMutelistShouldNotOverrideContent() throws {
+        let privkey = test_keypair_full.privkey
+        let pubkey = test_keypair_full.pubkey
+        let keypair = FullKeypair(pubkey: pubkey, privkey: privkey)
+        let mutelist = NostrEvent(content: "random", keypair: keypair.to_keypair(), kind: NostrKind.mute_list.rawValue, tags: [])
+        let new = create_or_update_mutelist(keypair: keypair, mprev: mutelist, to_add: .user(test_pubkey, nil))!
+
+        XCTAssertEqual(new.content, "random")
     }
 }

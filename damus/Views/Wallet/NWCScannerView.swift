@@ -51,20 +51,23 @@ struct WalletScannerView: View {
     @Environment(\.dismiss) var dismiss
     
     var body: some View {
-        CodeScannerView(codeTypes: [.qr]) { res in
-            switch res {
-            case .success(let success):
-                guard let url = WalletConnectURL(str: success.string) else {
+        VStack {
+            CodeScannerView(codeTypes: [.qr]) { res in
+                switch res {
+                case .success(let success):
+                    guard let url = WalletConnectURL(str: success.string) else {
+                        result = .failed
+                        dismiss()
+                        return
+                    }
+                    
+                    result = .success(url)
+                case .failure:
                     result = .failed
-                    return
                 }
                 
-                result = .success(url)
-            case .failure:
-                result = .failed
+                dismiss()
             }
-            
-            dismiss()
         }
     }
 }

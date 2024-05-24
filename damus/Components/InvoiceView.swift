@@ -9,7 +9,7 @@ import SwiftUI
 
 struct InvoiceView: View {
     @Environment(\.colorScheme) var colorScheme
-    let our_pubkey: String
+    let our_pubkey: Pubkey
     let invoice: Invoice
     @State var showing_select_wallet: Bool = false
     @State var copied = false
@@ -37,9 +37,14 @@ struct InvoiceView: View {
     var PayButton: some View {
         Button {
             if settings.show_wallet_selector {
-                showing_select_wallet = true
+                present_sheet(.select_wallet(invoice: invoice.string))
             } else {
-                open_with_wallet(wallet: settings.default_wallet.model, invoice: invoice.string)
+                do {
+                    try open_with_wallet(wallet: settings.default_wallet.model, invoice: invoice.string)
+                }
+                catch {
+                    present_sheet(.select_wallet(invoice: invoice.string))
+                }
             }
         } label: {
             RoundedRectangle(cornerRadius: 20, style: .circular)
@@ -79,27 +84,29 @@ struct InvoiceView: View {
             }
             .padding(30)
         }
-        .sheet(isPresented: $showing_select_wallet, onDismiss: {showing_select_wallet = false}) {
-            SelectWalletView(default_wallet: settings.default_wallet, showingSelectWallet: $showing_select_wallet, our_pubkey: our_pubkey, invoice: invoice.string)
-        }
     }
 }
 
-func open_with_wallet(wallet: Wallet.Model, invoice: String) {
+enum OpenWalletError: Error {
+    case no_wallet_to_open
+    case store_link_invalid
+    case system_cannot_open_store_link
+}
+
+func open_with_wallet(wallet: Wallet.Model, invoice: String) throws {
     if let url = URL(string: "\(wallet.link)\(invoice)"), UIApplication.shared.canOpenURL(url) {
         UIApplication.shared.open(url)
     } else {
         guard let store_link = wallet.appStoreLink else {
-            // TODO: do something here if we don't have an appstore link
-            return
+            throw OpenWalletError.no_wallet_to_open
         }
         
         guard let url = URL(string: store_link) else {
-            return
+            throw OpenWalletError.store_link_invalid
         }
         
         guard UIApplication.shared.canOpenURL(url) else {
-            return
+            throw OpenWalletError.system_cannot_open_store_link
         }
         
         UIApplication.shared.open(url)
@@ -111,8 +118,12 @@ let test_invoice = Invoice(description: .description("this is a description"), a
 
 struct InvoiceView_Previews: PreviewProvider {
     static var previews: some View {
-        InvoiceView(our_pubkey: "", invoice: test_invoice, settings: test_damus_state().settings)
+        InvoiceView(our_pubkey: .empty, invoice: test_invoice, settings: test_damus_state.settings)
             .frame(width: 300, height: 200)
     }
 }
 
+
+func present_sheet(_ sheet: Sheets) {
+    notify(.present_sheet(sheet))
+}

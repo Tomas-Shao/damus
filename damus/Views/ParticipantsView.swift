@@ -10,10 +10,10 @@ import SwiftUI
 struct ParticipantsView: View {
     
     let damus_state: DamusState
-    
-    @Binding var references: [ReferencedId]
-    @Binding var originalReferences: [ReferencedId]
-    
+    let original_pubkeys: [Pubkey]
+
+    @Binding var filtered_pubkeys: Set<Pubkey>
+
     var body: some View {
         VStack {
             Text("Replying to", comment: "Text indicating that the view is used for editing which participants are replied to in a note.")
@@ -23,7 +23,7 @@ struct ParticipantsView: View {
                 
                 Button {
                     // Remove all "p" refs, keep "e" refs
-                    references = originalReferences.eRefs
+                    filtered_pubkeys = Set(original_pubkeys)
                 } label: {
                     Text("Remove all", comment: "Button label to remove all participants from a note reply.")
                 }
@@ -34,7 +34,7 @@ struct ParticipantsView: View {
                 .clipShape(Capsule())
 
                 Button {
-                    references = originalReferences
+                    filtered_pubkeys = []
                 } label: {
                     Text("Add all", comment: "Button label to re-add all original participants as profiles to reply to in a note")
                 }
@@ -48,40 +48,19 @@ struct ParticipantsView: View {
             }
             VStack {
                 ScrollView {
-                    ForEach(originalReferences.pRefs) { participant in
-                        let pubkey = participant.id
+                    ForEach(original_pubkeys) { pubkey in
                         HStack {
-                            ProfilePicView(pubkey: pubkey, size: PFP_SIZE, highlight: .none, profiles: damus_state.profiles, disable_animation: damus_state.settings.disable_animation)
-                            
-                            VStack(alignment: .leading) {
-                                let profile = damus_state.profiles.lookup(id: pubkey)
-                                ProfileName(pubkey: pubkey, profile: profile, damus: damus_state, show_nip5_domain: false)
-                                if let about = profile?.about {
-                                    let blocks = parse_mentions(content: about, tags: [])
-                                    let about_string = render_blocks(blocks: blocks, profiles: damus_state.profiles).content.attributed
-                                    Text(about_string)
-                                        .lineLimit(3)
-                                        .font(.footnote)
-                                }
-                            }
-                            
-                            Spacer()
+                            UserView(damus_state: damus_state, pubkey: pubkey)
                             
                             Image("check-circle.fill", bundle: Bundle(for: DamusColors.self))
                                 .font(.system(size: 30))
-                                .foregroundColor(references.contains(participant) ? DamusColors.purple : .gray)
+                                .foregroundColor(filtered_pubkeys.contains(pubkey) ? .gray : DamusColors.purple)
                         }
                         .onTapGesture {
-                            if references.contains(participant) {
-                                references = references.filter {
-                                    $0 != participant
-                                }
+                            if filtered_pubkeys.contains(pubkey) {
+                                filtered_pubkeys.remove(pubkey)
                             } else {
-                                if references.contains(participant) {
-                                    // Don't add it twice
-                                } else {
-                                    references.append(participant)
-                                }
+                                filtered_pubkeys.insert(pubkey)
                             }
                         }
                     }                    

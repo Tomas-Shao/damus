@@ -10,7 +10,7 @@ import Security
 
 struct SaveKeysView: View {
     let account: CreateAccountModel
-    let pool: RelayPool = RelayPool()
+    let pool: RelayPool = RelayPool(ndb: Ndb()!)
     @State var pub_copied: Bool = false
     @State var priv_copied: Bool = false
     @State var loading: Bool = false
@@ -21,39 +21,40 @@ struct SaveKeysView: View {
     @FocusState var pubkey_focused: Bool
     @FocusState var privkey_focused: Bool
     
+    let first_contact_event: NdbNote?
+    
+    init(account: CreateAccountModel) {
+        self.account = account
+        self.first_contact_event = make_first_contact_event(keypair: account.keypair)
+    }
+    
     var body: some View {
         ZStack(alignment: .top) {
             VStack(alignment: .center) {
-                Text("Welcome, \(account.rendered_name)!", comment: "Text to welcome user.")
-                    .font(.title.bold())
-                    .padding(.bottom, 10)
+                if account.rendered_name.isEmpty {
+                    Text("Welcome!", comment: "Text to welcome user.")
+                        .font(.title.bold())
+                        .padding(.bottom, 10)
+                } else {
+                    Text("Welcome, \(account.rendered_name)!", comment: "Text to welcome user.")
+                        .font(.title.bold())
+                        .padding(.bottom, 10)
+                }
                 
                 Text("Before we get started, you'll need to save your account info, otherwise you won't be able to login in the future if you ever uninstall Damus.", comment: "Reminder to user that they should save their account information.")
                     .padding(.bottom, 10)
                 
-                Text("Public Key", comment: "Label to indicate that text below is the user's public key used by others to uniquely refer to the user.")
+                Text("Private Key", comment: "Label to indicate that the text below is the user's private key used by only the user themself as a secret to login to access their account.")
                     .font(.title2.bold())
                     .padding(.bottom, 10)
                 
-                Text("This is your account ID, you can give this to your friends so that they can follow you. Tap to copy.", comment: "Label to describe that a public key is the user's account ID and what they can do with it.")
+                Text("This is your secret account key. You need this to access your account. Don't share this with anyone! Save it in a password manager and keep it safe!", comment: "Label to describe that a private key is the user's secret account key and what they should do with it.")
                     .padding(.bottom, 10)
                 
-                SaveKeyView(text: account.pubkey_bech32, textContentType: .username, is_copied: $pub_copied, focus: $pubkey_focused)
+                SaveKeyView(text: account.privkey.nsec, textContentType: .newPassword, is_copied: $priv_copied, focus: $privkey_focused)
                     .padding(.bottom, 10)
-                
-                if pub_copied {
-                    Text("Private Key", comment: "Label to indicate that the text below is the user's private key used by only the user themself as a secret to login to access their account.")
-                        .font(.title2.bold())
-                        .padding(.bottom, 10)
-                    
-                    Text("This is your secret account key. You need this to access your account. Don't share this with anyone! Save it in a password manager and keep it safe!", comment: "Label to describe that a private key is the user's secret account key and what they should do with it.")
-                        .padding(.bottom, 10)
-                    
-                    SaveKeyView(text: account.privkey_bech32, textContentType: .newPassword, is_copied: $priv_copied, focus: $privkey_focused)
-                        .padding(.bottom, 10)
-                }
-                
-                if pub_copied && priv_copied {
+
+                if priv_copied {
                     if loading {
                         ProgressView()
                             .progressViewStyle(.circular)
@@ -108,6 +109,13 @@ struct SaveKeysView: View {
     }
     
     func complete_account_creation(_ account: CreateAccountModel) {
+        guard let first_contact_event else {
+            error = NSLocalizedString("Could not create your initial contact list event. This is a software bug, please contact Damus support via support@damus.io or through our Nostr account for help.", comment: "Error message to the user indicating that the initial contact list failed to be created.")
+            return
+        }
+        // Save contact list to storage right away so that we don't need to depend on the network to complete this important step
+        self.save_to_storage(first_contact_event: first_contact_event, for: account)
+        
         let bootstrap_relays = load_bootstrap_relays(pubkey: account.pubkey)
         for relay in bootstrap_relays {
             add_rw_relay(self.pool, relay)
@@ -115,34 +123,41 @@ struct SaveKeysView: View {
 
         self.pool.register_handler(sub_id: "signup", handler: handle_event)
         
-        credential_handler.save_credential(pubkey: account.pubkey_bech32, privkey: account.privkey_bech32)
-        
+        credential_handler.save_credential(pubkey: account.pubkey, privkey: account.privkey)
+
         self.loading = true
         
         self.pool.connect()
     }
     
-    func handle_event(relay: String, ev: NostrConnectionEvent) {
+    func save_to_storage(first_contact_event: NdbNote, for account: CreateAccountModel) {
+        // Send to NostrDB so that we have a local copy in storage
+        self.pool.send_raw_to_local_ndb(.typical(.event(first_contact_event)))
+        
+        // Save the ID to user settings so that we can easily find it later.
+        let settings = UserSettingsStore.globally_load_for(pubkey: account.pubkey)
+        settings.latest_contact_event_id_hex = first_contact_event.id.hex()
+    }
+
+    func handle_event(relay: RelayURL, ev: NostrConnectionEvent) {
         switch ev {
         case .ws_event(let wsev):
             switch wsev {
             case .connected:
                 let metadata = create_account_to_metadata(account)
-                let contacts_ev = make_first_contact_event(keypair: account.keypair)
                 make_first_post_event(name: "test_save", addressId: "test_save")
-                print("[DAMUS]: 发送first_contact_event和first_post_evnet从SaveKeysView")
-                if let keypair = account.keypair.to_full() {
-                    let metadata_ev = make_metadata_event(keypair: keypair, metadata: metadata)
+                if let keypair = account.keypair.to_full(),
+                   let metadata_ev = make_metadata_event(keypair: keypair, metadata: metadata) {
                     self.pool.send(.event(metadata_ev))
                 }
                 
-                if let contacts_ev {
-                    self.pool.send(.event(contacts_ev))
+                if let first_contact_event {
+                    self.pool.send(.event(first_contact_event))
                 }
                 
                 do {
                     try save_keypair(pubkey: account.pubkey, privkey: account.privkey)
-                    notify(.login, account.keypair)
+                    notify(.login(account.keypair))
                 } catch {
                     self.error = "Failed to save keys"
                 }
@@ -165,6 +180,8 @@ struct SaveKeysView: View {
             case .eose:
                 break
             case .ok:
+                break
+            case .auth:
                 break
             }
         }
@@ -240,5 +257,5 @@ struct SaveKeysView_Previews: PreviewProvider {
 }
 
 public func create_account_to_metadata(_ model: CreateAccountModel) -> Profile {
-    return Profile(name: model.nick_name, display_name: model.real_name, about: model.about, picture: model.profile_image, banner: nil, website: nil, lud06: nil, lud16: nil, nip05: nil, damus_donation: nil)
+    return Profile(name: model.nick_name, display_name: model.real_name, about: model.about, picture: model.profile_image?.absoluteString, banner: nil, website: nil, lud06: nil, lud16: nil, nip05: nil, damus_donation: nil)
 }
